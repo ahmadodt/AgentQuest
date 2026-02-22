@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "campaign_id": "campaign.v1.alley_to_gate",
+  "scenes": [
+    {
+      "scene_id": "scene.001.goblin_alley",
+      "title": "Alley Ambush",
+      "location": "Old Cobblestone Alley",
+      "character_id": "knight.bram",
+      "monster_id": "goblin.street_cutpurse",
+      "narrative": "A goblin leaps from a pile of wet crates and lunges at your throat with a rusty dagger.",
+      "knowledge_level": "low",
+      "constraints": {
+        "exactly_one_tool_call": true
+      },
+      "success_condition": {
+        "type": "defeat_monster"
+      },
+      "failure_condition": {
+        "type": "not_defeated"
+      },
+      "ui": {
+        "monster_image_key": "goblin",
+        "background_image_key": "alley"
+      }
+    },
+    {
+      "scene_id": "scene.002.runes_on_wall",
+      "title": "Runes in the Dark",
+      "location": "Dungeon Antechamber",
+      "character_id": "wizard.ember",
+      "monster_id": "cursed.whispering_statue",
+      "narrative": "An ancient statue whispers your name. Strange runes glow faintly on the wall beside it.",
+      "knowledge_level": "high",
+      "constraints": {
+        "exactly_one_tool_call": true
+      },
+      "success_condition": {
+        "type": "solve_encounter",
+        "preferred_effects": ["knowledge_gain"]
+      },
+      "failure_condition": {
+        "type": "wrong_action"
+      },
+      "ui": {
+        "monster_image_key": "statue",
+        "background_image_key": "dungeon"
+      }
+    },
+    {
+      "scene_id": "scene.003.flame_gate",
+      "title": "The Burning Gate",
+      "location": "Gate of Ash",
+      "character_id": "wizard.ember",
+      "monster_id": "elemental.flame_sentinel",
+      "narrative": "A towering flame elemental blocks the gate. The air ripples with heat. Running is not an option.",
+      "knowledge_level": "medium",
+      "constraints": {
+        "exactly_one_tool_call": true,
+        "no_escape": true
+      },
+      "success_condition": {
+        "type": "defeat_monster"
+      },
+      "failure_condition": {
+        "type": "not_defeated"
+      },
+      "ui": {
+        "monster_image_key": "flame_elemental",
+        "background_image_key": "gate"
+      }
+    }
+  ]
+}
