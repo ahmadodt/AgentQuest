@@ -5,7 +5,7 @@
       "character_id": "wizard.ember",
       "name": "Ember",
       "class": "Wizard",
-      "inventory": ["wand"],
+      "inventory": [],
       "traits": [],
       "tool_ids": [
         "wizard.cast_fireball",

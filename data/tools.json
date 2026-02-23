@@ -15,7 +15,7 @@
       },
       "constraints": {
         "allowed_classes": ["Wizard"],
-        "required_inventory": [],
+        "required_inventory": ["wand"],
         "forbidden_traits": ["low_mana"]
       },
       "effects": {
@@ -34,9 +34,9 @@
       "args": {
         "type": "object",
         "properties": {
-          "strength": { "type": "integer", "minimum": 1, "maximum": 10 }
+    
         },
-        "required": ["strength"]
+        "required": []
       },
       "constraints": {
         "allowed_classes": ["Wizard"],
