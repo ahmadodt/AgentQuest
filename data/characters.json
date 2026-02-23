@@ -10,6 +10,7 @@
       "tool_ids": [
         "wizard.cast_fireball",
         "wizard.arcane_shield",
+        "wizard.read_runes",
         "common.run"
       ]
     },
