@@ -3,40 +3,42 @@
   "tools": [
     {
       "tool_id": "wizard.cast_fireball",
-      "name": "Cast Fireball",
+      "label": "Cast Fireball",
       "description": "Launch a burst of flame at the target.",
       "category": "attack",
-      "call_schema": {
-        "name": "cast_fireball",
-        "arguments": {
-          "target": "string"
-        }
+      "args": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string" }
+        },
+        "required": ["target"]
       },
-      "requirements": {
+      "constraints": {
         "allowed_classes": ["Wizard"],
         "required_inventory": [],
         "forbidden_traits": ["low_mana"]
       },
       "effects": {
         "damage_type": "fire",
-        "power": 6
+        "base_power": 6
       },
       "ui": {
-        "icon": "🔥"
+        "emoji": "🔥"
       }
     },
     {
       "tool_id": "wizard.arcane_shield",
-      "name": "Arcane Shield",
+      "label": "Arcane Shield",
       "description": "Conjure a protective magical barrier.",
       "category": "defense",
-      "call_schema": {
-        "name": "arcane_shield",
-        "arguments": {
-          "strength": "integer"
-        }
+      "args": {
+        "type": "object",
+        "properties": {
+          "strength": { "type": "integer", "minimum": 1, "maximum": 10 }
+        },
+        "required": ["strength"]
       },
-      "requirements": {
+      "constraints": {
         "allowed_classes": ["Wizard"],
         "required_inventory": [],
         "forbidden_traits": ["silenced"]
@@ -46,69 +48,75 @@
         "mitigation": 5
       },
       "ui": {
-        "icon": "🛡️"
+        "emoji": "🛡️"
       }
     },
     {
-    "tool_id": "wizard.read_runes",
-    "name": "Read Ancient Runes",
-    "description": "Analyze mystical inscriptions to extract hidden knowledge.",
-    "category": "utility",
-    "call_schema": {
-        "name": "read_runes",
-        "arguments": {
-        "surface": "string"
-        }
-    },
-    "requirements": {
+      "tool_id": "wizard.read_runes",
+      "label": "Read Ancient Runes",
+      "description": "Analyze mystical inscriptions to extract hidden knowledge.",
+      "category": "utility",
+      "args": {
+        "type": "object",
+        "properties": {
+          "surface": { "type": "string" }
+        },
+        "required": ["surface"]
+      },
+      "constraints": {
         "allowed_classes": ["Wizard"],
         "required_inventory": [],
         "forbidden_traits": ["blinded"]
-    },
-    "effects": {
+      },
+      "effects": {
         "knowledge_gain": true,
         "combat_effect": false
-    },
-    "ui": {
-        "icon": "📜"
-    }
+      },
+      "ui": {
+        "emoji": "📜"
+      }
     },
     {
       "tool_id": "knight.sword_slash",
-      "name": "Sword Slash",
+      "label": "Sword Slash",
       "description": "Strike the target with a sword.",
       "category": "attack",
-      "call_schema": {
-        "name": "sword_slash",
-        "arguments": {
-          "target": "string"
-        }
+      "args": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string" }
+        },
+        "required": ["target"]
       },
-      "requirements": {
+      "constraints": {
         "allowed_classes": ["Knight"],
         "required_inventory": ["sword"],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "physical",
-        "power": 5
+        "base_power": 5
       },
       "ui": {
-        "icon": "⚔️"
+        "emoji": "⚔️"
       }
     },
     {
       "tool_id": "knight.shield_block",
-      "name": "Shield Block",
+      "label": "Shield Block",
       "description": "Block an incoming attack using a shield.",
       "category": "defense",
-      "call_schema": {
-        "name": "shield_block",
-        "arguments": {
-          "direction": "string"
-        }
+      "args": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": ["front", "left", "right", "above"]
+          }
+        },
+        "required": ["direction"]
       },
-      "requirements": {
+      "constraints": {
         "allowed_classes": ["Knight"],
         "required_inventory": ["shield"],
         "forbidden_traits": []
@@ -118,21 +126,25 @@
         "mitigation": 4
       },
       "ui": {
-        "icon": "🛡️"
+        "emoji": "🛡️"
       }
     },
     {
       "tool_id": "common.run",
-      "name": "Run",
+      "label": "Run",
       "description": "Attempt to flee the encounter.",
       "category": "movement",
-      "call_schema": {
-        "name": "run",
-        "arguments": {
-          "direction": "string"
-        }
+      "args": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": ["toward_exit", "into_forest", "backtrack"]
+          }
+        },
+        "required": ["direction"]
       },
-      "requirements": {
+      "constraints": {
         "allowed_classes": ["Wizard", "Knight"],
         "required_inventory": [],
         "forbidden_traits": ["broken_leg"]
@@ -141,7 +153,7 @@
         "escape_attempt": true
       },
       "ui": {
-        "icon": "🏃"
+        "emoji": "🏃"
       }
     }
   ]
