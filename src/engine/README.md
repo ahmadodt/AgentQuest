@@ -123,3 +123,12 @@ This separation lets you tell whether a failure is:
    - Hard: feasibility/constraints
 
 Soft validation will be added later once scene/monster logic is implemented.
+
+
+Model Output
+     ↓
+AST Validator   →  “Is the output structurally correct?”
+     ↓
+Hard Validator  →  “Is this action legally possible?”
+     ↓
+Soft Validator  →  “Does this succeed in this situation?” (next step)

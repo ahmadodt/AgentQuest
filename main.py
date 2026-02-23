@@ -1,6 +1,5 @@
 from src.engine.loader import load_gamedata, DataValidationError
-from src.engine.validator_ast import ast_validate_tool_call, AstValidationError
-from src.engine.validator_hard import hard_validate_tool_call
+from src.engine.validator import validate
 
 
 def main():
@@ -19,16 +18,18 @@ def main():
 
         print("\n--- AST + HARD Validation Test Mode ---\n")
 
-        # Choose character + scene (scene is not used by hard validator yet)
-        # characters "wizard.ember" or "knight.bram"
-        character_id = "knight.bram" 
+        # Choose character + scene
+        # characters: "wizard.ember" or "knight.bram"
+        character_id = "knight.bram"
         scene_id = "scene.001.goblin_alley"
 
         print(f"Using character: {character_id}")
         print(f"Using scene: {scene_id}")
 
         character = gamedata["characters_by_id"][character_id]
-        #character["traits"] =  ["low_mana"] 
+
+        # Optional manual trait testing:
+        # character["traits"] = ["low_mana"]
 
         # For now: visible tools = character.tool_ids
         visible_tool_ids = character["tool_ids"]
@@ -38,33 +39,23 @@ def main():
             print(f" - {tid}")
 
         print("\nEnter a tool call JSON (example):")
-        print('{"tool_id": "wizard.cast_fireball", "arguments": {"target": "goblin"}}')
+        print('{"tool_id": "knight.sword_slash", "arguments": {"target": "goblin"}}')
         print()
 
         raw_input_str = input("Tool call > ")
 
-        # ---- Stage 1: AST validation ----
-        try:
-            parsed = ast_validate_tool_call(
-                raw_output=raw_input_str,
-                tools_by_id=gamedata["tools_by_id"],
-                visible_tool_ids=visible_tool_ids,
-            )
-
-            print("\n✔ AST validation passed!")
-            print(f"Parsed tool call: {parsed}")
-
-        except AstValidationError as e:
-            print("\n✖ AST validation failed:")
-            print(e)
-            return
-
-        # ---- Stage 2: Hard validation ----
-        verdict = hard_validate_tool_call(
+        verdict = validate(
             gamedata=gamedata,
             character_id=character_id,
-            tool_id=parsed["tool_id"],
+            scene_id=scene_id,
+            visible_tool_ids=visible_tool_ids,
+            raw_model_output=raw_input_str,
         )
+
+        if verdict.get("ast_valid") is False:
+            print("\n✖ AST validation failed:")
+            print(verdict["reason"])
+            return
 
         if verdict.get("hard_valid"):
             print("\n✔ Hard validation passed!")
