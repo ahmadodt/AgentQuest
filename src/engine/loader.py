@@ -190,7 +190,7 @@ def _validate_monsters(mon_root: dict) -> dict:
     return monsters_by_id
 
 
-def _validate_scenes(scene_root: dict, chars_by_id: dict, monsters_by_id: dict) -> dict:
+def _validate_scenes(scene_root: dict, monsters_by_id: dict) -> dict:
     ctx = "scenes.json"
     _require(scene_root, "scenes", ctx)
     _require_type(scene_root["scenes"], list, ctx, "scenes")
@@ -203,7 +203,6 @@ def _validate_scenes(scene_root: dict, chars_by_id: dict, monsters_by_id: dict) 
         for key in [
             "title",
             "location",
-            "character_id",
             "monster_id",
             "narrative",
             "knowledge_level",
@@ -215,7 +214,6 @@ def _validate_scenes(scene_root: dict, chars_by_id: dict, monsters_by_id: dict) 
 
         _require_type(s["title"], str, sctx, "title")
         _require_type(s["location"], str, sctx, "location")
-        _require_type(s["character_id"], str, sctx, "character_id")
         _require_type(s["monster_id"], str, sctx, "monster_id")
         _require_type(s["narrative"], str, sctx, "narrative")
         _require_type(s["knowledge_level"], str, sctx, "knowledge_level")
@@ -227,9 +225,7 @@ def _validate_scenes(scene_root: dict, chars_by_id: dict, monsters_by_id: dict) 
         if not isinstance(s["failure_condition"], dict):
             raise DataValidationError(f"{sctx}: failure_condition must be an object/dict")
 
-        # Reference checks
-        if s["character_id"] not in chars_by_id:
-            raise DataValidationError(f"{sctx}: unknown character_id '{s['character_id']}'")
+        # Reference check (monster only now)
         if s["monster_id"] not in monsters_by_id:
             raise DataValidationError(f"{sctx}: unknown monster_id '{s['monster_id']}'")
 
@@ -245,7 +241,6 @@ def _validate_scenes(scene_root: dict, chars_by_id: dict, monsters_by_id: dict) 
                 )
 
     return scenes_by_id
-
 
 def load_gamedata(data_dir: str = "data") -> dict:
     """
@@ -264,7 +259,7 @@ def load_gamedata(data_dir: str = "data") -> dict:
     tools_by_id = _validate_tools(tools_root)
     characters_by_id = _validate_characters(chars_root, tools_by_id)
     monsters_by_id = _validate_monsters(monsters_root)
-    scenes_by_id = _validate_scenes(scenes_root, characters_by_id, monsters_by_id)
+    scenes_by_id = _validate_scenes(scenes_root, monsters_by_id)
 
     return {
         "tools_by_id": tools_by_id,
