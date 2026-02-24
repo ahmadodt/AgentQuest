@@ -1,9 +1,3 @@
-# AgentQuest
-A structured sandbox for studying AI tool selection under constraints, presented as a modular fantasy simulation.
-
-Here is the full top-level `README.md` content, clean and ready to copy-paste:
-
----
 
 # AgentQuest
 
@@ -124,10 +118,5 @@ pytest -q
 * Fail-fast data integrity
 * Explicit separation of syntax, feasibility, and reasoning
 * Built for experimentation and analysis
-
----
-
-If you'd like next, we can refine this to sound more research-focused (for thesis/benchmark framing) or more product-focused (for demo/game framing).
-
 
 
