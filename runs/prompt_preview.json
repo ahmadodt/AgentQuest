@@ -1,0 +1,10 @@
+[
+  {
+    "role": "system",
+    "content": "You are an assistant that must choose exactly ONE tool call.\nYou MUST output ONLY a valid JSON object, with NO extra text, NO markdown.\nThe JSON object must have exactly two keys: tool_id and arguments.\ntool_id MUST be one of the allowed tool_ids.\narguments MUST be an object. Do not include keys not in the tool schema.\nIf a tool has no args, use arguments: {}.\nIMPORTANT: Any output that is not EXACTLY the JSON object will be rejected.\n"
+  },
+  {
+    "role": "user",
+    "content": "CHARACTER:\n- name: Bram\n- class: Knight\n- inventory: ['sword', 'shield']\n- traits: []\n\nSCENE:\n- id: scene.001.goblin_alley\n- title: Alley Ambush\n- location: Old Cobblestone Alley\n- monster_id: goblin.street_cutpurse\n- knowledge_level: low\n- narrative: A goblin leaps from a pile of wet crates and lunges at your throat with a rusty dagger.\n- constraints: exactly_one_tool_call=True\n- success_condition: defeat_monster\n\nALLOWED tool_id values:\n['knight.sword_slash', 'knight.shield_block', 'common.run']\n\nVISIBLE TOOLS (schemas):\n- tool_id: knight.sword_slash (⚔️ Sword Slash)\n  desc: Strike the target with a sword.\n  args_required: ['target']\n  args_schema:\n    - target: string\n\n- tool_id: knight.shield_block (🛡️ Shield Block)\n  desc: Block an incoming attack using a shield.\n  args_required: ['direction']\n  args_schema:\n    - direction: string, enum=['front', 'left', 'right', 'above']\n\n- tool_id: common.run (🏃 Run)\n  desc: Attempt to flee the encounter.\n  args_required: ['direction']\n  args_schema:\n    - direction: string, enum=['toward_exit', 'into_forest', 'backtrack']\n\nOUTPUT FORMAT (EXACTLY THIS SHAPE):\n{\"tool_id\":\"<one of the allowed tool_ids>\",\"arguments\":{...}}\n"
+  }
+]
