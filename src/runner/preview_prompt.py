@@ -1,9 +1,10 @@
 import argparse
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from src.engine.loader import load_gamedata, DataValidationError
 from src.prompts.base_prompt import build_messages
+from src.prompts.prompt_config import DEFAULT_PROMPT_CONFIG, PromptConfig
 
 
 def _print_messages(messages: List[Dict[str, str]]) -> None:
@@ -14,12 +15,55 @@ def _print_messages(messages: List[Dict[str, str]]) -> None:
         print(f"--- message {i} ({role}) ---\n{content}\n")
 
 
+def _load_preset(preset_name: str) -> PromptConfig:
+    """
+    Loads a PromptConfig preset from configs/prompt_presets.py
+    """
+    if preset_name == "default":
+        return DEFAULT_PROMPT_CONFIG
+
+    # Import lazily so preview still works even if presets file doesn't exist yet
+    try:
+        from configs import prompt_presets  # type: ignore
+    except Exception as e:
+        raise RuntimeError(
+            "Could not import configs/prompt_presets.py. "
+            "Create it (or use --preset default). "
+            f"Original error: {e}"
+        )
+
+    if not hasattr(prompt_presets, preset_name):
+        # Show available presets
+        available = sorted(
+            [
+                k
+                for k in dir(prompt_presets)
+                if k.isupper() and isinstance(getattr(prompt_presets, k), PromptConfig)
+            ]
+        )
+        raise ValueError(
+            f"Unknown preset '{preset_name}'. Available presets: {available} "
+            "(Preset names are the UPPERCASE variables in configs/prompt_presets.py)"
+        )
+
+    cfg = getattr(prompt_presets, preset_name)
+    if not isinstance(cfg, PromptConfig):
+        raise TypeError(f"Preset '{preset_name}' exists but is not a PromptConfig.")
+    return cfg
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", type=str, default="data")
     parser.add_argument("--character-id", type=str, default="knight.bram")
     parser.add_argument("--scene-id", type=str, default="scene.001.goblin_alley")
     parser.add_argument("--prompt-format", type=str, default="json_only")
+    parser.add_argument(
+        "--preset",
+        type=str,
+        default="default",
+        help="Prompt preset name. Use 'default' or a UPPERCASE preset variable from configs/prompt_presets.py",
+    )
     parser.add_argument("--save-json", type=str, default="", help="Optional path to save messages as JSON")
     args = parser.parse_args()
 
@@ -32,13 +76,18 @@ def main():
         visible_tool_ids = character["tool_ids"]
         visible_tools = [gamedata["tools_by_id"][tid] for tid in visible_tool_ids]
 
+        cfg = _load_preset(args.preset)
+
         messages = build_messages(
             scene=scene,
             character=character,
             visible_tools=visible_tools,
+            gamedata=gamedata,
             prompt_format=args.prompt_format,
+            cfg=cfg,
         )
 
+        print(f"\nPreset: {args.preset}")
         _print_messages(messages)
 
         if args.save_json:

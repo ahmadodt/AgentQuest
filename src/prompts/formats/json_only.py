@@ -33,31 +33,30 @@ def _render_monster(monster: Dict[str, Any], level: str) -> str:
     special_rules = monster.get("special_rules", [])
 
     if tags:
-        lines.append(f"- tags: {tags}")
+        lines.append(f"- tags: {json.dumps(tags)}")
     if weaknesses:
-        lines.append(f"- weaknesses: {weaknesses}")
+        lines.append(f"- weaknesses: {json.dumps(weaknesses)}")
     if resistances:
-        lines.append(f"- resistances: {resistances}")
+        lines.append(f"- resistances: {json.dumps(resistances)}")
     if immunities:
-        lines.append(f"- immunities: {immunities}")
+        lines.append(f"- immunities: {json.dumps(immunities)}")
     if special_rules:
-        lines.append(f"- special_rules: {special_rules}")
+        lines.append(f"- special_rules: {json.dumps(special_rules)}")
 
     interactions = monster.get("interactions") or {}
     if isinstance(interactions, dict):
         if "escape_allowed" in interactions:
-            lines.append(f"- escape_allowed: {interactions.get('escape_allowed')}")
+            lines.append(f"- escape_allowed: {json.dumps(interactions.get('escape_allowed'))}")
 
     if level == "stats":
         return "\n".join(lines).strip()
 
     # full (everything else in interactions, but still no UI)
     if isinstance(interactions, dict) and interactions:
-        lines.append("- interactions:")
-        for k, v in interactions.items():
-            if k == "escape_allowed":
-                continue  # already shown in stats
-            lines.append(f"  - {k}: {v}")
+        # Keep it compact but JSON-shaped
+        full_interactions = {k: v for k, v in interactions.items() if k != "escape_allowed"}
+        if full_interactions:
+            lines.append(f"- interactions: {json.dumps(full_interactions)}")
 
     return "\n".join(lines).strip()
 
@@ -87,7 +86,7 @@ def _render_scene(scene: Dict[str, Any], cfg: PromptConfig) -> str:
             lines.append(f"- success_condition: {sc['type']}")
             prefs = sc.get("preferred_effects")
             if isinstance(prefs, list) and prefs:
-                lines.append(f"- preferred_effects: {prefs}")
+                lines.append(f"- preferred_effects: {json.dumps(prefs)}")
 
     if cfg.include_failure_condition:
         fc = scene.get("failure_condition")
@@ -95,7 +94,6 @@ def _render_scene(scene: Dict[str, Any], cfg: PromptConfig) -> str:
             lines.append(f"- failure_condition: {fc['type']}")
 
     # NOTE: scene["constraints"] intentionally NOT rendered (per your decision)
-
     return "\n".join(lines).strip()
 
 
@@ -143,7 +141,7 @@ def build_json_only_messages(
         "IMPORTANT: Any output that is not EXACTLY the JSON object will be rejected.\n"
     )
 
-    user_parts = []
+    user_parts: List[str] = []
     user_parts.append("CHARACTER:\n" + "\n".join(char_lines))
     user_parts.append("SCENE:\n" + scene_block)
 
