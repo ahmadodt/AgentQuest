@@ -1,4 +1,7 @@
-from typing import Any, Dict, List
+import json
+from typing import Any, Dict, List, Optional
+
+from src.prompts.prompt_config import PromptConfig
 
 
 def _fmt_rule(k: str, schema: Dict[str, Any]) -> str:
@@ -17,35 +20,38 @@ def _fmt_rule(k: str, schema: Dict[str, Any]) -> str:
     return f"{k}: " + ", ".join(bits)
 
 
-def render_tools_compact(tools: List[Dict[str, Any]]) -> str:
+def render_tools_compact(tools: List[Dict[str, Any]], cfg: PromptConfig) -> str:
     lines: List[str] = []
 
     for tool in tools:
         tool_id = tool.get("tool_id", "")
         desc = tool.get("description", "")
 
-        label = tool.get("label", "") or ""
-        emoji = ""
-        ui = tool.get("ui") or {}
-        if isinstance(ui, dict):
-            emoji = ui.get("emoji", "") or ""
-
         header = f"- tool_id: {tool_id}"
-        if label or emoji:
-            # e.g. "- tool_id: wizard.cast_fireball (🔥 Cast Fireball)"
-            pretty = f"{emoji} {label}".strip()
-            header += f" ({pretty})"
+
+        if cfg.tools_include_label_emoji:
+            label = tool.get("label", "") or ""
+            emoji = ""
+            ui = tool.get("ui") or {}
+            if isinstance(ui, dict):
+                emoji = ui.get("emoji", "") or ""
+            if label or emoji:
+                pretty = f"{emoji} {label}".strip()
+                header += f" ({pretty})"
+
         lines.append(header)
 
+        # Always include description
         if desc:
             lines.append(f"  desc: {desc}")
 
+        # Always include args schema
         args = tool.get("args", {}) or {}
         props = (args.get("properties") or {})
         required = args.get("required") or []
 
         if props:
-            lines.append(f"  args_required: {required}")
+            lines.append(f"  args_required: {json.dumps(required)}")
             lines.append("  args_schema:")
             for k, schema in props.items():
                 lines.append(f"    - {_fmt_rule(k, schema)}")
@@ -53,6 +59,22 @@ def render_tools_compact(tools: List[Dict[str, Any]]) -> str:
             lines.append("  args_required: []")
             lines.append("  args_schema: (none)")
 
-        lines.append("")  # blank line between tools
+        # Optional: constraints
+        if cfg.tools_include_constraints:
+            constraints = tool.get("constraints") or {}
+            if isinstance(constraints, dict) and constraints:
+                lines.append("  constraints:")
+                for ck, cv in constraints.items():
+                    lines.append(f"    - {ck}: {cv}")
+
+        # Optional: effects
+        if cfg.tools_include_effects:
+            effects = tool.get("effects") or {}
+            if isinstance(effects, dict) and effects:
+                lines.append("  effects:")
+                for ek, ev in effects.items():
+                    lines.append(f"    - {ek}: {ev}")
+
+        lines.append("")
 
     return "\n".join(lines).strip()
