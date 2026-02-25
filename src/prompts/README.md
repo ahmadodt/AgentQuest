@@ -192,9 +192,12 @@ python -m src.runner.preview_prompt
 Examples:
 
 python -m src.runner.preview_prompt --preset default
-python -m src.runner.preview_prompt --preset PROMPT_MINIMAL
 python -m src.runner.preview_prompt --character-id wizard.ember --scene-id scene.001.goblin_alley
-
+python -m src.runner.preview_prompt --preset PRESET_BASELINE_MINIMAL
+python -m src.runner.preview_prompt --preset PRESET_PLUS_MONSTER_STATS
+python -m src.runner.preview_prompt --preset PRESET_PLUS_MONSTER_INTERACTIONS
+python -m src.runner.preview_prompt --preset PRESET_PLUS_TOOL_CONSTRAINTS
+python -m src.runner.preview_prompt --preset PRESET_OVERLOAD_ALL
 Optional:
 
 --save-json runs/prompt_preview.json
@@ -226,3 +229,7 @@ Benchmark-friendly
 Easy to evolve
 
 Isolated from inference logic
+
+
+
+
