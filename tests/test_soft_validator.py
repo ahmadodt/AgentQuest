@@ -1,5 +1,4 @@
-from src.engine.validator import validate
-from src.engine.validator_soft import soft_validate_tool_call
+from src.engine.validation.validator_soft import soft_validate_tool_call
 
 
 def test_soft_attack_succeeds_when_effective_power_meets_threshold(gamedata):
@@ -37,60 +36,36 @@ def test_soft_knowledge_scene_accepts_knowledge_tool(gamedata):
     assert verdict["outcome"] == "success"
 
 
-def test_soft_knowledge_scene_rejects_non_knowledge_tool(gamedata_copy, make_tool_call):
-    gd = gamedata_copy
-    character_id = "wizard.ember"
-
-    raw = make_tool_call("wizard.arcane_shield")
-    verdict = validate(
-        gamedata=gd,
-        character_id=character_id,
+def test_soft_knowledge_scene_rejects_non_knowledge_tool(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
         scene_id="scene.002.runes_on_wall",
-        visible_tool_ids=gd["characters_by_id"][character_id]["tool_ids"],
-        raw_model_output=raw,
+        tool_id="wizard.arcane_shield",
     )
 
-    assert verdict["ast_valid"] is True
-    assert verdict["hard_valid"] is True
     assert verdict["soft_valid"] is False
     assert verdict["outcome"] == "failure"
     assert "knowledge-oriented" in verdict["reason"]
 
 
-def test_soft_escape_fails_when_scene_forbids_escape(gamedata_copy, make_tool_call):
-    gd = gamedata_copy
-    character_id = "knight.bram"
-
-    raw = make_tool_call("common.run", {"direction": "toward_exit"})
-    verdict = validate(
-        gamedata=gd,
-        character_id=character_id,
+def test_soft_escape_fails_when_scene_forbids_escape(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
         scene_id="scene.003.flame_gate",
-        visible_tool_ids=gd["characters_by_id"][character_id]["tool_ids"],
-        raw_model_output=raw,
+        tool_id="common.run",
     )
 
-    assert verdict["ast_valid"] is True
-    assert verdict["hard_valid"] is True
     assert verdict["soft_valid"] is False
     assert verdict["outcome"] == "failure"
     assert "forbids escape" in verdict["reason"]
 
 
-def test_soft_escape_succeeds_when_allowed(gamedata_copy, make_tool_call):
-    gd = gamedata_copy
-    character_id = "wizard.ember"
-
-    raw = make_tool_call("common.run", {"direction": "backtrack"})
-    verdict = validate(
-        gamedata=gd,
-        character_id=character_id,
+def test_soft_escape_succeeds_when_allowed(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
         scene_id="scene.001.goblin_alley",
-        visible_tool_ids=gd["characters_by_id"][character_id]["tool_ids"],
-        raw_model_output=raw,
+        tool_id="common.run",
     )
 
-    assert verdict["ast_valid"] is True
-    assert verdict["hard_valid"] is True
     assert verdict["soft_valid"] is True
     assert verdict["outcome"] == "success"
