@@ -1,5 +1,5 @@
 from src.engine.loader import load_gamedata, DataValidationError
-from src.engine.validator import validate
+from src.engine.validator import ToolCallValidator
 
 
 def main():
@@ -16,7 +16,7 @@ def main():
         print(f"- Scenes: {len(gamedata['scenes_by_id'])}")
         print(f"Game data structure: {list(gamedata.keys())}")
 
-        print("\n--- AST + HARD Validation Test Mode ---\n")
+        print("\n--- AST + HARD + SOFT Validation Test Mode ---\n")
 
         # Choose character + scene
         # characters: "wizard.ember" or "knight.bram"
@@ -30,6 +30,7 @@ def main():
 
         # Optional manual trait testing:
         # character["traits"] = ["low_mana"]
+        # character["traits"] = ["silenced"]
 
         # For now: visible tools = character.tool_ids
         visible_tool_ids = character["tool_ids"]
@@ -44,24 +45,36 @@ def main():
 
         raw_input_str = input("Tool call > ")
 
-        verdict = validate(
+        validator = ToolCallValidator(
             gamedata=gamedata,
             character_id=character_id,
             scene_id=scene_id,
             visible_tool_ids=visible_tool_ids,
-            raw_model_output=raw_input_str,
         )
+
+        verdict = validator.validate(raw_input_str)
 
         if verdict.get("ast_valid") is False:
             print("\n✖ AST validation failed:")
             print(verdict["reason"])
             return
 
-        if verdict.get("hard_valid"):
-            print("\n✔ Hard validation passed!")
-        else:
+        if verdict.get("hard_valid") is False:
             print("\n✖ Hard validation failed:")
+            print(verdict["reason"])
+            print(verdict)
+            return
 
+        print("\n✔ Hard validation passed!")
+
+        if verdict.get("soft_valid") is False:
+            print("\n✖ Soft validation failed:")
+            print(verdict["reason"])
+            print(verdict)
+            return
+
+        print("\n✔ Soft validation passed!")
+        print("\nFinal verdict:")
         print(verdict)
 
     except DataValidationError as e:
