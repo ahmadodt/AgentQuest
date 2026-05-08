@@ -1,5 +1,5 @@
-from src.engine.validator_ast import ast_validate_tool_call
-from src.engine.validator_hard import hard_validate_tool_call
+from src.engine.validation.validator_ast import ast_validate_tool_call
+from src.engine.validation.validator_hard import hard_validate_tool_call
 
 def test_hard_passes_for_wizard_fireball(gamedata_copy, make_tool_call):
     gd = gamedata_copy

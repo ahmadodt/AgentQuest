@@ -1,6 +1,6 @@
 import pytest
 
-from src.engine.validator_ast import ast_validate_tool_call, AstValidationError
+from src.engine.validation.validator_ast import ast_validate_tool_call, AstValidationError
 
 def test_ast_valid_cast_fireball(gamedata, make_tool_call):
     character = gamedata["characters_by_id"]["wizard.ember"]

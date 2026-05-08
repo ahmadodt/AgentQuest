@@ -1,15 +1,14 @@
-from src.engine.validator_ast import AstValidationError, ast_validate_tool_call
-from src.engine.validator_hard import hard_validate_tool_call
-from src.engine.validator_soft import soft_validate_tool_call
+from src.engine.validation.validator_ast import AstValidationError, ast_validate_tool_call
+from src.engine.validation.validator_hard import hard_validate_tool_call
+from src.engine.validation.validator_soft import soft_validate_tool_call
 
 
 class ToolCallValidator:
     """
-    Orchestrates validation pipeline:
+    Orchestrates the validation pipeline:
     Stage 1: AST validation (JSON + tool exists + tool visible + args correct)
     Stage 2: Hard validation (character/tool feasibility: permissions + inventory + traits)
-
-    Soft validation will be added later.
+    Stage 3: Soft validation (scene/monster outcome logic)
     """
     def __init__(
         self,
@@ -78,18 +77,3 @@ class ToolCallValidator:
         verdict["scene_id"] = self.scene_id
         return verdict
 
-
-def validate(
-    gamedata: dict,
-    character_id: str,
-    scene_id: str,
-    visible_tool_ids: list,
-    raw_model_output: str,
-) -> dict:
-    validator = ToolCallValidator(
-        gamedata=gamedata,
-        character_id=character_id,
-        scene_id=scene_id,
-        visible_tool_ids=visible_tool_ids,
-    )
-    return validator.validate(raw_model_output)

@@ -1,4 +1,4 @@
-from src.engine.validator_utils import (
+from agentquest.src.engine.validation.validator_utils import (
     build_invalid_verdict,
     compute_effective_power,
     get_monster_for_scene_or_error,

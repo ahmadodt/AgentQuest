@@ -1,4 +1,4 @@
-from src.engine.validator_utils import (
+from src.engine.validation.validator_utils import (
     build_invalid_verdict,
     get_character_or_error,
     get_tool_constraints,
