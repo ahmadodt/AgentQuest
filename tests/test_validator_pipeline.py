@@ -1,0 +1,93 @@
+def test_validator_pipeline_returns_ast_error_verdict(validator_factory, gamedata):
+    validator = validator_factory(
+        gamedata=gamedata,
+        character_id="wizard.ember",
+        scene_id="scene.001.goblin_alley",
+    )
+
+    verdict = validator.validate("{not valid json}")
+
+    assert verdict["ast_valid"] is False
+    assert verdict["hard_valid"] is None
+    assert verdict["soft_valid"] is None
+    assert verdict["outcome"] == "invalid"
+    assert verdict["parsed_tool_call"] is None
+    assert verdict["character_id"] == "wizard.ember"
+    assert verdict["scene_id"] == "scene.001.goblin_alley"
+    assert "AST error:" in verdict["reason"]
+
+
+def test_validator_pipeline_stops_after_hard_failure(
+    validator_factory,
+    gamedata_copy,
+    make_tool_call,
+):
+    gd = gamedata_copy
+    character_id = "wizard.ember"
+    visible_tool_ids = gd["characters_by_id"][character_id]["tool_ids"] + ["knight.sword_slash"]
+    validator = validator_factory(
+        gamedata=gd,
+        character_id=character_id,
+        scene_id="scene.001.goblin_alley",
+        visible_tool_ids=visible_tool_ids,
+    )
+
+    verdict = validator.validate(make_tool_call("knight.sword_slash", {"target": "goblin"}))
+
+    assert verdict["ast_valid"] is True
+    assert verdict["hard_valid"] is False
+    assert verdict["soft_valid"] is None
+    assert verdict["outcome"] == "invalid"
+    assert verdict["parsed_tool_call"] == {
+        "tool_id": "knight.sword_slash",
+        "arguments": {"target": "goblin"},
+    }
+    assert "not available" in verdict["reason"].lower()
+
+
+def test_validator_pipeline_returns_soft_failure_after_ast_and_hard_pass(
+    validator_factory,
+    gamedata,
+    make_tool_call,
+):
+    validator = validator_factory(
+        gamedata=gamedata,
+        character_id="knight.bram",
+        scene_id="scene.003.flame_gate",
+    )
+
+    verdict = validator.validate(make_tool_call("common.run", {"direction": "toward_exit"}))
+
+    assert verdict["ast_valid"] is True
+    assert verdict["hard_valid"] is True
+    assert verdict["soft_valid"] is False
+    assert verdict["outcome"] == "failure"
+    assert verdict["parsed_tool_call"] == {
+        "tool_id": "common.run",
+        "arguments": {"direction": "toward_exit"},
+    }
+    assert "forbids escape" in verdict["reason"]
+
+
+def test_validator_pipeline_returns_soft_success_for_valid_action(
+    validator_factory,
+    gamedata,
+    make_tool_call,
+):
+    validator = validator_factory(
+        gamedata=gamedata,
+        character_id="wizard.ember",
+        scene_id="scene.001.goblin_alley",
+    )
+
+    verdict = validator.validate(make_tool_call("common.run", {"direction": "backtrack"}))
+
+    assert verdict["ast_valid"] is True
+    assert verdict["hard_valid"] is True
+    assert verdict["soft_valid"] is True
+    assert verdict["outcome"] == "success"
+    assert verdict["parsed_tool_call"] == {
+        "tool_id": "common.run",
+        "arguments": {"direction": "backtrack"},
+    }
+    assert verdict["reason"] == "Escape attempt succeeded"

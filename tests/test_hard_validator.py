@@ -1,35 +1,13 @@
-import copy
-import json
-import os
-import pytest
-
-from src.engine.loader import load_gamedata
 from src.engine.validator_ast import ast_validate_tool_call
 from src.engine.validator_hard import hard_validate_tool_call
 
-
-def _project_root() -> str:
-    # tests/ -> project root
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-
-@pytest.fixture()
-def gamedata():
-    data_dir = os.path.join(_project_root(), "data")
-    return load_gamedata(data_dir)
-
-
-def _call(obj: dict) -> str:
-    return json.dumps(obj, ensure_ascii=False)
-
-
-def test_hard_passes_for_wizard_fireball(gamedata):
-    gd = copy.deepcopy(gamedata)
+def test_hard_passes_for_wizard_fireball(gamedata_copy, make_tool_call):
+    gd = gamedata_copy
 
     character_id = "wizard.ember"
     visible_tool_ids = gd["characters_by_id"][character_id]["tool_ids"]
 
-    raw = _call({"tool_id": "wizard.cast_fireball", "arguments": {"target": "goblin"}})
+    raw = make_tool_call("wizard.cast_fireball", {"target": "goblin"})
     parsed = ast_validate_tool_call(raw, gd["tools_by_id"], visible_tool_ids)
 
     verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])
@@ -37,7 +15,7 @@ def test_hard_passes_for_wizard_fireball(gamedata):
     assert verdict["outcome"] == "proceed"
 
 
-def test_hard_rejects_tool_not_in_character_tool_ids_even_if_visible(gamedata):
+def test_hard_rejects_tool_not_in_character_tool_ids_even_if_visible(gamedata_copy, make_tool_call):
     """
     Demonstrates separation:
     - AST checks 'visible_tool_ids'
@@ -45,7 +23,7 @@ def test_hard_rejects_tool_not_in_character_tool_ids_even_if_visible(gamedata):
 
     We intentionally allow the tool to be visible but not actually owned/allowed by the character.
     """
-    gd = copy.deepcopy(gamedata)
+    gd = gamedata_copy
 
     character_id = "wizard.ember"
     character = gd["characters_by_id"][character_id]
@@ -53,7 +31,7 @@ def test_hard_rejects_tool_not_in_character_tool_ids_even_if_visible(gamedata):
     # Make knight tool visible to pass AST, but do NOT add it to character.tool_ids
     visible_tool_ids = character["tool_ids"] + ["knight.sword_slash"]
 
-    raw = _call({"tool_id": "knight.sword_slash", "arguments": {"target": "goblin"}})
+    raw = make_tool_call("knight.sword_slash", {"target": "goblin"})
     parsed = ast_validate_tool_call(raw, gd["tools_by_id"], visible_tool_ids)
 
     verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])
@@ -61,8 +39,8 @@ def test_hard_rejects_tool_not_in_character_tool_ids_even_if_visible(gamedata):
     assert "not available" in verdict["reason"].lower()
 
 
-def test_hard_rejects_forbidden_trait(gamedata):
-    gd = copy.deepcopy(gamedata)
+def test_hard_rejects_forbidden_trait(gamedata_copy, make_tool_call):
+    gd = gamedata_copy
 
     character_id = "wizard.ember"
     character = gd["characters_by_id"][character_id]
@@ -72,7 +50,7 @@ def test_hard_rejects_forbidden_trait(gamedata):
 
     visible_tool_ids = character["tool_ids"]
 
-    raw = _call({"tool_id": "wizard.cast_fireball", "arguments": {"target": "goblin"}})
+    raw = make_tool_call("wizard.cast_fireball", {"target": "goblin"})
     parsed = ast_validate_tool_call(raw, gd["tools_by_id"], visible_tool_ids)
 
     verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])
@@ -80,13 +58,13 @@ def test_hard_rejects_forbidden_trait(gamedata):
     assert "forbidden trait" in verdict["reason"].lower()
 
 
-def test_hard_rejects_missing_required_inventory(gamedata):
+def test_hard_rejects_missing_required_inventory(gamedata_copy, make_tool_call):
     """
     Force an inventory failure by:
     - temporarily requiring wand for wizard.cast_fireball
     - removing wand from Ember inventory
     """
-    gd = copy.deepcopy(gamedata)
+    gd = gamedata_copy
 
     character_id = "wizard.ember"
     character = gd["characters_by_id"][character_id]
@@ -100,7 +78,7 @@ def test_hard_rejects_missing_required_inventory(gamedata):
 
     visible_tool_ids = character["tool_ids"]
 
-    raw = _call({"tool_id": "wizard.cast_fireball", "arguments": {"target": "goblin"}})
+    raw = make_tool_call("wizard.cast_fireball", {"target": "goblin"})
     parsed = ast_validate_tool_call(raw, gd["tools_by_id"], visible_tool_ids)
 
     verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])

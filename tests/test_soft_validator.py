@@ -1,25 +1,5 @@
-import copy
-import json
-import os
-import pytest
-
-from src.engine.loader import load_gamedata
 from src.engine.validator import validate
 from src.engine.validator_soft import soft_validate_tool_call
-
-
-def _project_root() -> str:
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-
-@pytest.fixture()
-def gamedata():
-    data_dir = os.path.join(_project_root(), "data")
-    return load_gamedata(data_dir)
-
-
-def _call(obj: dict) -> str:
-    return json.dumps(obj, ensure_ascii=False)
 
 
 def test_soft_attack_succeeds_when_effective_power_meets_threshold(gamedata):
@@ -57,11 +37,11 @@ def test_soft_knowledge_scene_accepts_knowledge_tool(gamedata):
     assert verdict["outcome"] == "success"
 
 
-def test_soft_knowledge_scene_rejects_non_knowledge_tool(gamedata):
-    gd = copy.deepcopy(gamedata)
+def test_soft_knowledge_scene_rejects_non_knowledge_tool(gamedata_copy, make_tool_call):
+    gd = gamedata_copy
     character_id = "wizard.ember"
 
-    raw = _call({"tool_id": "wizard.arcane_shield", "arguments": {}})
+    raw = make_tool_call("wizard.arcane_shield")
     verdict = validate(
         gamedata=gd,
         character_id=character_id,
@@ -77,11 +57,11 @@ def test_soft_knowledge_scene_rejects_non_knowledge_tool(gamedata):
     assert "knowledge-oriented" in verdict["reason"]
 
 
-def test_soft_escape_fails_when_scene_forbids_escape(gamedata):
-    gd = copy.deepcopy(gamedata)
+def test_soft_escape_fails_when_scene_forbids_escape(gamedata_copy, make_tool_call):
+    gd = gamedata_copy
     character_id = "knight.bram"
 
-    raw = _call({"tool_id": "common.run", "arguments": {"direction": "toward_exit"}})
+    raw = make_tool_call("common.run", {"direction": "toward_exit"})
     verdict = validate(
         gamedata=gd,
         character_id=character_id,
@@ -97,11 +77,11 @@ def test_soft_escape_fails_when_scene_forbids_escape(gamedata):
     assert "forbids escape" in verdict["reason"]
 
 
-def test_soft_escape_succeeds_when_allowed(gamedata):
-    gd = copy.deepcopy(gamedata)
+def test_soft_escape_succeeds_when_allowed(gamedata_copy, make_tool_call):
+    gd = gamedata_copy
     character_id = "wizard.ember"
 
-    raw = _call({"tool_id": "common.run", "arguments": {"direction": "backtrack"}})
+    raw = make_tool_call("common.run", {"direction": "backtrack"})
     verdict = validate(
         gamedata=gd,
         character_id=character_id,
