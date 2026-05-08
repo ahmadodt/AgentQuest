@@ -36,6 +36,9 @@ It only ensures the world data is structurally valid before the engine runs.
 
 
 # Validators (src/engine/*)
+The validator system is the core rule engine behind AgentQuest.
+
+The LLM chooses an action, but the validator decides whether that action is structurally valid, legally possible, and successful in the current fantasy scene.
 
 ## Purpose
 Validate an agent/tool output in **layers**, so failures are easy to diagnose:

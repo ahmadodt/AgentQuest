@@ -1,9 +1,11 @@
 
 # AgentQuest
 
-A structured sandbox for studying AI tool selection under constraints, presented as a modular fantasy simulation.
+AgentQuest is a playable AI-agent RPG where an LLM controls a fantasy character by choosing structured tool calls.
 
----
+Each scene presents a fantasy encounter. The agent must return strict JSON containing a selected `tool_id` and arguments. A deterministic validation engine checks whether the output is well-formed, legally possible for the character, and successful in the current scene.
+
+The project makes LLM tool use visible: users can see the prompt context, selected tool call, validation stages, and final outcome.
 
 ## What Is AgentQuest?
 
@@ -118,5 +120,7 @@ pytest -q
 * Fail-fast data integrity
 * Explicit separation of syntax, feasibility, and reasoning
 * Built for experimentation and analysis
+
+
 
 
