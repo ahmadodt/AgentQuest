@@ -24,21 +24,21 @@ def _load_preset(preset_name: str) -> PromptConfig:
 
     # Import lazily so preview still works even if presets file doesn't exist yet
     try:
-        from configs import prompt_presets  # type: ignore
+        from src.prompts import presets  # type: ignore
     except Exception as e:
         raise RuntimeError(
-            "Could not import configs/prompt_presets.py. "
+            "Could not import src/prompts/presets.py. "
             "Create it (or use --preset default). "
             f"Original error: {e}"
         )
 
-    if not hasattr(prompt_presets, preset_name):
+    if not hasattr(presets, preset_name):
         # Show available presets
         available = sorted(
             [
                 k
-                for k in dir(prompt_presets)
-                if k.isupper() and isinstance(getattr(prompt_presets, k), PromptConfig)
+                for k in dir(presets)
+                if k.isupper() and isinstance(getattr(presets, k), PromptConfig)
             ]
         )
         raise ValueError(
@@ -46,7 +46,7 @@ def _load_preset(preset_name: str) -> PromptConfig:
             "(Preset names are the UPPERCASE variables in configs/prompt_presets.py)"
         )
 
-    cfg = getattr(prompt_presets, preset_name)
+    cfg = getattr(presets, preset_name)
     if not isinstance(cfg, PromptConfig):
         raise TypeError(f"Preset '{preset_name}' exists but is not a PromptConfig.")
     return cfg

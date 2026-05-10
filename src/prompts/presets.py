@@ -1,7 +1,7 @@
 from src.prompts.prompt_config import PromptConfig
 
 # Baseline: minimal narrative + tool schemas (inventory/traits included; as-is)
-PRESET_BASELINE_MINIMAL = PromptConfig(
+MINIMAL = PromptConfig(
     include_inventory=True,
     include_traits=True,
 
@@ -22,7 +22,7 @@ PRESET_BASELINE_MINIMAL = PromptConfig(
 )
 
 # Baseline + monster basic (name/type/description)
-PRESET_PLUS_MONSTER_BASIC = PromptConfig(
+MONSTER_BASIC = PromptConfig(
     include_inventory=True,
     include_traits=True,
 
@@ -43,7 +43,7 @@ PRESET_PLUS_MONSTER_BASIC = PromptConfig(
 )
 
 # Baseline + monster stats (tags/weaknesses/resistances/immunities/special_rules/escape_allowed)
-PRESET_PLUS_MONSTER_STATS = PromptConfig(
+MONSTER_STATS = PromptConfig(
     include_inventory=True,
     include_traits=True,
 
@@ -65,7 +65,7 @@ PRESET_PLUS_MONSTER_STATS = PromptConfig(
 
 # Baseline + monster interactions (everything in interactions beyond escape_allowed)
 # (This is what "full" really means in your monster schema.)
-PRESET_PLUS_MONSTER_INTERACTIONS = PromptConfig(
+MONSTER_FULL = PromptConfig(
     include_inventory=True,
     include_traits=True,
 
@@ -86,7 +86,7 @@ PRESET_PLUS_MONSTER_INTERACTIONS = PromptConfig(
 )
 
 # Baseline + tool constraints revealed
-PRESET_PLUS_TOOL_CONSTRAINTS = PromptConfig(
+TOOL_CONSTRAINTS = PromptConfig(
     include_inventory=True,
     include_traits=True,
 
@@ -107,7 +107,7 @@ PRESET_PLUS_TOOL_CONSTRAINTS = PromptConfig(
 )
 
 # Baseline + tool effects revealed
-PRESET_PLUS_TOOL_EFFECTS = PromptConfig(
+TOOL_EFFECTS = PromptConfig(
     include_inventory=True,
     include_traits=True,
 
@@ -128,7 +128,7 @@ PRESET_PLUS_TOOL_EFFECTS = PromptConfig(
 )
 
 # Overload: everything (scene meta + monster interactions + tool constraints + effects + label/emoji)
-PRESET_OVERLOAD_ALL = PromptConfig(
+FULL_INFO = PromptConfig(
     include_inventory=True,
     include_traits=True,
 
@@ -149,13 +149,13 @@ PRESET_OVERLOAD_ALL = PromptConfig(
 )
 
 PRESETS = {
-    "PRESET_BASELINE_MINIMAL": PRESET_BASELINE_MINIMAL,
-    "PRESET_PLUS_MONSTER_BASIC": PRESET_PLUS_MONSTER_BASIC,
-    "PRESET_PLUS_MONSTER_STATS": PRESET_PLUS_MONSTER_STATS,
-    "PRESET_PLUS_MONSTER_INTERACTIONS": PRESET_PLUS_MONSTER_INTERACTIONS,
-    "PRESET_PLUS_TOOL_CONSTRAINTS": PRESET_PLUS_TOOL_CONSTRAINTS,
-    "PRESET_PLUS_TOOL_EFFECTS": PRESET_PLUS_TOOL_EFFECTS,
-    "PRESET_OVERLOAD_ALL": PRESET_OVERLOAD_ALL,
+    "minimal": MINIMAL,
+    "monster_basic": MONSTER_BASIC,
+    "monster_stats": MONSTER_STATS,
+    "monster_full": MONSTER_FULL,
+    "tool_constraints": TOOL_CONSTRAINTS,
+    "tool_effects": TOOL_EFFECTS,
+    "full_info": FULL_INFO,
 }
 
-DEFAULT_PRESET_NAME = "PRESET_BASELINE_MINIMAL"
+DEFAULT_PRESET_NAME = "minimal"
