@@ -14,19 +14,25 @@ class LlamaCppHandler:
             ) from e
 
         self._model_path = model_path
-        self._client = Llama(model_path=model_path, verbose=False)
+        self._client = Llama(
+            model_path=model_path,
+            n_ctx=4096,          # total context window: prompt + output
+            n_gpu_layers=-1,     # offload as many layers as possible to GPU
+            verbose=False,
+        )
 
     def generate(
         self,
         messages: List[ChatMessage],
         *,
-        max_tokens: int = 256,
+        max_tokens: int = 256,   # output tokens only
         temperature: float = 0.0,
     ) -> GenerationResult:
         response = self._client.create_chat_completion(
             messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
+            response_format={"type": "json_object"},
         )
 
         choice = response["choices"][0]
