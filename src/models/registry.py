@@ -1,12 +1,23 @@
-import os
+from src.models.base import ModelHandler
+from src.models.backends.llama_cpp import LlamaCppHandler
+from src.models.config import DEFAULT_RUN_CONFIG_PATH, load_runtime_model_config
 
-from src.models.backends.openai_compat import OpenAICompatConfig, OpenAICompatHandler
 
-def build_handler(model_key: str):
-    if model_key == "openai_compat":
-        base_url = os.environ.get("AQ_BASE_URL", "http://localhost:8080")
-        api_key = os.environ.get("AQ_API_KEY", "sk-no-key")
-        model = os.environ.get("AQ_MODEL", "llama")
-        return OpenAICompatHandler(OpenAICompatConfig(base_url=base_url, api_key=api_key, model=model))
+def build_handler(
+    model_key: str | None = None,
+    *,
+    config_path: str = DEFAULT_RUN_CONFIG_PATH,
+) -> ModelHandler:
+    runtime_cfg = load_runtime_model_config(config_path)
+    backend_name = (model_key or runtime_cfg.backend).strip()
 
-    raise ValueError(f"Unknown model_key: {model_key}")
+    if backend_name != runtime_cfg.backend:
+        raise ValueError(
+            f"Requested backend '{backend_name}' does not match configured backend "
+            f"'{runtime_cfg.backend}' in {config_path}."
+        )
+
+    if backend_name == "llama_cpp":
+        return LlamaCppHandler(model_path=runtime_cfg.model_path)
+
+    raise ValueError(f"Unsupported backend '{backend_name}'.")
