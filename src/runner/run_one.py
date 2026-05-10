@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Dict, List
 
 from src.engine.loader import load_gamedata, DataValidationError
-from src.engine.validator import validate
+from src.engine.validator import ToolCallValidator
 
 from src.prompts.base_prompt import build_messages
 from src.prompts.prompt_config import DEFAULT_PROMPT_CONFIG, PromptConfig
@@ -39,7 +39,6 @@ def _load_preset(preset_name: str) -> PromptConfig:
         )
         raise ValueError(
             f"Unknown preset '{preset_name}'. Available presets: {available} "
-            "(Preset names are the UPPERCASE variables in configs/prompt_presets.py)"
         )
 
     cfg = getattr(presets, preset_name)
@@ -52,6 +51,9 @@ def _ensure_dir(dirpath: str) -> None:
     if dirpath and not os.path.exists(dirpath):
         os.makedirs(dirpath, exist_ok=True)
 
+def _default_run_path() -> str:
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    return os.path.join("runs", f"run_one_{timestamp}.json")
 
 def main():
     parser = argparse.ArgumentParser()
@@ -62,13 +64,22 @@ def main():
     parser.add_argument("--preset", type=str, default="default")
 
     # model calling
-    parser.add_argument("--model-key", type=str, default="openai_compat")
+    parser.add_argument(
+        "--model-key",
+        type=str,
+        default="",
+        help="Optional backend override. Defaults to the backend in configs/run_config.json.",
+    )
     parser.add_argument("--max-tokens", type=int, default=128)
     parser.add_argument("--temperature", type=float, default=0.0)
 
     # logging
-    parser.add_argument("--save-run", type=str, default="", help="Optional path to save full run log as JSON")
-
+    parser.add_argument(
+    "--save-run",
+    type=str,
+    default=_default_run_path(),
+    help="Path to save full run log as JSON. Defaults to runs/run_one_<timestamp>.json",
+    )
     args = parser.parse_args()
 
     try:
@@ -104,13 +115,13 @@ def main():
         print("\n=== MODEL OUTPUT ===")
         print(raw)
 
-        verdict = validate(
+        validator = ToolCallValidator(
             gamedata=gamedata,
             character_id=args.character_id,
             scene_id=args.scene_id,
             visible_tool_ids=visible_tool_ids,
-            raw_model_output=raw,
         )
+        verdict = validator.validate(raw)
 
         print("\n=== VERDICT ===")
         print(json.dumps(verdict, indent=2, ensure_ascii=False))
@@ -141,8 +152,10 @@ def main():
         print("✖ Data validation error:")
         print(e)
     except Exception as e:
+        import traceback
         print("✖ Unexpected error:")
         print(e)
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
