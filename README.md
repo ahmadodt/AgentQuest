@@ -6,6 +6,32 @@ Each scene presents a fantasy encounter. The agent must return strict JSON conta
 
 The project makes LLM tool use visible: users can inspect the prompt context, selected tool call, validation stages, and final outcome.
 
+## Open5e Conversion
+
+AgentQuest includes a local Open5e conversion path for larger external RPG datasets without changing the live runtime path.
+
+* Raw Open5e JSON files live under `data/raw/open5e/`
+* Converted AgentQuest-shaped outputs are written under `data/generated/open5e/`
+* Generated files do not overwrite the hand-written `data/*.json` dataset by default
+* Conversion is deterministic and uses local JSON files only
+* Monster weaknesses, resistances, and immunities come only from structured Open5e fields
+* Description fields are copied in full with no summarization or truncation
+* No free-text inference is done yet for monster damage modifiers
+
+Run the converter with:
+
+```bash
+python -m src.data_pipeline.open5e_converter
+```
+
+This writes:
+
+* `data/generated/open5e/monsters.json`
+* `data/generated/open5e/tools_spells.json`
+* `data/generated/open5e/tools_weapons.json`
+
+The main runtime still loads `data/tools.json`, `data/characters.json`, `data/monsters.json`, and `data/scenes.json`, so the current one-run flow remains unchanged. A later enrichment step can add smarter extraction if needed, but the baseline converter is intentionally simple and explainable.
+
 ## What Is AgentQuest?
 
 AgentQuest is an experimental framework for analyzing how AI agents:
