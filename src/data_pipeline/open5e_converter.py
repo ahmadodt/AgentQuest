@@ -3,7 +3,6 @@ import json
 import math
 import os
 import re
-from pathlib import Path
 
 
 DAMAGE_TYPES = [
@@ -37,19 +36,23 @@ SPELL_CLASS_MAP = {
     "wizard": "Wizard",
 }
 
-DEFAULT_WEAPON_ALLOWED_CLASSES = ["Knight", "Wizard"]
-DEFAULT_INPUT_DIR = Path("data") / "raw" / "open5e"
-DEFAULT_OUTPUT_DIR = Path("data") / "generated" / "open5e"
+DEFAULT_INPUT_DIR = os.path.join("data", "raw", "open5e")
+DEFAULT_CURATED_DIR = os.path.join("data", "curated", "open5e")
+DEFAULT_OUTPUT_DIR = os.path.join("data", "generated", "open5e")
 
 
-def _load_json(path: Path):
-    with path.open("r", encoding="utf-8") as handle:
+class CuratedSelectionError(ValueError):
+    """Raised when curated selections cannot be resolved against raw Open5e data."""
+
+
+def _load_json(path: str):
+    with open(path, "r", encoding="utf-8") as handle:
         return json.load(handle)
 
 
-def _write_json(path: Path, payload: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
+def _write_json(path: str, payload: dict) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, ensure_ascii=False)
         handle.write("\n")
 
@@ -65,6 +68,13 @@ def _records_from_payload(payload) -> list[dict]:
     if isinstance(payload, list):
         return payload
     raise ValueError("Unsupported Open5e payload format")
+
+
+def _selected_items_from_payload(payload: dict) -> list[dict]:
+    selected = payload.get("selected")
+    if not isinstance(selected, list):
+        raise ValueError("Curated selection payload must contain a 'selected' list")
+    return selected
 
 
 def normalize_token(value: str) -> str:
@@ -187,6 +197,60 @@ def build_monster_damage_modifiers(record: dict) -> dict:
     return modifiers
 
 
+def determine_weapon_allowed_classes(category: str | None) -> list[str]:
+    text = (category or "").lower()
+    if "simple" in text:
+        return ["Knight", "Wizard"]
+    if "martial" in text:
+        return ["Knight"]
+    return ["Knight"]
+
+
+def _merge_override_values(base_value, override_value):
+    if isinstance(base_value, dict) and isinstance(override_value, dict):
+        merged = dict(base_value)
+        for key, value in override_value.items():
+            merged[key] = _merge_override_values(merged.get(key), value)
+        return merged
+    return override_value
+
+
+def apply_overrides(record: dict, overrides: dict | None) -> dict:
+    if not overrides:
+        return record
+    return _merge_override_values(record, overrides)
+
+
+def _select_records(raw_records: list[dict], curated_items: list[dict], category_name: str) -> list[dict]:
+    records_by_slug = {}
+    for record in raw_records:
+        slug = record.get("slug")
+        if isinstance(slug, str) and slug:
+            records_by_slug[slug] = record
+
+    selected_records = []
+    missing_slugs = []
+
+    for item in curated_items:
+        slug = item.get("slug")
+        if slug not in records_by_slug:
+            missing_slugs.append(str(slug))
+            continue
+        selected_records.append(
+            {
+                "raw": records_by_slug[slug],
+                "selection": item,
+            }
+        )
+
+    if missing_slugs:
+        raise CuratedSelectionError(
+            f"Missing selected slug(s) in {category_name}: {', '.join(missing_slugs)}"
+        )
+
+    return selected_records
+
+
 def convert_open5e_monster(record: dict) -> dict:
     slug = record["slug"]
     monster_type = normalize_token(record.get("type") or "unknown")
@@ -227,7 +291,6 @@ def convert_open5e_monster(record: dict) -> dict:
             "damage_type_modifiers": modifiers,
             "min_power_to_defeat": max(1, math.ceil(cr_value)) if cr_value > 0 else 1,
             "knowledge_tools_help": False,
-            "escape_allowed": True,
         },
         "source": {
             "dataset": "open5e",
@@ -321,7 +384,7 @@ def convert_open5e_weapon(record: dict) -> dict:
             "required": ["target"],
         },
         "constraints": {
-            "allowed_classes": list(DEFAULT_WEAPON_ALLOWED_CLASSES),
+            "allowed_classes": determine_weapon_allowed_classes(record.get("category")),
             "required_inventory": [slug],
             "forbidden_traits": [],
         },
@@ -346,56 +409,110 @@ def convert_open5e_weapon(record: dict) -> dict:
     }
 
 
-def convert_open5e_dataset(input_dir: str | os.PathLike = DEFAULT_INPUT_DIR, output_dir: str | os.PathLike = DEFAULT_OUTPUT_DIR) -> dict:
-    input_path = Path(input_dir)
-    output_path = Path(output_dir)
-
-    monsters = _records_from_payload(_load_json(input_path / "monsters.json"))
-    spells = _records_from_payload(_load_json(input_path / "spells.json"))
-    weapons = _records_from_payload(_load_json(input_path / "weapons.json"))
-
-    converted_monsters = [convert_open5e_monster(record) for record in monsters]
-    converted_spells = [convert_open5e_spell(record) for record in spells]
-    converted_weapons = [convert_open5e_weapon(record) for record in weapons]
-
-    monster_payload = {
+def _build_monster_payload(monsters: list[dict]) -> dict:
+    return {
         "version": "1.0",
         "source": "open5e",
         "generated_from": "local_json",
-        "monsters": converted_monsters,
-    }
-    spell_payload = {
-        "version": "1.0",
-        "source": "open5e",
-        "generated_from": "local_json",
-        "tools": converted_spells,
-    }
-    weapon_payload = {
-        "version": "1.0",
-        "source": "open5e",
-        "generated_from": "local_json",
-        "tools": converted_weapons,
+        "monsters": monsters,
     }
 
-    _write_json(output_path / "monsters.json", monster_payload)
-    _write_json(output_path / "tools_spells.json", spell_payload)
-    _write_json(output_path / "tools_weapons.json", weapon_payload)
+
+def _build_tool_payload(tools: list[dict]) -> dict:
+    return {
+        "version": "1.0",
+        "source": "open5e",
+        "generated_from": "local_json",
+        "tools": tools,
+    }
+
+
+def _write_output_payloads(output_dir: str, monsters: list[dict], spells: list[dict], weapons: list[dict]) -> dict:
+    monster_payload = _build_monster_payload(monsters)
+    spell_payload = _build_tool_payload(spells)
+    weapon_payload = _build_tool_payload(weapons)
+
+    _write_json(os.path.join(output_dir, "monsters.json"), monster_payload)
+    _write_json(os.path.join(output_dir, "tools_spells.json"), spell_payload)
+    _write_json(os.path.join(output_dir, "tools_weapons.json"), weapon_payload)
 
     return {
         "monsters": monster_payload,
         "spells": spell_payload,
         "weapons": weapon_payload,
-        "output_dir": str(output_path),
+        "output_dir": output_dir,
     }
+
+
+def convert_open5e_dataset(input_dir: str = DEFAULT_INPUT_DIR, output_dir: str = DEFAULT_OUTPUT_DIR) -> dict:
+    monsters = _records_from_payload(_load_json(os.path.join(input_dir, "monsters.json")))
+    spells = _records_from_payload(_load_json(os.path.join(input_dir, "spells.json")))
+    weapons = _records_from_payload(_load_json(os.path.join(input_dir, "weapons.json")))
+
+    converted_monsters = [convert_open5e_monster(record) for record in monsters]
+    converted_spells = [convert_open5e_spell(record) for record in spells]
+    converted_weapons = [convert_open5e_weapon(record) for record in weapons]
+
+    return _write_output_payloads(output_dir, converted_monsters, converted_spells, converted_weapons)
+
+
+def convert_curated_open5e_dataset(
+    input_dir: str = DEFAULT_INPUT_DIR,
+    curated_dir: str = DEFAULT_CURATED_DIR,
+    output_dir: str = DEFAULT_OUTPUT_DIR,
+) -> dict:
+    raw_monsters = _records_from_payload(_load_json(os.path.join(input_dir, "monsters.json")))
+    raw_spells = _records_from_payload(_load_json(os.path.join(input_dir, "spells.json")))
+    raw_weapons = _records_from_payload(_load_json(os.path.join(input_dir, "weapons.json")))
+
+    selected_monsters = _selected_items_from_payload(
+        _load_json(os.path.join(curated_dir, "selected_monsters.json"))
+    )
+    selected_spells = _selected_items_from_payload(
+        _load_json(os.path.join(curated_dir, "selected_spells.json"))
+    )
+    selected_weapons = _selected_items_from_payload(
+        _load_json(os.path.join(curated_dir, "selected_weapons.json"))
+    )
+
+    converted_monsters = []
+    for item in _select_records(raw_monsters, selected_monsters, "monsters"):
+        converted = convert_open5e_monster(item["raw"])
+        converted_monsters.append(apply_overrides(converted, item["selection"].get("overrides")))
+
+    converted_spells = []
+    for item in _select_records(raw_spells, selected_spells, "spells"):
+        converted = convert_open5e_spell(item["raw"])
+        converted_spells.append(apply_overrides(converted, item["selection"].get("overrides")))
+
+    converted_weapons = []
+    for item in _select_records(raw_weapons, selected_weapons, "weapons"):
+        converted = convert_open5e_weapon(item["raw"])
+        converted_weapons.append(apply_overrides(converted, item["selection"].get("overrides")))
+
+    return _write_output_payloads(output_dir, converted_monsters, converted_spells, converted_weapons)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Convert local Open5e JSON files into AgentQuest JSON records.")
-    parser.add_argument("--input-dir", default=str(DEFAULT_INPUT_DIR))
-    parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
+    parser.add_argument("--input-dir", default=DEFAULT_INPUT_DIR)
+    parser.add_argument("--curated-dir", default=DEFAULT_CURATED_DIR)
+    parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--curated", action="store_true")
     args = parser.parse_args()
 
-    result = convert_open5e_dataset(input_dir=args.input_dir, output_dir=args.output_dir)
+    if args.curated:
+        result = convert_curated_open5e_dataset(
+            input_dir=args.input_dir,
+            curated_dir=args.curated_dir,
+            output_dir=args.output_dir,
+        )
+    else:
+        result = convert_open5e_dataset(
+            input_dir=args.input_dir,
+            output_dir=args.output_dir,
+        )
+
     print(
         "Converted Open5e data to AgentQuest JSON: "
         f"{len(result['monsters']['monsters'])} monsters, "

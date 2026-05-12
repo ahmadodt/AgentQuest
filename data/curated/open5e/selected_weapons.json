@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "source": "open5e",
+  "selected": [
+    {
+      "slug": "battleaxe",
+      "notes": "Initial curated weapon example"
+    }
+  ]
+}
