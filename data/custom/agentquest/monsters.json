@@ -1,21 +1,102 @@
 {
-  "version": "1.0",
+  "version": "1.2",
   "monsters": [
     {
       "monster_id": "goblin.street_cutpurse",
       "name": "Street Cutpurse Goblin",
       "type": "goblin",
-      "description": "A quick, mean little goblin with a rusty dagger and a bad attitude.",
-      "tags": ["humanoid", "melee", "low_tier"],
-      "weaknesses": ["physical"],
+      "description": "A quick alley goblin with a rusty dagger and no armor worth mentioning.",
+      "tags": ["goblin", "tutorial", "melee", "light_enemy"],
+      "weaknesses": ["slashing", "piercing"],
       "resistances": ["fire"],
       "immunities": [],
-      "special_rules": [],
+      "special_rules": ["basic_enemy"],
       "interactions": {
         "damage_type_modifiers": {
-          "physical": 1.0,
+          "physical": 0.0,
+          "slashing": 1.0,
+          "bludgeoning": 0.9,
+          "piercing": 1.0,
           "fire": 0.5,
-          "magic": 1.0
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 5,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      }
+    },
+    {
+      "monster_id": "cursed.whispering_statue",
+      "name": "Whispering Statue",
+      "type": "construct",
+      "description": "A cursed stone figure that taunts intruders and yields only to understanding, not force.",
+      "tags": ["tutorial", "knowledge", "construct", "puzzle_enemy"],
+      "weaknesses": ["knowledge"],
+      "resistances": ["slashing", "bludgeoning", "piercing", "fire", "magic"],
+      "immunities": [],
+      "special_rules": ["knowledge_encounter"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.2,
+          "bludgeoning": 0.3,
+          "piercing": 0.1,
+          "fire": 0.2,
+          "magic": 0.4,
+          "knowledge": 1.0
+        },
+        "min_power_to_defeat": 99,
+        "knowledge_tools_help": true,
+        "escape_allowed": true
+      }
+    },
+    {
+      "monster_id": "elemental.flame_sentinel",
+      "name": "Flame Sentinel",
+      "type": "elemental",
+      "description": "A towering fire guardian that seals the gate and punishes hesitation.",
+      "tags": ["tutorial", "elemental", "fire", "guardian"],
+      "weaknesses": ["cold", "water"],
+      "resistances": ["slashing", "bludgeoning", "piercing"],
+      "immunities": ["fire"],
+      "special_rules": ["no_escape_guardian"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.5,
+          "bludgeoning": 0.6,
+          "piercing": 0.5,
+          "fire": 0.0,
+          "cold": 1.0,
+          "water": 1.2,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 6,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      }
+    },
+    {
+      "monster_id": "open5e.monster.goblin-a5e",
+      "name": "Goblin",
+      "type": "goblin",
+      "description": "A nervous cave guard with quick hands, weak armor, and very little courage.",
+      "tags": ["goblin", "humanoid", "melee", "low_tier", "starter_enemy"],
+      "weaknesses": ["slashing", "piercing"],
+      "resistances": ["fire"],
+      "immunities": [],
+      "special_rules": ["basic_enemy"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 1.0,
+          "bludgeoning": 0.9,
+          "piercing": 1.0,
+          "fire": 0.5,
+          "magic": 1.0,
+          "knowledge": 0.0
         },
         "min_power_to_defeat": 5,
         "knowledge_tools_help": false,
@@ -26,22 +107,54 @@
       }
     },
     {
-      "monster_id": "elemental.flame_sentinel",
-      "name": "Flame Sentinel",
+      "monster_id": "open5e.monster.water-elemental",
+      "name": "Water Elemental",
       "type": "elemental",
-      "description": "A living pillar of flame guarding the gate, crackling with heat.",
-      "tags": ["elemental", "fire", "guardian"],
+      "description": "A rolling mass of dark water that absorbs ordinary weapon strikes and reforms after every blow.",
+      "tags": ["elemental", "water", "large", "resilient", "magic_sensitive"],
       "weaknesses": ["magic"],
-      "resistances": ["physical"],
-      "immunities": ["fire"],
-      "special_rules": ["fire_immune"],
+      "resistances": ["slashing", "bludgeoning", "piercing", "fire"],
+      "immunities": [],
+      "special_rules": ["weapon_resistant", "fluid_body"],
       "interactions": {
         "damage_type_modifiers": {
-          "physical": 0.7,
-          "fire": 0.0,
-          "magic": 1.2
+          "physical": 0.0,
+          "slashing": 0.5,
+          "bludgeoning": 0.6,
+          "piercing": 0.4,
+          "fire": 0.3,
+          "magic": 1.4,
+          "knowledge": 0.0
         },
-        "min_power_to_defeat": 6,
+        "min_power_to_defeat": 7,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      },
+      "ui": {
+        "icon": "🌊"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.fire-elemental",
+      "name": "Fire Elemental",
+      "type": "elemental",
+      "description": "A living blaze with a burning core. Fire only feeds it, and ordinary weapons barely hold its shape back.",
+      "tags": ["elemental", "fire", "large", "guardian", "fire_immune"],
+      "weaknesses": ["magic"],
+      "resistances": ["slashing", "bludgeoning", "piercing"],
+      "immunities": ["fire"],
+      "special_rules": ["fire_immune", "weapon_resistant"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.5,
+          "bludgeoning": 0.6,
+          "piercing": 0.5,
+          "fire": 0.0,
+          "magic": 1.4,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 7,
         "knowledge_tools_help": false,
         "escape_allowed": false
       },
@@ -50,28 +163,451 @@
       }
     },
     {
-      "monster_id": "cursed.whispering_statue",
-      "name": "Whispering Statue",
-      "type": "cursed_object",
-      "description": "A stone statue that mutters secrets and lies directly into your skull.",
-      "tags": ["cursed", "puzzle", "non_combat"],
-      "weaknesses": ["knowledge"],
-      "resistances": [],
-      "immunities": ["physical", "fire", "magic"],
-      "special_rules": ["non_combat_encounter"],
+      "monster_id": "open5e.monster.shadow-goblin",
+      "name": "Shadow Goblin",
+      "type": "goblin",
+      "description": "A thin goblin wrapped in living shadow. Steel passes through it unless bright flame forces it into shape.",
+      "tags": ["goblin", "shadow", "skirmisher", "low_light", "trick_enemy"],
+      "weaknesses": ["fire"],
+      "resistances": ["slashing", "bludgeoning", "piercing"],
+      "immunities": [],
+      "special_rules": ["shadow_body", "light_sensitive"],
       "interactions": {
         "damage_type_modifiers": {
           "physical": 0.0,
-          "fire": 0.0,
-          "magic": 0.0,
-          "knowledge": 1.0
+          "slashing": 0.6,
+          "bludgeoning": 0.5,
+          "piercing": 0.7,
+          "fire": 1.5,
+          "magic": 1.0,
+          "knowledge": 0.0
         },
-        "min_power_to_defeat": 1,
-        "knowledge_tools_help": true,
+        "min_power_to_defeat": 5,
+        "knowledge_tools_help": false,
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🗿"
+        "icon": "🌑"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.dust-goblin-chieftain",
+      "name": "Dust Goblin Chieftain",
+      "type": "goblin",
+      "description": "A calm, ash-covered chieftain wearing layered bone plates. Quick cuts slide off, but crushing force can break his guard.",
+      "tags": ["goblin", "chieftain", "boss", "armored", "finale_enemy"],
+      "weaknesses": ["bludgeoning"],
+      "resistances": ["slashing", "fire"],
+      "immunities": [],
+      "special_rules": ["armored_boss", "resists_basic_attacks"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.7,
+          "bludgeoning": 1.3,
+          "piercing": 0.9,
+          "fire": 0.2,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 6,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      },
+      "ui": {
+        "icon": "👑"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.goblin-alchemist-a5e",
+      "name": "Goblin Alchemist",
+      "type": "goblin",
+      "description": "A twitchy potion-maker surrounded by unstable bottles. Fire is dangerous here; a careful reach attack is safer.",
+      "tags": ["goblin", "alchemist", "hazard", "ranged", "explosive_room"],
+      "weaknesses": ["piercing"],
+      "resistances": ["slashing", "bludgeoning"],
+      "immunities": [],
+      "special_rules": ["fire_causes_explosion", "careful_attack_required"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.8,
+          "bludgeoning": 0.7,
+          "piercing": 1.2,
+          "fire": 0.0,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 6,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      },
+      "ui": {
+        "icon": "🧪"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.goblin-boss-a5e",
+      "name": "Goblin Boss",
+      "type": "goblin",
+      "description": "A loud goblin boss in stolen armor. He expects swordplay, but his armor buckles under blunt force.",
+      "tags": ["goblin", "boss", "armored", "commander"],
+      "weaknesses": ["bludgeoning"],
+      "resistances": ["slashing", "piercing", "fire"],
+      "immunities": [],
+      "special_rules": ["armor_resists_blades"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.8,
+          "bludgeoning": 1.3,
+          "piercing": 0.8,
+          "fire": 0.5,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 6,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      },
+      "ui": {
+        "icon": "🪖"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.goblin-shieldbearer-a5e",
+      "name": "Goblin Shieldbearer",
+      "type": "goblin",
+      "description": "A goblin crouched behind a heavy shield and wooden barricade. Cutting attacks glance off; a mace can smash the defense.",
+      "tags": ["goblin", "shield", "defender", "barricade", "armor_check"],
+      "weaknesses": ["bludgeoning"],
+      "resistances": ["slashing", "piercing", "fire"],
+      "immunities": [],
+      "special_rules": ["shielded", "break_guard_with_blunt_force"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.5,
+          "bludgeoning": 1.3,
+          "piercing": 0.6,
+          "fire": 0.4,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 6,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      },
+      "ui": {
+        "icon": "🛡️"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.goblin-warlock-a5e",
+      "name": "Goblin Warlock",
+      "type": "goblin",
+      "description": "A goblin caster drawing power from a cracked idol. It must be interrupted from a distance before the spell completes.",
+      "tags": ["goblin", "warlock", "caster", "ritual", "interrupt_enemy"],
+      "weaknesses": ["piercing"],
+      "resistances": ["fire", "bludgeoning"],
+      "immunities": [],
+      "special_rules": ["must_interrupt_casting", "reach_attack_preferred"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.9,
+          "bludgeoning": 0.8,
+          "piercing": 1.3,
+          "fire": 0.5,
+          "magic": 0.8,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 6,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      },
+      "ui": {
+        "icon": "🔮"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.hobgoblin-a5e",
+      "name": "Hobgoblin",
+      "type": "hobgoblin",
+      "description": "A disciplined soldier with better armor than a common goblin. Simple sword strikes are less reliable.",
+      "tags": ["hobgoblin", "humanoid", "soldier", "armored"],
+      "weaknesses": ["piercing", "bludgeoning"],
+      "resistances": ["slashing"],
+      "immunities": [],
+      "special_rules": ["trained_guard"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.8,
+          "bludgeoning": 1.1,
+          "piercing": 1.1,
+          "fire": 0.7,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 5,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      },
+      "ui": {
+        "icon": "🪖"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.hobgoblin-captain-a5e",
+      "name": "Hobgoblin Captain",
+      "type": "hobgoblin",
+      "description": "A veteran captain in reinforced armor. He punishes careless attacks and must be hit with enough force to break formation.",
+      "tags": ["hobgoblin", "captain", "commander", "armored", "elite"],
+      "weaknesses": ["bludgeoning"],
+      "resistances": ["slashing", "piercing", "fire"],
+      "immunities": [],
+      "special_rules": ["elite_armor", "formation_leader"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.7,
+          "bludgeoning": 1.3,
+          "piercing": 0.9,
+          "fire": 0.5,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 7,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      },
+      "ui": {
+        "icon": "🎖️"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.hobgoblin-warlord-a5e",
+      "name": "Hobgoblin Warlord",
+      "type": "hobgoblin",
+      "description": "A battlefield commander with layered armor and brutal discipline. Weak attacks only make him advance faster.",
+      "tags": ["hobgoblin", "warlord", "boss", "elite", "armored"],
+      "weaknesses": ["bludgeoning", "magic"],
+      "resistances": ["slashing", "piercing", "fire"],
+      "immunities": [],
+      "special_rules": ["boss_enemy", "requires_high_power"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.6,
+          "bludgeoning": 1.3,
+          "piercing": 0.8,
+          "fire": 0.4,
+          "magic": 1.2,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 8,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      },
+      "ui": {
+        "icon": "⚔️"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.miremuck-goblin-king-a5e",
+      "name": "Miremuck Goblin King",
+      "type": "goblin",
+      "description": "A swamp-crowned goblin ruler covered in wet mud, reeds, and stolen charms. Fire sputters out against him.",
+      "tags": ["goblin", "king", "swamp", "boss", "mud_armor"],
+      "weaknesses": ["piercing", "magic"],
+      "resistances": ["slashing", "bludgeoning", "fire"],
+      "immunities": [],
+      "special_rules": ["mud_armor", "fire_resistant"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.7,
+          "bludgeoning": 0.8,
+          "piercing": 1.3,
+          "fire": 0.2,
+          "magic": 1.2,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 7,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      },
+      "ui": {
+        "icon": "👑"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.rat-a5e",
+      "name": "Rat",
+      "type": "beast",
+      "description": "A small cave rat. It is not dangerous, but it is fast enough to waste a careless heavy attack.",
+      "tags": ["beast", "tiny", "low_tier", "fast"],
+      "weaknesses": ["piercing", "slashing"],
+      "resistances": ["bludgeoning"],
+      "immunities": [],
+      "special_rules": ["tiny_target"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 1.0,
+          "bludgeoning": 0.5,
+          "piercing": 1.2,
+          "fire": 1.0,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 3,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      },
+      "ui": {
+        "icon": "🐀"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.rat-king",
+      "name": "Rat King",
+      "type": "monstrosity",
+      "description": "A tangled mass of rats moving as one body. Cutting one rat does little; fire or magic can scatter the swarm.",
+      "tags": ["rat", "swarm", "monstrosity", "boss", "many_bodies"],
+      "weaknesses": ["fire", "magic"],
+      "resistances": ["slashing", "piercing", "bludgeoning"],
+      "immunities": [],
+      "special_rules": ["swarm_body", "weapon_resistant"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.5,
+          "bludgeoning": 0.6,
+          "piercing": 0.4,
+          "fire": 1.4,
+          "magic": 1.3,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 7,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      },
+      "ui": {
+        "icon": "🐀"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.rat_giant_bf",
+      "name": "Rat, Giant",
+      "type": "beast",
+      "description": "A dog-sized rat with thick hide and snapping teeth. A spear keeps it away better than a close sword swing.",
+      "tags": ["rat", "beast", "large_vermin", "charging_enemy"],
+      "weaknesses": ["piercing"],
+      "resistances": ["bludgeoning"],
+      "immunities": [],
+      "special_rules": ["keep_distance"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.9,
+          "bludgeoning": 0.7,
+          "piercing": 1.2,
+          "fire": 1.0,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 5,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      },
+      "ui": {
+        "icon": "🐁"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.rat_swarm_of_rats_bf",
+      "name": "Rat, Swarm of Rats",
+      "type": "swarm",
+      "description": "A carpet of rats pouring across the floor. Single-target weapon strikes are inefficient; fire clears space quickly.",
+      "tags": ["rat", "swarm", "many_bodies", "fire_weak"],
+      "weaknesses": ["fire"],
+      "resistances": ["slashing", "piercing", "bludgeoning"],
+      "immunities": [],
+      "special_rules": ["swarm_body", "single_target_resistant"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.5,
+          "bludgeoning": 0.5,
+          "piercing": 0.4,
+          "fire": 1.5,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 5,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      },
+      "ui": {
+        "icon": "🐀"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.wererat-a5e",
+      "name": "Wererat",
+      "type": "lycanthrope",
+      "description": "A rat-like shapeshifter with unnatural resilience. Ordinary cuts do little unless the attack is precise or empowered.",
+      "tags": ["rat", "lycanthrope", "humanoid", "resilient", "trick_enemy"],
+      "weaknesses": ["piercing", "magic"],
+      "resistances": ["slashing", "bludgeoning", "fire"],
+      "immunities": [],
+      "special_rules": ["resists_common_weapons", "precision_attack_preferred"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.6,
+          "bludgeoning": 0.7,
+          "piercing": 1.2,
+          "fire": 0.6,
+          "magic": 1.3,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 6,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      },
+      "ui": {
+        "icon": "🐭"
+      }
+    },
+    {
+      "monster_id": "open5e.monster.diseased-giant-rat-a5e",
+      "name": "Diseased Giant Rat",
+      "type": "beast",
+      "description": "A swollen rat with infected wounds and frantic movement. Getting too close is risky, so reach or fire is safer.",
+      "tags": ["rat", "beast", "diseased", "hazard", "low_tier"],
+      "weaknesses": ["piercing", "fire"],
+      "resistances": ["bludgeoning"],
+      "immunities": [],
+      "special_rules": ["disease_risk", "avoid_close_contact"],
+      "interactions": {
+        "damage_type_modifiers": {
+          "physical": 0.0,
+          "slashing": 0.8,
+          "bludgeoning": 0.7,
+          "piercing": 1.2,
+          "fire": 1.2,
+          "magic": 1.0,
+          "knowledge": 0.0
+        },
+        "min_power_to_defeat": 5,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      },
+      "ui": {
+        "icon": "🦠"
       }
     }
   ]

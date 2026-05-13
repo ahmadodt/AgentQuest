@@ -1,15 +1,17 @@
 {
-  "version": "1.1",
+  "version": "1.2",
   "tools": [
     {
       "tool_id": "wizard.cast_fireball",
       "label": "Cast Fireball",
-      "description": "Launch a powerful burst of flame at the target.",
+      "description": "Launch a powerful burst of flame at the target. Strong against swarms, shadows, beasts, and enemies weak to fire, but useless against fire-immune creatures.",
       "category": "attack",
       "args": {
         "type": "object",
         "properties": {
-          "target": { "type": "string" }
+          "target": {
+            "type": "string"
+          }
         },
         "required": ["target"]
       },
@@ -29,12 +31,14 @@
     {
       "tool_id": "wizard.cast_ice_spear",
       "label": "Cast Ice Spear",
-      "description": "Launch a sharp spear of ice at the target.",
+      "description": "Launch a sharp spear of ice at the target. Useful against hot, burning, or water-sensitive enemies, and precise enough to hit single targets.",
       "category": "attack",
       "args": {
         "type": "object",
         "properties": {
-          "target": { "type": "string" }
+          "target": {
+            "type": "string"
+          }
         },
         "required": ["target"]
       },
@@ -54,12 +58,14 @@
     {
       "tool_id": "wizard.cast_water_ball",
       "label": "Cast Water Ball",
-      "description": "Throw a dense ball of water at the target.",
+      "description": "Throw a dense ball of water at the target. Useful against fire creatures, burning hazards, and enemies vulnerable to water.",
       "category": "attack",
       "args": {
         "type": "object",
         "properties": {
-          "target": { "type": "string" }
+          "target": {
+            "type": "string"
+          }
         },
         "required": ["target"]
       },
@@ -70,7 +76,7 @@
       },
       "effects": {
         "damage_type": "water",
-        "base_power": 5
+        "base_power": 6
       },
       "ui": {
         "emoji": "💧"
@@ -79,7 +85,7 @@
     {
       "tool_id": "wizard.arcane_shield",
       "label": "Arcane Shield",
-      "description": "Conjure a protective magical barrier.",
+      "description": "Conjure a protective magical barrier. This is useful for surviving magical attacks, but it does not directly defeat a monster.",
       "category": "defense",
       "args": {
         "type": "object",
@@ -93,7 +99,8 @@
       },
       "effects": {
         "defense_type": "magic",
-        "mitigation": 5
+        "mitigation": 5,
+        "combat_effect": false
       },
       "ui": {
         "emoji": "🛡️"
@@ -102,12 +109,14 @@
     {
       "tool_id": "wizard.read_runes",
       "label": "Read Ancient Runes",
-      "description": "Analyze mystical inscriptions to extract hidden knowledge.",
+      "description": "Analyze mystical inscriptions, cursed objects, seals, shrines, or magical writing to extract hidden knowledge. Best for puzzle or knowledge-based encounters.",
       "category": "utility",
       "args": {
         "type": "object",
         "properties": {
-          "surface": { "type": "string" }
+          "surface": {
+            "type": "string"
+          }
         },
         "required": ["surface"]
       },
@@ -117,6 +126,8 @@
         "forbidden_traits": ["blinded"]
       },
       "effects": {
+        "damage_type": "knowledge",
+        "base_power": 1,
         "knowledge_gain": true,
         "combat_effect": false
       },
@@ -127,12 +138,14 @@
     {
       "tool_id": "knight.sword_slash",
       "label": "Sword Slash",
-      "description": "Strike the target with a sword.",
+      "description": "Strike the target with a sword. Reliable against ordinary unarmored enemies, but weaker against shields, armor, swarms, and creatures resistant to slashing.",
       "category": "attack",
       "args": {
         "type": "object",
         "properties": {
-          "target": { "type": "string" }
+          "target": {
+            "type": "string"
+          }
         },
         "required": ["target"]
       },
@@ -152,12 +165,14 @@
     {
       "tool_id": "knight.mace_strike",
       "label": "Mace Strike",
-      "description": "Strike the target with a heavy mace.",
+      "description": "Strike the target with a heavy mace. Best against armored enemies, shielded enemies, barricades, bone plates, and targets weak to blunt force.",
       "category": "attack",
       "args": {
         "type": "object",
         "properties": {
-          "target": { "type": "string" }
+          "target": {
+            "type": "string"
+          }
         },
         "required": ["target"]
       },
@@ -177,12 +192,14 @@
     {
       "tool_id": "knight.spear_thrust",
       "label": "Spear Thrust",
-      "description": "Thrust a spear into the target.",
+      "description": "Thrust a spear into the target. Best when reach, precision, or interruption matters, such as against casters, alchemists, charging beasts, and enemies weak to piercing.",
       "category": "attack",
       "args": {
         "type": "object",
         "properties": {
-          "target": { "type": "string" }
+          "target": {
+            "type": "string"
+          }
         },
         "required": ["target"]
       },
@@ -193,7 +210,7 @@
       },
       "effects": {
         "damage_type": "piercing",
-        "base_power": 4
+        "base_power": 5
       },
       "ui": {
         "emoji": "🗡️"
@@ -202,12 +219,14 @@
     {
       "tool_id": "knight.throw_torch",
       "label": "Throw Torch",
-      "description": "Throw a burning torch at the target.",
+      "description": "Throw a burning torch at the target. Best against shadows, swarms, rats, and creatures weak to fire. Dangerous or useless against fire-resistant, wet, or explosive encounters.",
       "category": "attack",
       "args": {
         "type": "object",
         "properties": {
-          "target": { "type": "string" }
+          "target": {
+            "type": "string"
+          }
         },
         "required": ["target"]
       },
@@ -218,7 +237,7 @@
       },
       "effects": {
         "damage_type": "fire",
-        "base_power": 3
+        "base_power": 4
       },
       "ui": {
         "emoji": "🔥"
@@ -227,7 +246,7 @@
     {
       "tool_id": "knight.shield_block",
       "label": "Shield Block",
-      "description": "Block an incoming attack using a shield.",
+      "description": "Block an incoming attack using a shield. Useful for defense, but it does not directly defeat a monster unless the scene specifically requires blocking.",
       "category": "defense",
       "args": {
         "type": "object",
@@ -246,7 +265,8 @@
       },
       "effects": {
         "defense_type": "physical",
-        "mitigation": 4
+        "mitigation": 4,
+        "combat_effect": false
       },
       "ui": {
         "emoji": "🛡️"
@@ -255,7 +275,7 @@
     {
       "tool_id": "common.run",
       "label": "Run",
-      "description": "Attempt to flee the encounter.",
+      "description": "Attempt to flee the encounter. This can only succeed when escape is allowed by the scene or monster rules. It does not defeat the monster.",
       "category": "movement",
       "args": {
         "type": "object",
@@ -273,7 +293,8 @@
         "forbidden_traits": ["broken_leg"]
       },
       "effects": {
-        "escape_attempt": true
+        "escape_attempt": true,
+        "combat_effect": false
       },
       "ui": {
         "emoji": "🏃"
