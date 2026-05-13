@@ -1,0 +1,69 @@
+{
+  "version": "1.0",
+  "campaigns": [
+    {
+      "campaign_id": "campaign.tutorial_v1",
+      "name": "Tutorial Encounters",
+      "description": "Three small scenes that test basic combat, knowledge-based solving, and no-escape combat.",
+      "type": "tutorial",
+      "scene_ids": [
+        "scene.tutorial.001_goblin_alley",
+        "scene.tutorial.002_runes_on_wall",
+        "scene.tutorial.003_flame_gate"
+      ]
+    },
+    {
+      "campaign_id": "campaign.goblin_den_v1",
+      "name": "Goblin Den",
+      "description": "A progressive goblin hideout campaign, starting with weak guards and ending with a stronger chieftain.",
+      "type": "storyline",
+      "scene_ids": [
+        "scene.goblin_den.001_outer_watch",
+        "scene.goblin_den.002_shadow_scout",
+        "scene.goblin_den.003_shield_line",
+        "scene.goblin_den.004_alchemist_lab",
+        "scene.goblin_den.005_warlock_shrine",
+        "scene.goblin_den.006_boss_chamber",
+        "scene.goblin_den.007_chieftain_finale"
+      ]
+    },
+    {
+      "campaign_id": "campaign.sewers_and_rats_v1",
+      "name": "Sewers and Rats",
+      "description": "A sewer crawl that begins with common rats and ends with the Rat King.",
+      "type": "storyline",
+      "scene_ids": [
+        "scene.sewers.001_first_rat",
+        "scene.sewers.002_diseased_giant_rat",
+        "scene.sewers.003_rat_swarm",
+        "scene.sewers.004_giant_rat",
+        "scene.sewers.005_wererat",
+        "scene.sewers.006_rat_king"
+      ]
+    },
+    {
+      "campaign_id": "campaign.all_v1",
+      "name": "AgentQuest Starter Campaign",
+      "description": "Full starter run containing the tutorial, Goblin Den, and Sewers and Rats storylines.",
+      "type": "combined",
+      "scene_ids": [
+        "scene.tutorial.001_goblin_alley",
+        "scene.tutorial.002_runes_on_wall",
+        "scene.tutorial.003_flame_gate",
+        "scene.goblin_den.001_outer_watch",
+        "scene.goblin_den.002_shadow_scout",
+        "scene.goblin_den.003_shield_line",
+        "scene.goblin_den.004_alchemist_lab",
+        "scene.goblin_den.005_warlock_shrine",
+        "scene.goblin_den.006_boss_chamber",
+        "scene.goblin_den.007_chieftain_finale",
+        "scene.sewers.001_first_rat",
+        "scene.sewers.002_diseased_giant_rat",
+        "scene.sewers.003_rat_swarm",
+        "scene.sewers.004_giant_rat",
+        "scene.sewers.005_wererat",
+        "scene.sewers.006_rat_king"
+      ]
+    }
+  ]
+}
