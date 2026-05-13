@@ -62,6 +62,28 @@ Example:
 python -m src.runner.run_campaign --campaign-id campaign.goblin_den_v1 --character-id knight.bram
 ```
 
+### Run The Streamlit Viewer
+
+Install Streamlit if it is not already available:
+
+```bash
+pip install streamlit
+```
+
+Launch the run viewer:
+
+```bash
+streamlit run streamlit_app.py
+```
+
+The viewer lets you choose:
+
+- a local GGUF model from `local_models/`
+- a character
+- either a campaign or a single scene
+
+When you run, it updates `configs/run_config.json` to point at the selected model, then renders each scene result with the scene id, monster, character, model tool call, and success/failure verdict.
+
 ### Runner Requirements
 
 - `preview_prompt` does not call the model
