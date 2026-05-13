@@ -2,22 +2,19 @@
 
 This folder contains the Open5e ingestion and conversion scripts used to prepare external RPG data for AgentQuest.
 
-The pipeline is intentionally separate from the main runtime.
-The live game still reads the hand-written files in `data/`:
+The pipeline is intentionally separate from the main runtime. The live game uses the hand-authored runtime files first:
 
-- `data/tools.json`
-- `data/characters.json`
-- `data/monsters.json`
-- `data/scenes.json`
+- preferred: `data/custom/agentquest/`
+- fallback: legacy top-level `data/*.json`
 
-The Open5e pipeline exists to import larger source material, curate a small benchmark subset, and generate AgentQuest-shaped JSON without replacing the runtime dataset by default.
+The Open5e pipeline exists to import larger source material, curate a benchmark subset, and generate AgentQuest-shaped JSON without replacing the custom dataset by default. Generated monsters and generated spells are merged into the runtime catalog at load time, while generated weapons remain outside the runtime flow for now.
 
 ## Files
 
 - `download_open5e.py`
   Downloads raw Open5e endpoint data into local JSON files.
 - `open5e_converter.py`
-  Converts raw or curated Open5e data into AgentQuest-compatible monster/tool payloads.
+  Converts raw or curated Open5e data into AgentQuest-compatible monster and tool payloads.
 - `__init__.py`
   Package marker.
 
@@ -34,13 +31,13 @@ The Open5e pipeline uses three layers of data:
 2. Curated benchmark selection
    `data/curated/open5e/`
 
-   This is where we choose the small subset of monsters, spells, and weapons that we actually want to use for controlled experiments.
+   This is where we choose the subset of monsters, spells, and weapons that we want to use for experiments.
 
 3. Generated AgentQuest-ready data
    `data/generated/open5e/`
 
    This is the output of the converter.
-   These files are generated artifacts and should not overwrite the hand-written runtime files in `data/`.
+   These files remain generated artifacts even though some of them are merged into the runtime later.
 
 ## Directory Layout
 
@@ -192,7 +189,7 @@ This:
 - applies optional per-item overrides
 - writes generated outputs into `data/generated/open5e/`
 
-This is the recommended path for controlled experiments.
+This is the expected workflow for the current project state because the runtime merge assumes curated generated monsters and spells rather than the full corpus.
 
 ## Current Conversion Rules
 
@@ -241,7 +238,7 @@ Current generated monster interactions include:
 - `knowledge_tools_help`
 
 The converter does not write monster-level `escape_allowed`.
-Escape control is expected to be scene-driven.
+The runtime loader adds `escape_allowed: true` when generated monsters are merged so they remain valid under the current validation rules.
 
 ### Spells
 
@@ -255,7 +252,7 @@ Important rules:
 - if a damage pattern can be found deterministically in the spell description, the converter sets:
   - `effects.damage_type`
   - `effects.base_power`
-- otherwise the spell defaults to a simple utility/non-combat shape
+- otherwise the spell defaults to a simple utility or non-combat shape
 
 The current tool argument schema for converted spells is:
 
@@ -292,7 +289,12 @@ The converter writes:
 These are generated files.
 They are useful for inspection, experiments, and later integration work.
 
-They do not replace the main runtime files automatically.
+Current runtime behavior after generation:
+
+- generated monsters are merged into the live monster catalog
+- generated spells are merged into the live tool catalog
+- custom records win on exact id collisions
+- generated weapons are not merged into the runtime yet
 
 ## What This Pipeline Does Not Do
 
@@ -300,17 +302,17 @@ They do not replace the main runtime files automatically.
 - It does not use LLM extraction or rewriting.
 - It does not infer weaknesses or resistances from free text.
 - It does not try to implement full D&D combat rules.
-- It does not alter the current one-run AgentQuest runtime flow.
+- It does not merge generated weapons into the runtime.
 
 ## Practical Workflow
 
 Typical usage:
 
 1. Download or refresh raw Open5e source data.
-2. Edit the curated selection files to choose a small benchmark subset.
+2. Edit the curated selection files to choose the benchmark monsters and spells you want.
 3. Run curated conversion.
-4. Inspect the generated outputs.
-5. Run tests.
+4. Inspect the generated outputs under `data/generated/open5e/`.
+5. Run tests or prompt previews against the merged runtime catalog.
 
 Example:
 

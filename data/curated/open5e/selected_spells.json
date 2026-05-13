@@ -5,6 +5,15 @@
     {
       "slug": "abhorrent-apparition",
       "notes": "Initial curated spell example"
+    },
+    {
+      "slug": "fire-bolt"
+    },
+    {
+      "slug": "fire-shield"
+    },
+    {
+      "slug": "wall-of-ice"
     }
   ]
 }

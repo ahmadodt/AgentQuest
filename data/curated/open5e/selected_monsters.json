@@ -3,8 +3,61 @@
   "source": "open5e",
   "selected": [
     {
-      "slug": "a-mi-kuk",
-      "notes": "Initial curated monster example"
+      "slug": "goblin-a5e"
+    },
+    {
+      "slug": "water-elemental"
+    },
+    {
+      "slug": "fire-elemental"
+    },
+    {
+      "slug": "shadow-goblin"
+    },
+    {
+      "slug": "dust-goblin-chieftain"
+    },
+    {
+      "slug": "goblin-alchemist-a5e"
+    },
+    {
+      "slug": "goblin-boss-a5e"
+    },
+    {
+      "slug": "goblin-shieldbearer-a5e"
+    },
+    {
+      "slug": "goblin-warlock-a5e"
+    },
+    {
+      "slug": "hobgoblin-a5e"
+    },
+    {
+      "slug": "hobgoblin-captain-a5e"
+    },
+    {
+      "slug": "hobgoblin-warlord-a5e"
+    },
+    {
+      "slug": "miremuck-goblin-king-a5e"
+    },
+    {
+      "slug": "rat-a5e"
+    },
+    {
+      "slug": "rat-king"
+    },
+    {
+      "slug": "rat_giant_bf"
+    },
+    {
+      "slug": "rat_swarm_of_rats_bf"
+    },
+    {
+      "slug": "wererat-a5e"
+    },
+    {
+      "slug": "diseased-giant-rat-a5e"
     }
   ]
 }
