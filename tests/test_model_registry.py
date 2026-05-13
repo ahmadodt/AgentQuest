@@ -4,17 +4,31 @@ import types
 
 import pytest
 
-from src.models.config import load_runtime_model_config
+from src.models.config import load_runtime_model_config, load_runtime_prompt_config
 from src.models.registry import build_handler
 
 
-def _write_run_config(tmp_path, *, backend="llama_cpp", model="model.gguf"):
+def _write_run_config(
+    tmp_path,
+    *,
+    backend="llama_cpp",
+    model="model.gguf",
+    preset="default",
+    prompt_format="json_only",
+):
     model_path = tmp_path / model
     model_path.write_text("stub", encoding="utf-8")
 
     config_path = tmp_path / "run_config.json"
     config_path.write_text(
-        json.dumps({"backend": backend, "model": model_path.name}),
+        json.dumps(
+            {
+                "backend": backend,
+                "model": model_path.name,
+                "preset": preset,
+                "prompt_format": prompt_format,
+            }
+        ),
         encoding="utf-8",
     )
     return config_path, model_path
@@ -35,7 +49,14 @@ def test_load_runtime_model_config_rejects_non_gguf_path(tmp_path):
 
     config_path = tmp_path / "run_config.json"
     config_path.write_text(
-        json.dumps({"backend": "llama_cpp", "model": bad_model_path.name}),
+        json.dumps(
+            {
+                "backend": "llama_cpp",
+                "model": bad_model_path.name,
+                "preset": "default",
+                "prompt_format": "json_only",
+            }
+        ),
         encoding="utf-8",
     )
 
@@ -46,7 +67,14 @@ def test_load_runtime_model_config_rejects_non_gguf_path(tmp_path):
 def test_load_runtime_model_config_rejects_missing_model_file(tmp_path):
     config_path = tmp_path / "run_config.json"
     config_path.write_text(
-        json.dumps({"backend": "llama_cpp", "model": "missing.gguf"}),
+        json.dumps(
+            {
+                "backend": "llama_cpp",
+                "model": "missing.gguf",
+                "preset": "default",
+                "prompt_format": "json_only",
+            }
+        ),
         encoding="utf-8",
     )
 
@@ -112,3 +140,31 @@ def test_build_handler_rejects_backend_mismatch(tmp_path):
 
     with pytest.raises(ValueError, match="does not match configured backend"):
         build_handler("other_backend", config_path=str(config_path))
+
+
+def test_load_runtime_prompt_config_uses_run_config_fields(tmp_path):
+    config_path, _ = _write_run_config(
+        tmp_path,
+        preset="FULL_INFO",
+        prompt_format="json_only",
+    )
+
+    cfg = load_runtime_prompt_config(str(config_path))
+
+    assert cfg.preset_name == "FULL_INFO"
+    assert cfg.prompt_format == "json_only"
+
+
+def test_load_runtime_prompt_config_defaults_when_fields_missing(tmp_path):
+    model_path = tmp_path / "model.gguf"
+    model_path.write_text("stub", encoding="utf-8")
+    config_path = tmp_path / "run_config.json"
+    config_path.write_text(
+        json.dumps({"backend": "llama_cpp", "model": model_path.name}),
+        encoding="utf-8",
+    )
+
+    cfg = load_runtime_prompt_config(str(config_path))
+
+    assert cfg.preset_name == "default"
+    assert cfg.prompt_format == "json_only"

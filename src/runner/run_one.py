@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 
 from src.engine.loader import load_gamedata, DataValidationError
+from src.models.config import load_runtime_prompt_config
 from src.runner.runner_utils import (
     DEFAULT_CHARACTER_ID,
     DEFAULT_SCENE_ID,
@@ -18,8 +19,8 @@ def main():
     parser.add_argument("--data-dir", type=str, default="data")
     parser.add_argument("--character-id", type=str, default=DEFAULT_CHARACTER_ID)
     parser.add_argument("--scene-id", type=str, default=DEFAULT_SCENE_ID)
-    parser.add_argument("--prompt-format", type=str, default="json_only")
-    parser.add_argument("--preset", type=str, default="default")
+    parser.add_argument("--prompt-format", type=str, default="")
+    parser.add_argument("--preset", type=str, default="")
 
     # model calling
     parser.add_argument(
@@ -42,14 +43,17 @@ def main():
 
     try:
         gamedata = load_gamedata(args.data_dir)
+        runtime_prompt_cfg = load_runtime_prompt_config()
+        prompt_format = args.prompt_format or runtime_prompt_cfg.prompt_format
+        preset_name = args.preset or runtime_prompt_cfg.preset_name
 
-        cfg = load_preset(args.preset)
+        cfg = load_preset(preset_name)
 
         scene_run = execute_scene_run(
             gamedata=gamedata,
             character_id=args.character_id,
             scene_id=args.scene_id,
-            prompt_format=args.prompt_format,
+            prompt_format=prompt_format,
             cfg=cfg,
             model_key=args.model_key,
             max_tokens=args.max_tokens,
@@ -75,8 +79,8 @@ def main():
                 "data_dir": args.data_dir,
                 "character_id": args.character_id,
                 "scene_id": args.scene_id,
-                "preset": args.preset,
-                "prompt_format": args.prompt_format,
+                "preset": preset_name,
+                "prompt_format": prompt_format,
                 **scene_run,
             }
             with open(args.save_run, "w", encoding="utf-8") as f:

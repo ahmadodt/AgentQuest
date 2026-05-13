@@ -14,6 +14,12 @@ class RuntimeModelConfig:
     model_path: str
 
 
+@dataclass(frozen=True)
+class RuntimePromptConfig:
+    preset_name: str
+    prompt_format: str
+
+
 def _resolve_model_path(config_path: str, model_path: str) -> str:
     if os.path.isabs(model_path):
         return model_path
@@ -43,3 +49,23 @@ def load_runtime_model_config(config_path: str = DEFAULT_RUN_CONFIG_PATH) -> Run
         raise FileNotFoundError(f"Configured GGUF model file does not exist: {model_path}")
 
     return RuntimeModelConfig(backend=backend.strip(), model_path=model_path)
+
+
+def load_runtime_prompt_config(config_path: str = DEFAULT_RUN_CONFIG_PATH) -> RuntimePromptConfig:
+    resolved_config_path = os.path.abspath(config_path)
+
+    with open(resolved_config_path, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+
+    preset_name = raw.get("preset", "default")
+    if not isinstance(preset_name, str) or not preset_name.strip():
+        raise ValueError("run_config.json field 'preset' must be a non-empty string when present.")
+
+    prompt_format = raw.get("prompt_format", "json_only")
+    if not isinstance(prompt_format, str) or not prompt_format.strip():
+        raise ValueError("run_config.json field 'prompt_format' must be a non-empty string when present.")
+
+    return RuntimePromptConfig(
+        preset_name=preset_name.strip(),
+        prompt_format=prompt_format.strip(),
+    )
