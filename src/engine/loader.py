@@ -58,11 +58,14 @@ def _index_by_id(items: list, id_key: str, ctx: str) -> dict:
 
 def _resolve_runtime_data_dir(data_dir: str) -> str:
     custom_dir = os.path.join(data_dir, "custom", "agentquest")
-    required_files = ["tools.json", "characters.json", "monsters.json", "scenes.json"]
+    required_files = ["tools.json", "characters.json", "monsters.json", "scenes.json", "campaigns.json"]
 
     if all(os.path.exists(os.path.join(custom_dir, name)) for name in required_files):
         return custom_dir
-    return data_dir
+    raise DataValidationError(
+        f"Missing required runtime dataset under '{custom_dir}'. "
+        "Expected tools.json, characters.json, monsters.json, scenes.json, and campaigns.json."
+    )
 
 
 def _merge_records_by_id(custom_items: list, generated_items: list, id_key: str) -> list:
@@ -309,7 +312,37 @@ def _validate_scenes(scene_root: dict, monsters_by_id: dict) -> dict:
     return scenes_by_id
 
 
-def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict]:
+def _validate_campaigns(campaign_root: dict, scenes_by_id: dict) -> dict:
+    ctx = "campaigns.json"
+    _require(campaign_root, "campaigns", ctx)
+    _require_type(campaign_root["campaigns"], list, ctx, "campaigns")
+
+    campaigns = campaign_root["campaigns"]
+    campaigns_by_id = _index_by_id(campaigns, "campaign_id", ctx)
+
+    for campaign_id, campaign in campaigns_by_id.items():
+        cctx = f"{ctx}:{campaign_id}"
+        for key in ["name", "description", "type", "scene_ids"]:
+            _require(campaign, key, cctx)
+
+        _require_type(campaign["name"], str, cctx, "name")
+        _require_type(campaign["description"], str, cctx, "description")
+        _require_type(campaign["type"], str, cctx, "type")
+        _require_type(campaign["scene_ids"], list, cctx, "scene_ids")
+
+        if not campaign["scene_ids"]:
+            raise DataValidationError(f"{cctx}: scene_ids must not be empty")
+
+        for i, scene_id in enumerate(campaign["scene_ids"]):
+            if not isinstance(scene_id, str):
+                raise DataValidationError(f"{cctx}: scene_ids[{i}] must be a string")
+            if scene_id not in scenes_by_id:
+                raise DataValidationError(f"{cctx}: unknown scene_id '{scene_id}'")
+
+    return campaigns_by_id
+
+
+def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict, dict]:
     runtime_data_dir = _resolve_runtime_data_dir(data_dir)
     generated_data_dir = os.path.join(data_dir, "generated", "open5e")
 
@@ -317,6 +350,7 @@ def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict]:
     chars_root = _load_json_file(os.path.join(runtime_data_dir, "characters.json"))
     monsters_root = _load_json_file(os.path.join(runtime_data_dir, "monsters.json"))
     scenes_root = _load_json_file(os.path.join(runtime_data_dir, "scenes.json"))
+    campaigns_root = _load_json_file(os.path.join(runtime_data_dir, "campaigns.json"))
 
     custom_tools = [_normalize_custom_tool(tool) for tool in tools_root.get("tools", [])]
     custom_monsters = [_normalize_custom_monster(monster) for monster in monsters_root.get("monsters", [])]
@@ -341,7 +375,7 @@ def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict]:
         custom_monsters, generated_monsters, "monster_id"
     )
 
-    return merged_tools_root, chars_root, merged_monsters_root, scenes_root
+    return merged_tools_root, chars_root, merged_monsters_root, scenes_root, campaigns_root
 
 
 def load_gamedata(data_dir: str = "data") -> dict:
@@ -350,12 +384,13 @@ def load_gamedata(data_dir: str = "data") -> dict:
     """
     from src.prompts.projections import project_monster_for_llm, project_tool_for_llm
 
-    tools_root, chars_root, monsters_root, scenes_root = _load_merged_content(data_dir)
+    tools_root, chars_root, monsters_root, scenes_root, campaigns_root = _load_merged_content(data_dir)
 
     tools_by_id = _validate_tools(tools_root)
     characters_by_id = _validate_characters(chars_root, tools_by_id)
     monsters_by_id = _validate_monsters(monsters_root)
     scenes_by_id = _validate_scenes(scenes_root, monsters_by_id)
+    campaigns_by_id = _validate_campaigns(campaigns_root, scenes_by_id)
     llm_tools_by_id = {
         tool_id: project_tool_for_llm(tool) for tool_id, tool in tools_by_id.items()
     }
@@ -368,6 +403,7 @@ def load_gamedata(data_dir: str = "data") -> dict:
         "characters_by_id": characters_by_id,
         "monsters_by_id": monsters_by_id,
         "scenes_by_id": scenes_by_id,
+        "campaigns_by_id": campaigns_by_id,
         "llm_tools_by_id": llm_tools_by_id,
         "llm_monsters_by_id": llm_monsters_by_id,
         "raw": {
@@ -375,5 +411,6 @@ def load_gamedata(data_dir: str = "data") -> dict:
             "characters": chars_root.get("characters", []),
             "monsters": monsters_root.get("monsters", []),
             "scenes": scenes_root.get("scenes", []),
+            "campaigns": campaigns_root.get("campaigns", []),
         },
     }

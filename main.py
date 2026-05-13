@@ -21,7 +21,7 @@ def main():
         # Choose character + scene
         # characters: "wizard.ember" or "knight.bram"
         character_id = "knight.bram"
-        scene_id = "scene.001.goblin_alley"
+        scene_id = "scene.tutorial.001_goblin_alley"
 
         print(f"Using character: {character_id}")
         print(f"Using scene: {scene_id}")

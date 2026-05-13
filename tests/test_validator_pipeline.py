@@ -2,7 +2,7 @@ def test_validator_pipeline_returns_ast_error_verdict(validator_factory, gamedat
     validator = validator_factory(
         gamedata=gamedata,
         character_id="wizard.ember",
-        scene_id="scene.001.goblin_alley",
+        scene_id="scene.tutorial.001_goblin_alley",
     )
 
     verdict = validator.validate("{not valid json}")
@@ -13,7 +13,7 @@ def test_validator_pipeline_returns_ast_error_verdict(validator_factory, gamedat
     assert verdict["outcome"] == "invalid"
     assert verdict["parsed_tool_call"] is None
     assert verdict["character_id"] == "wizard.ember"
-    assert verdict["scene_id"] == "scene.001.goblin_alley"
+    assert verdict["scene_id"] == "scene.tutorial.001_goblin_alley"
     assert "AST error:" in verdict["reason"]
 
 
@@ -28,7 +28,7 @@ def test_validator_pipeline_stops_after_hard_failure(
     validator = validator_factory(
         gamedata=gd,
         character_id=character_id,
-        scene_id="scene.001.goblin_alley",
+        scene_id="scene.tutorial.001_goblin_alley",
         visible_tool_ids=visible_tool_ids,
     )
 
@@ -53,7 +53,7 @@ def test_validator_pipeline_returns_soft_failure_after_ast_and_hard_pass(
     validator = validator_factory(
         gamedata=gamedata,
         character_id="knight.bram",
-        scene_id="scene.003.flame_gate",
+        scene_id="scene.tutorial.003_flame_gate",
     )
 
     verdict = validator.validate(make_tool_call("common.run", {"direction": "toward_exit"}))
@@ -77,7 +77,7 @@ def test_validator_pipeline_returns_soft_success_for_valid_action(
     validator = validator_factory(
         gamedata=gamedata,
         character_id="wizard.ember",
-        scene_id="scene.001.goblin_alley",
+        scene_id="scene.tutorial.001_goblin_alley",
     )
 
     verdict = validator.validate(make_tool_call("common.run", {"direction": "backtrack"}))

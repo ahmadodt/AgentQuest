@@ -1,0 +1,95 @@
+from src.models.base import GenerationResult
+from src.runner.runner_utils import execute_campaign_run, execute_scene_run
+
+
+class StubHandler:
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls = []
+
+    def generate(self, messages, *, max_tokens=256, temperature=0.0):
+        self.calls.append(
+            {
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            }
+        )
+        raw_text = self.responses.pop(0)
+        return GenerationResult(raw_text=raw_text, metadata={"stub": True})
+
+
+def test_execute_scene_run_uses_character_tool_ids_and_returns_scene_record(gamedata, make_tool_call):
+    handler = StubHandler([make_tool_call("common.run", {"direction": "backtrack"})])
+
+    scene_run = execute_scene_run(
+        gamedata=gamedata,
+        character_id="wizard.ember",
+        scene_id="scene.tutorial.001_goblin_alley",
+        prompt_format="json_only",
+        cfg=None,
+        model_key="",
+        max_tokens=64,
+        temperature=0.0,
+        handler=handler,
+    )
+
+    assert scene_run["scene_id"] == "scene.tutorial.001_goblin_alley"
+    assert scene_run["character_id"] == "wizard.ember"
+    assert scene_run["visible_tool_ids"] == gamedata["characters_by_id"]["wizard.ember"]["tool_ids"]
+    assert scene_run["verdict"]["outcome"] == "success"
+    assert scene_run["metadata"] == {"stub": True}
+
+
+def test_execute_campaign_run_stops_on_first_non_success(gamedata, make_tool_call):
+    handler = StubHandler(
+        [
+            make_tool_call("common.run", {"direction": "backtrack"}),
+            make_tool_call("wizard.arcane_shield", {}),
+        ]
+    )
+
+    campaign_run = execute_campaign_run(
+        gamedata=gamedata,
+        campaign_id="campaign.tutorial_v1",
+        character_id="wizard.ember",
+        prompt_format="json_only",
+        cfg=None,
+        model_key="",
+        max_tokens=64,
+        temperature=0.0,
+        handler=handler,
+    )
+
+    assert [item["scene_id"] for item in campaign_run["scene_runs"]] == [
+        "scene.tutorial.001_goblin_alley",
+        "scene.tutorial.002_runes_on_wall",
+    ]
+    assert campaign_run["final_outcome"] == "failure"
+    assert campaign_run["stop_scene_id"] == "scene.tutorial.002_runes_on_wall"
+
+
+def test_execute_campaign_run_succeeds_when_all_scenes_succeed(gamedata, make_tool_call):
+    handler = StubHandler(
+        [
+            make_tool_call("common.run", {"direction": "backtrack"}),
+            make_tool_call("wizard.read_runes", {"surface": "wall"}),
+            make_tool_call("wizard.cast_ice_spear", {"target": "flame sentinel"}),
+        ]
+    )
+
+    campaign_run = execute_campaign_run(
+        gamedata=gamedata,
+        campaign_id="campaign.tutorial_v1",
+        character_id="wizard.ember",
+        prompt_format="json_only",
+        cfg=None,
+        model_key="",
+        max_tokens=64,
+        temperature=0.0,
+        handler=handler,
+    )
+
+    assert len(campaign_run["scene_runs"]) == 3
+    assert campaign_run["final_outcome"] == "success"
+    assert campaign_run["stop_scene_id"] is None

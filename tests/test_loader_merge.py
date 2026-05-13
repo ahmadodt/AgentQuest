@@ -87,6 +87,18 @@ def _base_custom_dataset() -> dict:
                 }
             ],
         },
+        "campaigns": {
+            "version": "1.0",
+            "campaigns": [
+                {
+                    "campaign_id": "campaign.slime",
+                    "name": "Slime Trial",
+                    "description": "One slime scene.",
+                    "type": "tutorial",
+                    "scene_ids": ["scene.slime"],
+                }
+            ],
+        },
     }
 
 
@@ -96,6 +108,7 @@ def _write_runtime_dataset(base_dir: str, dataset: dict, use_custom_subdir: bool
     _write_json(os.path.join(root, "characters.json"), dataset["characters"])
     _write_json(os.path.join(root, "monsters.json"), dataset["monsters"])
     _write_json(os.path.join(root, "scenes.json"), dataset["scenes"])
+    _write_json(os.path.join(root, "campaigns.json"), dataset["campaigns"])
 
 
 def test_load_gamedata_merges_custom_and_generated_with_custom_precedence(tmp_path):
@@ -206,6 +219,7 @@ def test_load_gamedata_merges_custom_and_generated_with_custom_precedence(tmp_pa
     assert set(gamedata["monsters_by_id"]) == {"open5e.monster.slime", "open5e.monster.bat"}
     assert gamedata["monsters_by_id"]["open5e.monster.slime"]["name"] == "Custom Slime Boss"
     assert gamedata["monsters_by_id"]["open5e.monster.bat"]["origin"] == "generated"
+    assert set(gamedata["campaigns_by_id"]) == {"campaign.slime"}
 
 
 def test_generated_monsters_are_normalized_for_runtime_and_projected_for_llm(tmp_path):
@@ -316,10 +330,30 @@ def test_llm_tool_projection_shortens_generated_spell_description_and_prompt_use
 
 def test_load_gamedata_keeps_custom_only_flow_when_generated_content_is_absent(tmp_path):
     dataset = _base_custom_dataset()
-    _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=False)
+    _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)
 
     gamedata = load_gamedata(str(tmp_path))
 
     assert set(gamedata["tools_by_id"]) == {"mage.arc_bolt"}
     assert set(gamedata["monsters_by_id"]) == {"custom.slime"}
     assert gamedata["llm_tools_by_id"]["mage.arc_bolt"]["description"] == "A short custom attack."
+
+
+def test_load_gamedata_rejects_missing_custom_runtime_dataset(tmp_path):
+    try:
+        load_gamedata(str(tmp_path))
+        assert False, "Expected load_gamedata to fail when custom dataset is missing"
+    except Exception as error:
+        assert "Missing required runtime dataset" in str(error)
+
+
+def test_load_gamedata_rejects_campaign_with_unknown_scene(tmp_path):
+    dataset = _base_custom_dataset()
+    dataset["campaigns"]["campaigns"][0]["scene_ids"] = ["scene.unknown"]
+    _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)
+
+    try:
+        load_gamedata(str(tmp_path))
+        assert False, "Expected load_gamedata to fail for an unknown campaign scene"
+    except Exception as error:
+        assert "unknown scene_id" in str(error)

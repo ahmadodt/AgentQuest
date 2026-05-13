@@ -4,7 +4,7 @@ from src.engine.validation.validator_soft import soft_validate_tool_call
 def test_soft_attack_succeeds_when_effective_power_meets_threshold(gamedata):
     verdict = soft_validate_tool_call(
         gamedata=gamedata,
-        scene_id="scene.001.goblin_alley",
+        scene_id="scene.tutorial.001_goblin_alley",
         tool_id="knight.sword_slash",
     )
 
@@ -16,7 +16,7 @@ def test_soft_attack_succeeds_when_effective_power_meets_threshold(gamedata):
 def test_soft_attack_fails_when_effective_power_is_too_low(gamedata):
     verdict = soft_validate_tool_call(
         gamedata=gamedata,
-        scene_id="scene.001.goblin_alley",
+        scene_id="scene.tutorial.001_goblin_alley",
         tool_id="wizard.cast_fireball",
     )
 
@@ -28,7 +28,7 @@ def test_soft_attack_fails_when_effective_power_is_too_low(gamedata):
 def test_soft_knowledge_scene_accepts_knowledge_tool(gamedata):
     verdict = soft_validate_tool_call(
         gamedata=gamedata,
-        scene_id="scene.002.runes_on_wall",
+        scene_id="scene.tutorial.002_runes_on_wall",
         tool_id="wizard.read_runes",
     )
 
@@ -39,7 +39,7 @@ def test_soft_knowledge_scene_accepts_knowledge_tool(gamedata):
 def test_soft_knowledge_scene_rejects_non_knowledge_tool(gamedata):
     verdict = soft_validate_tool_call(
         gamedata=gamedata,
-        scene_id="scene.002.runes_on_wall",
+        scene_id="scene.tutorial.002_runes_on_wall",
         tool_id="wizard.arcane_shield",
     )
 
@@ -51,7 +51,7 @@ def test_soft_knowledge_scene_rejects_non_knowledge_tool(gamedata):
 def test_soft_escape_fails_when_scene_forbids_escape(gamedata):
     verdict = soft_validate_tool_call(
         gamedata=gamedata,
-        scene_id="scene.003.flame_gate",
+        scene_id="scene.tutorial.003_flame_gate",
         tool_id="common.run",
     )
 
@@ -63,7 +63,7 @@ def test_soft_escape_fails_when_scene_forbids_escape(gamedata):
 def test_soft_escape_succeeds_when_allowed(gamedata):
     verdict = soft_validate_tool_call(
         gamedata=gamedata,
-        scene_id="scene.001.goblin_alley",
+        scene_id="scene.tutorial.001_goblin_alley",
         tool_id="common.run",
     )
 

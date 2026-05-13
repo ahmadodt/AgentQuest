@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 from src.engine.loader import load_gamedata, DataValidationError
 from src.prompts.base_prompt import build_messages
 from src.prompts.prompt_config import DEFAULT_PROMPT_CONFIG, PromptConfig
+from src.runner.runner_utils import DEFAULT_CHARACTER_ID, DEFAULT_SCENE_ID
 
 
 def _print_messages(messages: List[Dict[str, str]]) -> None:
@@ -55,8 +56,8 @@ def _load_preset(preset_name: str) -> PromptConfig:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", type=str, default="data")
-    parser.add_argument("--character-id", type=str, default="knight.bram")
-    parser.add_argument("--scene-id", type=str, default="scene.001.goblin_alley")
+    parser.add_argument("--character-id", type=str, default=DEFAULT_CHARACTER_ID)
+    parser.add_argument("--scene-id", type=str, default=DEFAULT_SCENE_ID)
     parser.add_argument("--prompt-format", type=str, default="json_only")
     parser.add_argument(
         "--preset",

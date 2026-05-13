@@ -3,25 +3,24 @@ import json
 import os
 from datetime import datetime
 
-from src.engine.loader import load_gamedata, DataValidationError
+from src.engine.loader import DataValidationError, load_gamedata
 from src.runner.runner_utils import (
+    DEFAULT_CAMPAIGN_ID,
     DEFAULT_CHARACTER_ID,
-    DEFAULT_SCENE_ID,
     default_run_path,
     ensure_dir,
-    execute_scene_run,
+    execute_campaign_run,
     load_preset,
 )
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", type=str, default="data")
+    parser.add_argument("--campaign-id", type=str, default=DEFAULT_CAMPAIGN_ID)
     parser.add_argument("--character-id", type=str, default=DEFAULT_CHARACTER_ID)
-    parser.add_argument("--scene-id", type=str, default=DEFAULT_SCENE_ID)
     parser.add_argument("--prompt-format", type=str, default="json_only")
     parser.add_argument("--preset", type=str, default="default")
-
-    # model calling
     parser.add_argument(
         "--model-key",
         type=str,
@@ -30,65 +29,67 @@ def main():
     )
     parser.add_argument("--max-tokens", type=int, default=128)
     parser.add_argument("--temperature", type=float, default=0.0)
-
-    # logging
     parser.add_argument(
-    "--save-run",
-    type=str,
-    default=default_run_path("run_one"),
-    help="Path to save full run log as JSON. Defaults to runs/run_one_<timestamp>.json",
+        "--save-run",
+        type=str,
+        default=default_run_path("run_campaign"),
+        help="Path to save full campaign run log as JSON. Defaults to runs/run_campaign_<timestamp>.json",
     )
     args = parser.parse_args()
 
     try:
         gamedata = load_gamedata(args.data_dir)
-
         cfg = load_preset(args.preset)
 
-        scene_run = execute_scene_run(
+        campaign_run = execute_campaign_run(
             gamedata=gamedata,
+            campaign_id=args.campaign_id,
             character_id=args.character_id,
-            scene_id=args.scene_id,
             prompt_format=args.prompt_format,
             cfg=cfg,
             model_key=args.model_key,
             max_tokens=args.max_tokens,
             temperature=args.temperature,
         )
-        raw = scene_run["raw_model_output"]
-        verdict = scene_run["verdict"]
-        metadata = scene_run["metadata"]
 
-        print("\n=== MODEL OUTPUT ===")
-        print(raw)
+        print("\n=== CAMPAIGN RESULT ===")
+        print(
+            json.dumps(
+                {
+                    "campaign_id": campaign_run["campaign_id"],
+                    "character_id": campaign_run["character_id"],
+                    "final_outcome": campaign_run["final_outcome"],
+                    "final_reason": campaign_run["final_reason"],
+                    "stop_scene_id": campaign_run["stop_scene_id"],
+                    "scene_count_completed": len(campaign_run["scene_runs"]),
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
 
-        print("\n=== VERDICT ===")
-        print(json.dumps(verdict, indent=2, ensure_ascii=False))
-
-        print("\n=== METADATA ===")
-        print(json.dumps(metadata, indent=2, ensure_ascii=False))
-        
         if args.save_run:
             ensure_dir(os.path.dirname(args.save_run))
             runlog = {
                 "timestamp": datetime.utcnow().isoformat() + "Z",
                 "data_dir": args.data_dir,
+                "campaign_id": args.campaign_id,
                 "character_id": args.character_id,
-                "scene_id": args.scene_id,
                 "preset": args.preset,
                 "prompt_format": args.prompt_format,
-                **scene_run,
+                **campaign_run,
             }
             with open(args.save_run, "w", encoding="utf-8") as f:
                 json.dump(runlog, f, ensure_ascii=False, indent=2)
-            print(f"\nSaved run log to: {args.save_run}")
+            print(f"\nSaved campaign run log to: {args.save_run}")
 
     except DataValidationError as e:
-        print("✖ Data validation error:")
+        print("âœ– Data validation error:")
         print(e)
     except Exception as e:
         import traceback
-        print("✖ Unexpected error:")
+
+        print("âœ– Unexpected error:")
         print(e)
         traceback.print_exc()
 
