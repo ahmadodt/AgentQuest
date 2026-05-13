@@ -4,11 +4,11 @@ from src.engine.loader import DataValidationError, load_gamedata
 from src.runner.runner_utils import (
     execute_campaign_run,
     execute_scene_run,
-    load_preset,
 )
 from src.runner.streamlit_utils import (
     build_scene_result_rows,
     discover_local_models,
+    load_streamlit_run_settings,
     normalize_single_scene_run,
     rewrite_run_config_for_model,
 )
@@ -104,14 +104,16 @@ def main() -> None:
 
     try:
         rewrite_run_config_for_model(selected_model)
-        cfg = load_preset("default")
+        run_settings = load_streamlit_run_settings()
+        cfg = run_settings["preset_config"]
+        prompt_format = run_settings["prompt_format"]
 
         if run_mode == "campaign":
             run_result = execute_campaign_run(
                 gamedata=gamedata,
                 campaign_id=selected_campaign_id,
                 character_id=selected_character_id,
-                prompt_format="json_only",
+                prompt_format=prompt_format,
                 cfg=cfg,
                 model_key="",
                 max_tokens=128,
@@ -122,7 +124,7 @@ def main() -> None:
                 gamedata=gamedata,
                 character_id=selected_character_id,
                 scene_id=selected_scene_id,
-                prompt_format="json_only",
+                prompt_format=prompt_format,
                 cfg=cfg,
                 model_key="",
                 max_tokens=128,
@@ -135,6 +137,8 @@ def main() -> None:
         st.subheader("Run Summary")
         summary_payload = {
             "model": selected_model,
+            "preset": run_settings["preset_name"],
+            "prompt_format": prompt_format,
             "character_id": selected_character_id,
             "run_type": run_mode,
             "campaign_id": selected_campaign_id,

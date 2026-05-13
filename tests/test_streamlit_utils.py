@@ -3,6 +3,7 @@ import json
 from src.runner.streamlit_utils import (
     build_scene_result_rows,
     discover_local_models,
+    load_streamlit_run_settings,
     normalize_single_scene_run,
     rewrite_run_config_for_model,
 )
@@ -49,6 +50,30 @@ def test_rewrite_run_config_for_model_updates_relative_path_and_preserves_other_
 
     persisted = json.loads(config_path.read_text(encoding="utf-8"))
     assert persisted == updated
+
+
+def test_load_streamlit_run_settings_uses_preset_and_prompt_format_from_config(tmp_path, monkeypatch):
+    config_path = tmp_path / "run_config.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "backend": "llama_cpp",
+                "model": "../local_models/Qwen_Qwen3-4B-Q4_K_L.gguf",
+                "preset": "FULL_INFO",
+                "prompt_format": "json_only",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    sentinel = object()
+    monkeypatch.setattr("src.runner.streamlit_utils.load_preset", lambda preset_name: sentinel)
+
+    settings = load_streamlit_run_settings(str(config_path))
+
+    assert settings["preset_name"] == "FULL_INFO"
+    assert settings["prompt_format"] == "json_only"
+    assert settings["preset_config"] is sentinel
 
 
 def test_normalize_single_scene_run_wraps_scene_and_derives_summary(make_tool_call):
