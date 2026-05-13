@@ -10,3 +10,7 @@ venv/
 myenv/
 
 runs/
+# Raw external datasets
+data/raw/open5e/*.json
+# Generated converted datasets
+data/generated/open5e/*.json
