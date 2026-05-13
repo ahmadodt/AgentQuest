@@ -7,10 +7,13 @@ from src.runner.runner_utils import (
 )
 from src.runner.streamlit_utils import (
     build_scene_result_rows,
+    build_run_log_payload,
     discover_local_models,
+    discover_streamlit_presets,
     load_streamlit_run_settings,
     normalize_single_scene_run,
-    rewrite_run_config_for_model,
+    rewrite_run_config_for_streamlit_selection,
+    save_streamlit_run_log,
 )
 
 
@@ -42,6 +45,13 @@ def _render_scene_result(row: dict) -> None:
     if row["reason"]:
         st.caption(row["reason"])
 
+    with st.expander("Prompt Preview"):
+        for index, message in enumerate(row["messages"], start=1):
+            role = message.get("role", "?")
+            content = message.get("content", "")
+            st.markdown(f"**Message {index} ({role})**")
+            st.code(content or "", language="text")
+
     with st.expander("Validator Details"):
         st.json(row["verdict"])
 
@@ -63,10 +73,12 @@ def main() -> None:
     if not model_options:
         st.error("No GGUF models were found under local_models/.")
         return
+    preset_options = discover_streamlit_presets()
 
     characters = gamedata["raw"]["characters"]
     campaigns = gamedata["raw"]["campaigns"]
     scenes = gamedata["raw"]["scenes"]
+    run_settings = load_streamlit_run_settings()
 
     character_options = {f"{item['name']} ({item['character_id']})": item["character_id"] for item in characters}
     campaign_options = {f"{item['name']} ({item['campaign_id']})": item["campaign_id"] for item in campaigns}
@@ -76,16 +88,24 @@ def main() -> None:
     }
 
     with st.form("run_form"):
-        top_left, top_mid, top_right = st.columns(3)
+        top_left, top_mid, top_right, top_far_right = st.columns(4)
 
         with top_left:
             selected_model = st.selectbox("Model", model_options, index=0)
 
         with top_mid:
+            preset_index = (
+                preset_options.index(run_settings["preset_name"])
+                if run_settings["preset_name"] in preset_options
+                else 0
+            )
+            selected_preset = st.selectbox("Preset", preset_options, index=preset_index)
+
+        with top_right:
             selected_character_label = st.selectbox("Character", list(character_options.keys()), index=0)
             selected_character_id = character_options[selected_character_label]
 
-        with top_right:
+        with top_far_right:
             run_mode = st.selectbox("Run Type", ["campaign", "scene"], index=0)
 
         if run_mode == "campaign":
@@ -103,7 +123,10 @@ def main() -> None:
         return
 
     try:
-        rewrite_run_config_for_model(selected_model)
+        rewrite_run_config_for_streamlit_selection(
+            model_filename=selected_model,
+            preset_name=selected_preset,
+        )
         run_settings = load_streamlit_run_settings()
         cfg = run_settings["preset_config"]
         prompt_format = run_settings["prompt_format"]
@@ -133,6 +156,17 @@ def main() -> None:
             run_result = normalize_single_scene_run(scene_run)
 
         scene_rows = build_scene_result_rows(run_result["scene_runs"], gamedata)
+        runlog = build_run_log_payload(
+            run_mode=run_mode,
+            data_dir="data",
+            preset_name=run_settings["preset_name"],
+            prompt_format=prompt_format,
+            character_id=selected_character_id,
+            run_result=run_result,
+            campaign_id=selected_campaign_id,
+            scene_id=selected_scene_id,
+        )
+        saved_log_path = save_streamlit_run_log(run_mode, runlog)
 
         st.subheader("Run Summary")
         summary_payload = {
@@ -146,6 +180,7 @@ def main() -> None:
             "total_scenes_rendered": len(scene_rows),
             "final_outcome": run_result["final_outcome"],
             "stop_scene_id": run_result["stop_scene_id"],
+            "saved_run_log": saved_log_path,
         }
         st.json(summary_payload)
 

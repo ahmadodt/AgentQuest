@@ -1,14 +1,17 @@
 import json
 import os
+from datetime import datetime
 from typing import Any
 
 from src.models.config import DEFAULT_RUN_CONFIG_PATH, load_runtime_prompt_config
-from src.runner.runner_utils import load_preset
+from src.prompts.prompt_config import PromptConfig
+from src.runner.runner_utils import default_run_path, ensure_dir, load_preset
 
 
 DEFAULT_LOCAL_MODELS_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "local_models")
 )
+DEFAULT_STREAMLIT_PRESET = "BATTLE_PLAN"
 
 
 def discover_local_models(models_dir: str = DEFAULT_LOCAL_MODELS_DIR) -> list[str]:
@@ -23,19 +26,42 @@ def discover_local_models(models_dir: str = DEFAULT_LOCAL_MODELS_DIR) -> list[st
     return sorted(model_names)
 
 
+def discover_streamlit_presets() -> list[str]:
+    from src.prompts import presets  # type: ignore
+
+    preset_names = [
+        name
+        for name, value in vars(presets).items()
+        if name.isupper() and name != "DEFAULT_PRESET_NAME" and name != "PRESETS" and isinstance(value, PromptConfig)
+    ]
+
+    ordered = [DEFAULT_STREAMLIT_PRESET]
+    ordered.extend(sorted(name for name in preset_names if name != DEFAULT_STREAMLIT_PRESET))
+    return ordered
+
+
+def normalize_streamlit_preset_name(preset_name: str) -> str:
+    normalized = (preset_name or "").strip()
+    if not normalized or normalized == "default":
+        return DEFAULT_STREAMLIT_PRESET
+    return normalized
+
+
 def load_streamlit_run_settings(config_path: str = DEFAULT_RUN_CONFIG_PATH) -> dict[str, Any]:
     prompt_cfg = load_runtime_prompt_config(config_path)
+    preset_name = normalize_streamlit_preset_name(prompt_cfg.preset_name)
 
     return {
-        "preset_name": prompt_cfg.preset_name,
+        "preset_name": preset_name,
         "prompt_format": prompt_cfg.prompt_format,
-        "preset_config": load_preset(prompt_cfg.preset_name),
+        "preset_config": load_preset(preset_name),
     }
 
 
-def rewrite_run_config_for_model(
-    model_filename: str,
+def rewrite_run_config_for_streamlit_selection(
     *,
+    model_filename: str,
+    preset_name: str,
     config_path: str = DEFAULT_RUN_CONFIG_PATH,
     models_dir: str = DEFAULT_LOCAL_MODELS_DIR,
     backend: str = "llama_cpp",
@@ -59,12 +85,30 @@ def rewrite_run_config_for_model(
     updated = dict(raw)
     updated["backend"] = backend
     updated["model"] = relative_model_path
+    updated["preset"] = normalize_streamlit_preset_name(preset_name)
 
     with open(resolved_config_path, "w", encoding="utf-8") as f:
         json.dump(updated, f, ensure_ascii=False, indent=2)
         f.write("\n")
 
     return updated
+
+
+def rewrite_run_config_for_model(
+    model_filename: str,
+    *,
+    config_path: str = DEFAULT_RUN_CONFIG_PATH,
+    models_dir: str = DEFAULT_LOCAL_MODELS_DIR,
+    backend: str = "llama_cpp",
+) -> dict[str, Any]:
+    current_prompt_cfg = load_runtime_prompt_config(config_path)
+    return rewrite_run_config_for_streamlit_selection(
+        model_filename=model_filename,
+        preset_name=current_prompt_cfg.preset_name,
+        config_path=config_path,
+        models_dir=models_dir,
+        backend=backend,
+    )
 
 
 def normalize_single_scene_run(scene_run: dict) -> dict[str, Any]:
@@ -98,6 +142,7 @@ def build_scene_result_rows(scene_runs: list[dict], gamedata: dict) -> list[dict
                 "character_id": scene_run["character_id"],
                 "character_name": character.get("name", scene_run["character_id"]),
                 "raw_model_output": scene_run.get("raw_model_output", ""),
+                "messages": scene_run.get("messages", []),
                 "verdict": verdict,
                 "status": "success" if outcome == "success" else "failure",
                 "status_label": "Success" if outcome == "success" else "Failure",
@@ -106,3 +151,42 @@ def build_scene_result_rows(scene_runs: list[dict], gamedata: dict) -> list[dict
         )
 
     return rows
+
+
+def build_run_log_payload(
+    *,
+    run_mode: str,
+    data_dir: str,
+    preset_name: str,
+    prompt_format: str,
+    character_id: str,
+    run_result: dict,
+    campaign_id: str | None = None,
+    scene_id: str | None = None,
+) -> dict[str, Any]:
+    payload = {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "data_dir": data_dir,
+        "character_id": character_id,
+        "preset": preset_name,
+        "prompt_format": prompt_format,
+    }
+
+    if run_mode == "campaign":
+        payload["campaign_id"] = campaign_id
+    else:
+        payload["scene_id"] = scene_id
+
+    payload.update(run_result)
+    return payload
+
+
+def save_streamlit_run_log(run_mode: str, runlog: dict[str, Any]) -> str:
+    prefix = "run_campaign" if run_mode == "campaign" else "run_one"
+    save_path = default_run_path(prefix)
+    ensure_dir(os.path.dirname(save_path))
+
+    with open(save_path, "w", encoding="utf-8") as f:
+        json.dump(runlog, f, ensure_ascii=False, indent=2)
+
+    return save_path
