@@ -7,6 +7,16 @@ class DataValidationError(Exception):
     pass
 
 
+def _optional_load_json_file(path: str) -> dict | None:
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        raise DataValidationError(f"Invalid JSON in {path}: {e}") from e
+
+
 def _load_json_file(path: str) -> dict:
     if not os.path.exists(path):
         raise DataValidationError(f"Missing file: {path}")
@@ -44,6 +54,62 @@ def _index_by_id(items: list, id_key: str, ctx: str) -> dict:
         seen.add(_id)
         out[_id] = item
     return out
+
+
+def _resolve_runtime_data_dir(data_dir: str) -> str:
+    custom_dir = os.path.join(data_dir, "custom", "agentquest")
+    required_files = ["tools.json", "characters.json", "monsters.json", "scenes.json"]
+
+    if all(os.path.exists(os.path.join(custom_dir, name)) for name in required_files):
+        return custom_dir
+    return data_dir
+
+
+def _merge_records_by_id(custom_items: list, generated_items: list, id_key: str) -> list:
+    merged = {}
+    ordered_ids = []
+
+    for item in generated_items:
+        item_id = item[id_key]
+        merged[item_id] = item
+        ordered_ids.append(item_id)
+
+    for item in custom_items:
+        item_id = item[id_key]
+        if item_id not in merged:
+            ordered_ids.append(item_id)
+        merged[item_id] = item
+
+    return [merged[item_id] for item_id in ordered_ids]
+
+
+def _normalize_generated_monster(monster: dict) -> dict:
+    normalized = dict(monster)
+    normalized["origin"] = "generated"
+
+    interactions = dict(normalized.get("interactions") or {})
+    interactions.setdefault("escape_allowed", True)
+    normalized["interactions"] = interactions
+    return normalized
+
+
+def _normalize_custom_monster(monster: dict) -> dict:
+    normalized = dict(monster)
+    normalized["origin"] = "custom"
+    return normalized
+
+
+def _normalize_generated_spell(tool: dict) -> dict:
+    normalized = dict(tool)
+    normalized["origin"] = "generated"
+    normalized["tool_family"] = "spell"
+    return normalized
+
+
+def _normalize_custom_tool(tool: dict) -> dict:
+    normalized = dict(tool)
+    normalized["origin"] = "custom"
+    return normalized
 
 
 def _validate_tools(tools_root: dict) -> dict:
@@ -242,30 +308,68 @@ def _validate_scenes(scene_root: dict, monsters_by_id: dict) -> dict:
 
     return scenes_by_id
 
+
+def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict]:
+    runtime_data_dir = _resolve_runtime_data_dir(data_dir)
+    generated_data_dir = os.path.join(data_dir, "generated", "open5e")
+
+    tools_root = _load_json_file(os.path.join(runtime_data_dir, "tools.json"))
+    chars_root = _load_json_file(os.path.join(runtime_data_dir, "characters.json"))
+    monsters_root = _load_json_file(os.path.join(runtime_data_dir, "monsters.json"))
+    scenes_root = _load_json_file(os.path.join(runtime_data_dir, "scenes.json"))
+
+    custom_tools = [_normalize_custom_tool(tool) for tool in tools_root.get("tools", [])]
+    custom_monsters = [_normalize_custom_monster(monster) for monster in monsters_root.get("monsters", [])]
+
+    generated_monsters_root = _optional_load_json_file(os.path.join(generated_data_dir, "monsters.json")) or {}
+    generated_spells_root = _optional_load_json_file(os.path.join(generated_data_dir, "tools_spells.json")) or {}
+
+    generated_monsters = [
+        _normalize_generated_monster(monster)
+        for monster in generated_monsters_root.get("monsters", [])
+    ]
+    generated_spells = [
+        _normalize_generated_spell(tool)
+        for tool in generated_spells_root.get("tools", [])
+    ]
+
+    merged_tools_root = dict(tools_root)
+    merged_tools_root["tools"] = _merge_records_by_id(custom_tools, generated_spells, "tool_id")
+
+    merged_monsters_root = dict(monsters_root)
+    merged_monsters_root["monsters"] = _merge_records_by_id(
+        custom_monsters, generated_monsters, "monster_id"
+    )
+
+    return merged_tools_root, chars_root, merged_monsters_root, scenes_root
+
+
 def load_gamedata(data_dir: str = "data") -> dict:
     """
     Loads and validates all game JSON files, returning indexed maps for fast access.
     """
-    tools_path = os.path.join(data_dir, "tools.json")
-    chars_path = os.path.join(data_dir, "characters.json")
-    monsters_path = os.path.join(data_dir, "monsters.json")
-    scenes_path = os.path.join(data_dir, "scenes.json")
+    from src.prompts.projections import project_monster_for_llm, project_tool_for_llm
 
-    tools_root = _load_json_file(tools_path)
-    chars_root = _load_json_file(chars_path)
-    monsters_root = _load_json_file(monsters_path)
-    scenes_root = _load_json_file(scenes_path)
+    tools_root, chars_root, monsters_root, scenes_root = _load_merged_content(data_dir)
 
     tools_by_id = _validate_tools(tools_root)
     characters_by_id = _validate_characters(chars_root, tools_by_id)
     monsters_by_id = _validate_monsters(monsters_root)
     scenes_by_id = _validate_scenes(scenes_root, monsters_by_id)
+    llm_tools_by_id = {
+        tool_id: project_tool_for_llm(tool) for tool_id, tool in tools_by_id.items()
+    }
+    llm_monsters_by_id = {
+        monster_id: project_monster_for_llm(monster) for monster_id, monster in monsters_by_id.items()
+    }
 
     return {
         "tools_by_id": tools_by_id,
         "characters_by_id": characters_by_id,
         "monsters_by_id": monsters_by_id,
         "scenes_by_id": scenes_by_id,
+        "llm_tools_by_id": llm_tools_by_id,
+        "llm_monsters_by_id": llm_monsters_by_id,
         "raw": {
             "tools": tools_root.get("tools", []),
             "characters": chars_root.get("characters", []),

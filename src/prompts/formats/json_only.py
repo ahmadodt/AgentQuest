@@ -106,8 +106,13 @@ def build_json_only_messages(
 ) -> List[Dict[str, str]]:
     cfg = cfg or PromptConfig()
 
+    llm_tools_by_id = (gamedata or {}).get("llm_tools_by_id", {}) if gamedata else {}
+    llm_visible_tools = [
+        llm_tools_by_id.get(tool.get("tool_id"), tool) for tool in visible_tools
+    ]
+
     allowed_tool_ids = [t.get("tool_id", "") for t in visible_tools if t.get("tool_id")]
-    tool_block = render_tools_compact(visible_tools, cfg)
+    tool_block = render_tools_compact(llm_visible_tools, cfg)
 
     # Character
     char_lines = [
@@ -126,7 +131,11 @@ def build_json_only_messages(
     monster_block = ""
     if gamedata and cfg.monster_detail_level != "none":
         mid = scene.get("monster_id")
-        if mid and mid in gamedata.get("monsters_by_id", {}):
+        llm_monsters_by_id = gamedata.get("llm_monsters_by_id", {})
+        if mid and mid in llm_monsters_by_id:
+            monster = llm_monsters_by_id[mid]
+            monster_block = _render_monster(monster, cfg.monster_detail_level)
+        elif mid and mid in gamedata.get("monsters_by_id", {}):
             monster = gamedata["monsters_by_id"][mid]
             monster_block = _render_monster(monster, cfg.monster_detail_level)
 
