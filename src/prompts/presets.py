@@ -1,28 +1,11 @@
 from src.prompts.prompt_config import PromptConfig
 
-# Baseline: minimal narrative + tool schemas (inventory/traits included; as-is)
-MINIMAL = PromptConfig(
-    include_inventory=True,
-    include_traits=True,
 
-    include_scene_id=False,
-    include_title=False,
-    include_location=False,
-    include_narrative=True,
-    include_monster_id=True,
-    include_knowledge_level=False,
-    include_success_condition=True,
-    include_failure_condition=False,
-
-    monster_detail_level="none",
-
-    tools_include_label_emoji=False,
-    tools_include_constraints=False,
-    tools_include_effects=False,
-)
-
-# Baseline + monster basic (name/type/description)
-MONSTER_BASIC = PromptConfig(
+# Hard / learning mode:
+# The agent sees the scene, monster identity/basic description, and normal tool descriptions.
+# It does NOT see exact monster stats or tool effects.
+# Useful for narrative-only decisions and later "learn from failure" experiments.
+BLIND_ADVENTURER = PromptConfig(
     include_inventory=True,
     include_traits=True,
 
@@ -31,19 +14,49 @@ MONSTER_BASIC = PromptConfig(
     include_location=False,
     include_narrative=True,
     include_monster_id=True,
-    include_knowledge_level=True,
+    include_knowledge_level=False,
     include_success_condition=True,
     include_failure_condition=False,
 
+    # basic = monster name/type/description
     monster_detail_level="basic",
 
+    # normal visible tools: id, description, args/schema
     tools_include_label_emoji=False,
     tools_include_constraints=False,
     tools_include_effects=False,
 )
 
-# Baseline + monster stats (tags/weaknesses/resistances/immunities/special_rules/escape_allowed)
-MONSTER_STATS = PromptConfig(
+
+# Tool-focused mode:
+# Monster info stays minimal/basic, but the agent sees full tool information.
+# Useful to test whether failures come from not understanding the tools.
+TOOL_MANUAL = PromptConfig(
+    include_inventory=True,
+    include_traits=True,
+
+    include_scene_id=False,
+    include_title=True,
+    include_location=False,
+    include_narrative=True,
+    include_monster_id=True,
+    include_knowledge_level=False,
+    include_success_condition=True,
+    include_failure_condition=False,
+
+    monster_detail_level="basic",
+
+    tools_include_label_emoji=True,
+    tools_include_constraints=True,
+    tools_include_effects=True,
+)
+
+
+# Monster-focused mode:
+# The agent sees monster stats such as weaknesses, resistances, immunities,
+# and special rules, but tool effects are still not shown explicitly.
+# Useful to test if the model can map monster weaknesses to tool descriptions.
+SCOUT_REPORT = PromptConfig(
     include_inventory=True,
     include_traits=True,
 
@@ -63,13 +76,15 @@ MONSTER_STATS = PromptConfig(
     tools_include_effects=False,
 )
 
-# Baseline + monster interactions (everything in interactions beyond escape_allowed)
-# (This is what "full" really means in your monster schema.)
-MONSTER_FULL = PromptConfig(
+
+# Main benchmark mode:
+# The agent sees monster stats and tool effects.
+# This should be the default because the correct answer is mechanically inferable.
+BATTLE_PLAN = PromptConfig(
     include_inventory=True,
     include_traits=True,
 
-    include_scene_id=True,
+    include_scene_id=False,
     include_title=True,
     include_location=True,
     include_narrative=True,
@@ -78,56 +93,17 @@ MONSTER_FULL = PromptConfig(
     include_success_condition=True,
     include_failure_condition=True,
 
-    monster_detail_level="full",
-
-    tools_include_label_emoji=False,
-    tools_include_constraints=False,
-    tools_include_effects=False,
-)
-
-# Baseline + tool constraints revealed
-TOOL_CONSTRAINTS = PromptConfig(
-    include_inventory=True,
-    include_traits=True,
-
-    include_scene_id=False,
-    include_title=False,
-    include_location=False,
-    include_narrative=True,
-    include_monster_id=True,
-    include_knowledge_level=False,
-    include_success_condition=True,
-    include_failure_condition=False,
-
-    monster_detail_level="none",
-
-    tools_include_label_emoji=False,
-    tools_include_constraints=True,
-    tools_include_effects=False,
-)
-
-# Baseline + tool effects revealed
-TOOL_EFFECTS = PromptConfig(
-    include_inventory=True,
-    include_traits=True,
-
-    include_scene_id=False,
-    include_title=False,
-    include_location=False,
-    include_narrative=True,
-    include_monster_id=True,
-    include_knowledge_level=False,
-    include_success_condition=True,
-    include_failure_condition=False,
-
-    monster_detail_level="none",
+    monster_detail_level="stats",
 
     tools_include_label_emoji=False,
     tools_include_constraints=False,
     tools_include_effects=True,
 )
 
-# Overload: everything (scene meta + monster interactions + tool constraints + effects + label/emoji)
+
+# Full debug / upper-bound mode:
+# The agent sees everything: full monster interactions, exact tool constraints,
+# exact tool effects, labels, emojis, and all scene metadata.
 FULL_INFO = PromptConfig(
     include_inventory=True,
     include_traits=True,
@@ -148,14 +124,14 @@ FULL_INFO = PromptConfig(
     tools_include_effects=True,
 )
 
+
 PRESETS = {
-    "minimal": MINIMAL,
-    "monster_basic": MONSTER_BASIC,
-    "monster_stats": MONSTER_STATS,
-    "monster_full": MONSTER_FULL,
-    "tool_constraints": TOOL_CONSTRAINTS,
-    "tool_effects": TOOL_EFFECTS,
+    "blind_adventurer": BLIND_ADVENTURER,
+    "tool_manual": TOOL_MANUAL,
+    "scout_report": SCOUT_REPORT,
+    "battle_plan": BATTLE_PLAN,
     "full_info": FULL_INFO,
 }
 
-DEFAULT_PRESET_NAME = "minimal"
+
+DEFAULT_PRESET_NAME = "battle_plan"
