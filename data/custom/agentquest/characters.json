@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "characters": [
+    {
+      "character_id": "wizard.ember",
+      "name": "Ember",
+      "class": "Wizard",
+      "inventory": ["wand"],
+      "traits": [],
+      "tool_ids": [
+        "wizard.cast_fireball",
+        "wizard.arcane_shield",
+        "wizard.read_runes",
+        "common.run"
+      ]
+    },
+    {
+      "character_id": "knight.bram",
+      "name": "Bram",
+      "class": "Knight",
+      "inventory": ["sword", "shield"],
+      "traits": [],
+      "tool_ids": [
+        "knight.sword_slash",
+        "knight.shield_block",
+        "common.run"
+      ]
+    }
+  ]
+}
