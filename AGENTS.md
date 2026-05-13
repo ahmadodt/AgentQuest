@@ -22,7 +22,7 @@ Ignored model locations and file types:
 - `*.gguf`
 - `*.safetensors`
 - `*.bin`
-
+- `data\raw\open5e\*.json`
 Do not include model files in commits.
 
 ## Generated files

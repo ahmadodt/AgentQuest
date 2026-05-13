@@ -153,3 +153,16 @@ agentquest/
 |-- runs/
 `-- utils/
 ```
+
+
+
+NOtes :
+ So the clean mental model is:
+
+  - loader = load + merge + validate runtime data
+  - projector = shrink/runtime-to-LLM view
+  - prompt builder = assemble final messages using character, scene, monster info, and the visible tools for that character
+
+  One correction:
+  the “which tools this character can see” decision is mostly determined before prompt building, from the character’s tool_ids. The prompt builder renders the list it is given;
+  it does not decide eligibility by itself.

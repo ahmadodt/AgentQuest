@@ -1,10 +1,10 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "tools": [
     {
       "tool_id": "wizard.cast_fireball",
       "label": "Cast Fireball",
-      "description": "Launch a burst of flame at the target.",
+      "description": "Launch a powerful burst of flame at the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -20,10 +20,60 @@
       },
       "effects": {
         "damage_type": "fire",
-        "base_power": 6
+        "base_power": 8
       },
       "ui": {
         "emoji": "🔥"
+      }
+    },
+    {
+      "tool_id": "wizard.cast_ice_spear",
+      "label": "Cast Ice Spear",
+      "description": "Launch a sharp spear of ice at the target.",
+      "category": "attack",
+      "args": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string" }
+        },
+        "required": ["target"]
+      },
+      "constraints": {
+        "allowed_classes": ["Wizard"],
+        "required_inventory": ["wand"],
+        "forbidden_traits": ["low_mana"]
+      },
+      "effects": {
+        "damage_type": "cold",
+        "base_power": 6
+      },
+      "ui": {
+        "emoji": "🧊"
+      }
+    },
+    {
+      "tool_id": "wizard.cast_water_ball",
+      "label": "Cast Water Ball",
+      "description": "Throw a dense ball of water at the target.",
+      "category": "attack",
+      "args": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string" }
+        },
+        "required": ["target"]
+      },
+      "constraints": {
+        "allowed_classes": ["Wizard"],
+        "required_inventory": ["wand"],
+        "forbidden_traits": ["low_mana"]
+      },
+      "effects": {
+        "damage_type": "water",
+        "base_power": 5
+      },
+      "ui": {
+        "emoji": "💧"
       }
     },
     {
@@ -33,9 +83,7 @@
       "category": "defense",
       "args": {
         "type": "object",
-        "properties": {
-    
-        },
+        "properties": {},
         "required": []
       },
       "constraints": {
@@ -94,11 +142,86 @@
         "forbidden_traits": []
       },
       "effects": {
-        "damage_type": "physical",
+        "damage_type": "slashing",
         "base_power": 5
       },
       "ui": {
         "emoji": "⚔️"
+      }
+    },
+    {
+      "tool_id": "knight.mace_strike",
+      "label": "Mace Strike",
+      "description": "Strike the target with a heavy mace.",
+      "category": "attack",
+      "args": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string" }
+        },
+        "required": ["target"]
+      },
+      "constraints": {
+        "allowed_classes": ["Knight"],
+        "required_inventory": ["mace"],
+        "forbidden_traits": []
+      },
+      "effects": {
+        "damage_type": "bludgeoning",
+        "base_power": 5
+      },
+      "ui": {
+        "emoji": "🔨"
+      }
+    },
+    {
+      "tool_id": "knight.spear_thrust",
+      "label": "Spear Thrust",
+      "description": "Thrust a spear into the target.",
+      "category": "attack",
+      "args": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string" }
+        },
+        "required": ["target"]
+      },
+      "constraints": {
+        "allowed_classes": ["Knight"],
+        "required_inventory": ["spear"],
+        "forbidden_traits": []
+      },
+      "effects": {
+        "damage_type": "piercing",
+        "base_power": 4
+      },
+      "ui": {
+        "emoji": "🗡️"
+      }
+    },
+    {
+      "tool_id": "knight.throw_torch",
+      "label": "Throw Torch",
+      "description": "Throw a burning torch at the target.",
+      "category": "attack",
+      "args": {
+        "type": "object",
+        "properties": {
+          "target": { "type": "string" }
+        },
+        "required": ["target"]
+      },
+      "constraints": {
+        "allowed_classes": ["Knight"],
+        "required_inventory": ["torch"],
+        "forbidden_traits": []
+      },
+      "effects": {
+        "damage_type": "fire",
+        "base_power": 3
+      },
+      "ui": {
+        "emoji": "🔥"
       }
     },
     {
