@@ -7,6 +7,8 @@ from src.engine.loader import DataValidationError, load_gamedata
 from src.models.registry import build_handler
 from src.runner.runner_utils import (
     execute_scene_run,
+    execute_learning_campaign,
+    execute_learning_scene,
     get_campaign_scene_ids,
     get_visible_tools,
     load_preset,
@@ -35,6 +37,10 @@ CAMPAIGN_RESULTS_KEY = "aq_campaign_results"
 CAMPAIGN_HISTORY_KEY = "aq_campaign_history"
 CAMPAIGN_INDEX_KEY = "aq_campaign_current_index"
 CAMPAIGN_LOG_KEY = "aq_campaign_log_path"
+CAMPAIGN_NOTES_KEY = "aq_campaign_notes"
+CAMPAIGN_INITIAL_NOTES_KEY = "aq_campaign_initial_notes"
+CAMPAIGN_TOTAL_RETRIES_KEY = "aq_campaign_total_retries"
+CAMPAIGN_LEARNING_KEY = "aq_campaign_learning_enabled"
 SINGLE_SCENE_KEY = "aq_single_scene_result"
 SINGLE_LOG_KEY = "aq_single_scene_log_path"
 
@@ -58,11 +64,25 @@ def _campaign_signature(
     model_filename: str,
     preset_name: str,
     prompt_format: str,
-) -> tuple[str, str, str, str, str]:
-    return (campaign_id, character_id, model_filename, preset_name, prompt_format)
+    self_learning_enabled: bool,
+    per_scene_retry_limit: int,
+    total_retry_limit: int,
+    initial_notes: str,
+) -> tuple[str, str, str, str, str, bool, int, int, str]:
+    return (
+        campaign_id,
+        character_id,
+        model_filename,
+        preset_name,
+        prompt_format,
+        self_learning_enabled,
+        per_scene_retry_limit,
+        total_retry_limit,
+        initial_notes,
+    )
 
 
-def _ensure_campaign_state(signature: tuple[str, str, str, str, str]) -> None:
+def _ensure_campaign_state(signature: tuple[Any, ...]) -> None:
     if st.session_state.get(CAMPAIGN_SIGNATURE_KEY) == signature:
         return
 
@@ -71,14 +91,27 @@ def _ensure_campaign_state(signature: tuple[str, str, str, str, str]) -> None:
     st.session_state[CAMPAIGN_HISTORY_KEY] = []
     st.session_state[CAMPAIGN_INDEX_KEY] = 0
     st.session_state[CAMPAIGN_LOG_KEY] = ""
+    st.session_state[CAMPAIGN_NOTES_KEY] = ""
+    st.session_state[CAMPAIGN_INITIAL_NOTES_KEY] = ""
+    st.session_state[CAMPAIGN_TOTAL_RETRIES_KEY] = 0
+    st.session_state[CAMPAIGN_LEARNING_KEY] = False
 
 
-def _reset_campaign_state(signature: tuple[str, str, str, str, str]) -> None:
+def _reset_campaign_state(
+    signature: tuple[Any, ...],
+    *,
+    initial_notes: str = "",
+    self_learning_enabled: bool = False,
+) -> None:
     st.session_state[CAMPAIGN_SIGNATURE_KEY] = signature
     st.session_state[CAMPAIGN_RESULTS_KEY] = {}
     st.session_state[CAMPAIGN_HISTORY_KEY] = []
     st.session_state[CAMPAIGN_INDEX_KEY] = 0
     st.session_state[CAMPAIGN_LOG_KEY] = ""
+    st.session_state[CAMPAIGN_NOTES_KEY] = initial_notes
+    st.session_state[CAMPAIGN_INITIAL_NOTES_KEY] = initial_notes
+    st.session_state[CAMPAIGN_TOTAL_RETRIES_KEY] = 0
+    st.session_state[CAMPAIGN_LEARNING_KEY] = self_learning_enabled
 
 
 def _record_campaign_scene_result(scene_result: dict[str, Any]) -> None:
@@ -89,6 +122,17 @@ def _record_campaign_scene_result(scene_result: dict[str, Any]) -> None:
     history = list(st.session_state.get(CAMPAIGN_HISTORY_KEY, []))
     history.append(scene_result)
     st.session_state[CAMPAIGN_HISTORY_KEY] = history
+
+
+def _record_learning_scene_result(
+    scene_result: dict[str, Any],
+    *,
+    updated_notes: str,
+    retries_used_delta: int,
+) -> None:
+    _record_campaign_scene_result(scene_result)
+    st.session_state[CAMPAIGN_NOTES_KEY] = updated_notes
+    st.session_state[CAMPAIGN_TOTAL_RETRIES_KEY] = st.session_state.get(CAMPAIGN_TOTAL_RETRIES_KEY, 0) + retries_used_delta
 
 
 def _save_campaign_log(
@@ -123,6 +167,15 @@ def _save_campaign_log(
             "scenes_completed": scenes_completed,
             "campaign_completed": campaign_completed,
             "continue_on_failure": True,
+            "self_learning_enabled": st.session_state.get(CAMPAIGN_LEARNING_KEY, False),
+            "initial_notes": st.session_state.get(CAMPAIGN_INITIAL_NOTES_KEY, ""),
+            "final_notes": st.session_state.get(CAMPAIGN_NOTES_KEY, ""),
+            "total_retries_used": st.session_state.get(CAMPAIGN_TOTAL_RETRIES_KEY, 0),
+            "attempts": [
+                attempt
+                for scene_run in ordered_scene_runs
+                for attempt in scene_run.get("attempts", [])
+            ],
             "final_outcome": (
                 "success"
                 if campaign_completed and run_result["failed_scenes"] == 0
@@ -206,6 +259,53 @@ def _run_campaign_range(
         _record_campaign_scene_result(scene_result)
         st.session_state[CAMPAIGN_INDEX_KEY] = scene_index
         progress.progress(offset / total, text=f"Running {scene_ids[scene_index]}")
+
+    progress.empty()
+
+
+def _run_learning_campaign_range(
+    *,
+    gamedata: dict,
+    handler,
+    campaign_id: str,
+    character_id: str,
+    scene_ids: list[str],
+    start_index: int,
+    run_settings: dict[str, Any],
+    model_path: str,
+    per_scene_retry_limit: int,
+    total_retry_limit: int,
+) -> None:
+    progress = st.progress(0.0, text="Running self-learning campaign scenes...")
+    total = len(scene_ids) - start_index
+    for offset, scene_index in enumerate(range(start_index, len(scene_ids)), start=1):
+        learning_scene = execute_learning_scene(
+            gamedata=gamedata,
+            campaign_id=campaign_id,
+            character_id=character_id,
+            scene_id=scene_ids[scene_index],
+            scene_index=scene_index,
+            prompt_format=run_settings["prompt_format"],
+            cfg=run_settings["preset_config"],
+            model_key="",
+            max_tokens=128,
+            temperature=0.0,
+            current_notes=st.session_state.get(CAMPAIGN_NOTES_KEY, ""),
+            per_scene_retry_limit=per_scene_retry_limit,
+            total_retry_limit_remaining=max(
+                total_retry_limit - st.session_state.get(CAMPAIGN_TOTAL_RETRIES_KEY, 0),
+                0,
+            ),
+            model_path_override=model_path,
+            handler=handler,
+        )
+        _record_learning_scene_result(
+            learning_scene["scene_result"],
+            updated_notes=learning_scene["updated_notes"],
+            retries_used_delta=learning_scene["retries_used"],
+        )
+        st.session_state[CAMPAIGN_INDEX_KEY] = scene_index
+        progress.progress(offset / total, text=f"Learning on {scene_ids[scene_index]}")
 
     progress.empty()
 
@@ -296,6 +396,20 @@ def _render_scene_detail(
             st.markdown(f"**Message {index} ({message.get('role', '?')})**")
             st.code(message.get("content", ""), language="text")
 
+    if row and row.get("attempts"):
+        with st.expander("Learning Attempts"):
+            for attempt in row["attempts"]:
+                st.markdown(
+                    f"**Attempt {attempt.get('attempt_index', '?')}** "
+                    f"- `{attempt.get('status', 'UNKNOWN')}`"
+                )
+                st.code(attempt.get("raw_model_output") or "", language="json")
+                if attempt.get("reason"):
+                    st.caption(attempt["reason"])
+                if attempt.get("note_update"):
+                    st.markdown("**Updated Notes**")
+                    st.code(attempt["note_update"].get("updated_notes", ""), language="text")
+
 
 def _render_campaign_history(history_rows: list[dict[str, Any]]) -> None:
     st.subheader("Campaign History")
@@ -364,6 +478,10 @@ def _render_campaign_mode(
     model_filename: str,
     character_id: str,
     campaign_id: str,
+    self_learning_enabled: bool,
+    per_scene_retry_limit: int,
+    total_retry_limit: int,
+    initial_notes: str,
 ) -> None:
     scene_ids = get_campaign_scene_ids(gamedata, campaign_id)
     signature = _campaign_signature(
@@ -372,8 +490,22 @@ def _render_campaign_mode(
         model_filename=model_filename,
         preset_name=run_settings["preset_name"],
         prompt_format=run_settings["prompt_format"],
+        self_learning_enabled=self_learning_enabled,
+        per_scene_retry_limit=per_scene_retry_limit,
+        total_retry_limit=total_retry_limit,
+        initial_notes=initial_notes,
     )
     _ensure_campaign_state(signature)
+    if st.session_state.get(CAMPAIGN_SIGNATURE_KEY) != signature:
+        _reset_campaign_state(
+            signature,
+            initial_notes=initial_notes,
+            self_learning_enabled=self_learning_enabled,
+        )
+    if st.session_state.get(CAMPAIGN_INITIAL_NOTES_KEY, "") == "" and initial_notes:
+        st.session_state[CAMPAIGN_INITIAL_NOTES_KEY] = initial_notes
+        st.session_state[CAMPAIGN_NOTES_KEY] = initial_notes
+    st.session_state[CAMPAIGN_LEARNING_KEY] = self_learning_enabled
 
     model_path = _model_path_from_filename(model_filename)
     handler = _get_cached_handler(model_path)
@@ -393,6 +525,13 @@ def _render_campaign_mode(
         help="Save the current campaign evaluation state as a run log.",
     )
 
+    if self_learning_enabled:
+        st.subheader("Learning Notes")
+        st.caption(
+            f"Total retries used: {st.session_state.get(CAMPAIGN_TOTAL_RETRIES_KEY, 0)} / {total_retry_limit}"
+        )
+        st.code(st.session_state.get(CAMPAIGN_NOTES_KEY, ""), language="text")
+
     if prev_scene:
         st.session_state[CAMPAIGN_INDEX_KEY] = max(0, current_scene_index - 1)
         st.rerun()
@@ -400,49 +539,112 @@ def _render_campaign_mode(
         st.session_state[CAMPAIGN_INDEX_KEY] = min(len(scene_ids) - 1, current_scene_index + 1)
         st.rerun()
     if reset_campaign:
-        _reset_campaign_state(signature)
+        _reset_campaign_state(
+            signature,
+            initial_notes=initial_notes if self_learning_enabled else "",
+            self_learning_enabled=self_learning_enabled,
+        )
         st.rerun()
     if run_full:
-        _reset_campaign_state(signature)
+        _reset_campaign_state(
+            signature,
+            initial_notes=initial_notes if self_learning_enabled else "",
+            self_learning_enabled=self_learning_enabled,
+        )
         with st.spinner("Running full campaign..."):
-            _run_campaign_range(
-                gamedata=gamedata,
-                handler=handler,
-                campaign_id=campaign_id,
-                character_id=character_id,
-                scene_ids=scene_ids,
-                start_index=0,
-                run_settings=run_settings,
-                model_path=model_path,
-            )
+            if self_learning_enabled:
+                _run_learning_campaign_range(
+                    gamedata=gamedata,
+                    handler=handler,
+                    campaign_id=campaign_id,
+                    character_id=character_id,
+                    scene_ids=scene_ids,
+                    start_index=0,
+                    run_settings=run_settings,
+                    model_path=model_path,
+                    per_scene_retry_limit=per_scene_retry_limit,
+                    total_retry_limit=total_retry_limit,
+                )
+            else:
+                _run_campaign_range(
+                    gamedata=gamedata,
+                    handler=handler,
+                    campaign_id=campaign_id,
+                    character_id=character_id,
+                    scene_ids=scene_ids,
+                    start_index=0,
+                    run_settings=run_settings,
+                    model_path=model_path,
+                )
         st.rerun()
     elif run_remaining:
         with st.spinner("Running remaining campaign scenes..."):
-            _run_campaign_range(
-                gamedata=gamedata,
-                handler=handler,
-                campaign_id=campaign_id,
-                character_id=character_id,
-                scene_ids=scene_ids,
-                start_index=st.session_state[CAMPAIGN_INDEX_KEY],
-                run_settings=run_settings,
-                model_path=model_path,
-            )
+            if self_learning_enabled:
+                _run_learning_campaign_range(
+                    gamedata=gamedata,
+                    handler=handler,
+                    campaign_id=campaign_id,
+                    character_id=character_id,
+                    scene_ids=scene_ids,
+                    start_index=st.session_state[CAMPAIGN_INDEX_KEY],
+                    run_settings=run_settings,
+                    model_path=model_path,
+                    per_scene_retry_limit=per_scene_retry_limit,
+                    total_retry_limit=total_retry_limit,
+                )
+            else:
+                _run_campaign_range(
+                    gamedata=gamedata,
+                    handler=handler,
+                    campaign_id=campaign_id,
+                    character_id=character_id,
+                    scene_ids=scene_ids,
+                    start_index=st.session_state[CAMPAIGN_INDEX_KEY],
+                    run_settings=run_settings,
+                    model_path=model_path,
+                )
         st.rerun()
     elif run_current:
         with st.spinner("Running current scene..."):
             scene_index = st.session_state[CAMPAIGN_INDEX_KEY]
-            scene_result = _run_campaign_scene(
-                gamedata=gamedata,
-                handler=handler,
-                campaign_id=campaign_id,
-                character_id=character_id,
-                scene_id=scene_ids[scene_index],
-                scene_index=scene_index,
-                run_settings=run_settings,
-                model_path=model_path,
-            )
-            _record_campaign_scene_result(scene_result)
+            if self_learning_enabled:
+                learning_scene = execute_learning_scene(
+                    gamedata=gamedata,
+                    campaign_id=campaign_id,
+                    character_id=character_id,
+                    scene_id=scene_ids[scene_index],
+                    scene_index=scene_index,
+                    prompt_format=run_settings["prompt_format"],
+                    cfg=run_settings["preset_config"],
+                    model_key="",
+                    max_tokens=128,
+                    temperature=0.0,
+                    current_notes=st.session_state.get(CAMPAIGN_NOTES_KEY, ""),
+                    per_scene_retry_limit=per_scene_retry_limit,
+                    total_retry_limit_remaining=max(
+                        total_retry_limit - st.session_state.get(CAMPAIGN_TOTAL_RETRIES_KEY, 0),
+                        0,
+                    ),
+                    model_path_override=model_path,
+                    handler=handler,
+                )
+                _record_learning_scene_result(
+                    learning_scene["scene_result"],
+                    updated_notes=learning_scene["updated_notes"],
+                    retries_used_delta=learning_scene["retries_used"],
+                )
+            else:
+                scene_result = _run_campaign_scene(
+                    gamedata=gamedata,
+                    handler=handler,
+                    campaign_id=campaign_id,
+                    character_id=character_id,
+                    scene_id=scene_ids[scene_index],
+                    scene_index=scene_index,
+                    run_settings=run_settings,
+                    model_path=model_path,
+                )
+                _record_campaign_scene_result(scene_result)
         st.rerun()
     elif save_results:
         with st.spinner("Saving campaign evaluation run..."):
@@ -616,6 +818,19 @@ def main() -> None:
         if run_mode == "campaign":
             selected_campaign_label = st.selectbox("Campaign", list(campaign_options.keys()), index=0)
             selected_campaign_id = campaign_options[selected_campaign_label]
+            self_learning_enabled = st.checkbox("Self-learning agent", value=False)
+            learning_cols = st.columns(2)
+            with learning_cols[0]:
+                per_scene_retry_limit = st.number_input("Per-scene retry limit", min_value=0, max_value=10, value=3, step=1)
+            with learning_cols[1]:
+                total_retry_limit = st.number_input("Total retry limit", min_value=0, max_value=100, value=20, step=1)
+            initial_notes = ""
+            if self_learning_enabled:
+                initial_notes = st.text_area(
+                    "Initial notes",
+                    value="",
+                    help="Optional seed notes for this learning run.",
+                )
             resolve_campaign(gamedata, selected_campaign_id)
             _render_campaign_mode(
                 gamedata=gamedata,
@@ -623,6 +838,10 @@ def main() -> None:
                 model_filename=selected_model,
                 character_id=selected_character_id,
                 campaign_id=selected_campaign_id,
+                self_learning_enabled=self_learning_enabled,
+                per_scene_retry_limit=int(per_scene_retry_limit),
+                total_retry_limit=int(total_retry_limit),
+                initial_notes=initial_notes,
             )
         else:
             selected_scene_label = st.selectbox("Scene", list(scene_options.keys()), index=0)

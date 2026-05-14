@@ -31,7 +31,7 @@ python -m src.runner.preview_prompt --preset BATTLE_PLAN
 Save the prompt preview:
 
 ```bash
-python -m src.runner.preview_prompt --preset BATTLE_PLAN --save-json runs/prompt_preview.json
+python -m src.runner.preview_prompt --preset BLIND_ADVENTURER --save-json runs/prompt_preview.json
 ```
 
 ### Run One Scene
@@ -68,6 +68,12 @@ Evaluation-style example that continues after failures:
 python -m src.runner.run_campaign --campaign-id campaign.goblin_den_v1 --character-id knight.bram --continue-on-failure
 ```
 
+Self-learning example with note writing and retries:
+
+```bash
+python -m src.runner.run_campaign --campaign-id campaign.goblin_den_v1 --character-id knight.bram --preset BLIND_ADVENTURER --self-learning --per-scene-retry-limit 3 --total-retry-limit 20
+```
+
 ### Run The Streamlit Viewer
 
 Install Streamlit if it is not already available:
@@ -91,6 +97,7 @@ The viewer lets you choose:
 - either a campaign or a single scene
 
 The Streamlit app keeps the configured prompt settings from `configs/run_config.json`, uses the selected local GGUF model as a runtime override, and shows ordered campaign progress with per-scene PASS/FAIL results. If `preset` is omitted, it falls back to `BATTLE_PLAN`.
+Campaign mode also supports a self-learning run toggle that lets the same model update campaign notes after failed attempts and reuse them on retries.
 
 ### Runner Requirements
 

@@ -141,6 +141,123 @@ def summarize_scene_results(
     }
 
 
+def _normalize_learning_notes(notes: str, *, max_chars: int = 4000) -> str:
+    normalized = (notes or "").strip()
+    if len(normalized) <= max_chars:
+        return normalized
+    return normalized[:max_chars].rstrip()
+
+
+def _build_note_update_messages(
+    *,
+    scene: dict[str, Any],
+    character: dict[str, Any],
+    existing_notes: str,
+    scene_run: dict[str, Any],
+) -> list[dict[str, str]]:
+    system = (
+        "You maintain compact campaign notes for a learning agent.\n"
+        "Return ONLY a valid JSON object with exactly one key: notes.\n"
+        'Example: {"notes":"- note one\\n- note two"}\n'
+        "Revise the old notes conservatively. Keep only actionable lessons.\n"
+        "Remove redundant or incorrect notes. Keep the notes concise.\n"
+        "you cannot chnage the power of your actions.\n"
+    )
+    user = "\n\n".join(
+        [
+            "CHARACTER:\n"
+            f"- name: {character.get('name', scene_run.get('character_id', 'character'))}\n"
+            f"- class: {character.get('class', 'Unknown')}",
+            "SCENE:\n"
+            f"- scene_id: {scene.get('scene_id', scene_run['scene_id'])}\n"
+            f"- title: {scene.get('title', scene_run['scene_id'])}\n"
+            f"- monster_id: {scene.get('monster_id', '')}\n"
+            f"- narrative: {scene.get('narrative', '')}",
+            "OLD NOTES:\n" + (existing_notes or "(empty)"),
+            "FAILED ATTEMPT:\n"
+            f"- raw_model_output: {scene_run.get('raw_model_output', '')}\n"
+            f"- parsed_tool_call: {json.dumps(scene_run.get('parsed_tool_call') or {})}\n"
+            f"- status: {scene_run.get('status', 'FAIL')}\n"
+            f"- reason: {scene_run.get('reason', '')}",
+            "TASK:\n"
+            "Update the notes so the agent can do better on the next attempt or later scenes in this campaign.",
+        ]
+    )
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
+
+def _extract_updated_notes(raw_output: str, existing_notes: str) -> str:
+    raw_output = (raw_output or "").strip()
+    if not raw_output:
+        return existing_notes
+
+    try:
+        parsed = json.loads(raw_output)
+    except json.JSONDecodeError:
+        return _normalize_learning_notes(raw_output)
+
+    if isinstance(parsed, dict) and isinstance(parsed.get("notes"), str):
+        return _normalize_learning_notes(parsed["notes"])
+    return _normalize_learning_notes(raw_output)
+
+
+def execute_note_update(
+    *,
+    gamedata: dict,
+    character_id: str,
+    scene_id: str,
+    existing_notes: str,
+    scene_run: dict[str, Any],
+    model_key: str,
+    max_tokens: int,
+    temperature: float,
+    model_path_override: str | None = None,
+    handler=None,
+) -> dict[str, Any]:
+    character = resolve_character(gamedata, character_id)
+    scene = resolve_scene(gamedata, scene_id)
+    messages = _build_note_update_messages(
+        scene=scene,
+        character=character,
+        existing_notes=existing_notes,
+        scene_run=scene_run,
+    )
+    handler = handler or build_handler(model_key, model_path_override=model_path_override)
+    gen = handler.generate(messages, max_tokens=max_tokens, temperature=temperature)
+    raw = (gen.raw_text or "").strip()
+    updated_notes = _extract_updated_notes(raw, existing_notes)
+    return {
+        "scene_id": scene_id,
+        "character_id": character_id,
+        "old_notes": existing_notes,
+        "updated_notes": updated_notes,
+        "raw_model_output": raw,
+        "messages": messages,
+        "metadata": gen.metadata or {},
+    }
+
+
+def _finalize_scene_result(
+    *,
+    scene_result: dict[str, Any],
+    scene_attempts: list[dict[str, Any]],
+    notes_before_scene: str,
+    notes_after_scene: str,
+    retries_used: int,
+) -> dict[str, Any]:
+    final_scene_result = dict(scene_result)
+    final_scene_result["attempts"] = list(scene_attempts)
+    final_scene_result["attempt_count"] = len(scene_attempts)
+    final_scene_result["retry_count"] = retries_used
+    final_scene_result["notes_before_scene"] = notes_before_scene
+    final_scene_result["notes_after_scene"] = notes_after_scene
+    final_scene_result["resolved_after_learning"] = final_scene_result.get("status") == "PASS" and retries_used > 0
+    return final_scene_result
+
+
 def execute_scene_run(
     *,
     gamedata: dict,
@@ -154,6 +271,8 @@ def execute_scene_run(
     campaign_id: str | None = None,
     scene_index: int | None = None,
     model_path_override: str | None = None,
+    learning_notes: str = "",
+    attempt_index: int = 1,
     handler=None,
 ) -> dict:
     cfg = cfg or DEFAULT_PROMPT_CONFIG
@@ -167,6 +286,7 @@ def execute_scene_run(
         gamedata=gamedata,
         prompt_format=prompt_format,
         cfg=cfg,
+        learning_notes=learning_notes,
     )
 
     handler = handler or build_handler(model_key, model_path_override=model_path_override)
@@ -200,9 +320,121 @@ def execute_scene_run(
         "validation": verdict,
         "status": status,
         "reason": verdict.get("reason", ""),
+        "learning_notes": learning_notes,
+        "attempt_index": attempt_index,
         "metadata": metadata,
         "verdict": verdict,
         "scene_title": scene.get("title", scene_id),
+    }
+
+
+def execute_learning_scene(
+    *,
+    gamedata: dict,
+    campaign_id: str,
+    character_id: str,
+    scene_id: str,
+    scene_index: int,
+    prompt_format: str,
+    cfg: PromptConfig | None,
+    model_key: str,
+    max_tokens: int,
+    temperature: float,
+    current_notes: str = "",
+    per_scene_retry_limit: int = 3,
+    total_retry_limit_remaining: int = 20,
+    model_path_override: str | None = None,
+    handler=None,
+) -> dict[str, Any]:
+    cfg = cfg or DEFAULT_PROMPT_CONFIG
+    scene_attempts: list[dict[str, Any]] = []
+    notes = _normalize_learning_notes(current_notes)
+    notes_before_scene = notes
+    retries_used = 0
+    handler = handler or build_handler(model_key, model_path_override=model_path_override)
+
+    for attempt_index in range(1, per_scene_retry_limit + 2):
+        notes_before_attempt = notes
+        scene_run = execute_scene_run(
+            gamedata=gamedata,
+            campaign_id=campaign_id,
+            character_id=character_id,
+            scene_id=scene_id,
+            scene_index=scene_index,
+            prompt_format=prompt_format,
+            cfg=cfg,
+            model_key=model_key,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            model_path_override=model_path_override,
+            learning_notes=notes_before_attempt,
+            attempt_index=attempt_index,
+            handler=handler,
+        )
+        scene_run["notes_before_attempt"] = notes_before_attempt
+
+        if scene_run["status"] == "PASS":
+            scene_run["notes_after_attempt"] = notes_before_attempt
+            scene_attempts.append(scene_run)
+            final_scene_result = _finalize_scene_result(
+                scene_result=scene_run,
+                scene_attempts=scene_attempts,
+                notes_before_scene=notes_before_scene,
+                notes_after_scene=notes_before_attempt,
+                retries_used=retries_used,
+            )
+            return {
+                "scene_result": final_scene_result,
+                "updated_notes": notes_before_attempt,
+                "retries_used": retries_used,
+            }
+
+        note_update = execute_note_update(
+            gamedata=gamedata,
+            character_id=character_id,
+            scene_id=scene_id,
+            existing_notes=notes_before_attempt,
+            scene_run=scene_run,
+            model_key=model_key,
+            max_tokens=max(max_tokens, 256),
+            temperature=temperature,
+            model_path_override=model_path_override,
+            handler=handler,
+        )
+        notes = note_update["updated_notes"]
+        scene_run["note_update"] = note_update
+        scene_run["notes_after_attempt"] = notes
+        scene_attempts.append(scene_run)
+
+        if retries_used >= per_scene_retry_limit or retries_used >= total_retry_limit_remaining:
+            final_scene_result = _finalize_scene_result(
+                scene_result=scene_run,
+                scene_attempts=scene_attempts,
+                notes_before_scene=notes_before_scene,
+                notes_after_scene=notes,
+                retries_used=retries_used,
+            )
+            return {
+                "scene_result": final_scene_result,
+                "updated_notes": notes,
+                "retries_used": retries_used,
+            }
+
+        retries_used += 1
+        if retries_used > total_retry_limit_remaining:
+            break
+
+    final_scene_result = _finalize_scene_result(
+        scene_result=scene_attempts[-1],
+        scene_attempts=scene_attempts,
+        notes_before_scene=notes_before_scene,
+        notes_after_scene=notes,
+        retries_used=retries_used,
+    )
+    return {
+        "scene_result": final_scene_result,
+        "updated_notes": notes,
+        "retries_used": retries_used,
     }
 
 
@@ -283,6 +515,92 @@ def execute_campaign_run(
         "final_outcome": final_outcome,
         "final_reason": final_reason,
         "stop_scene_id": stop_scene_id,
+        "first_failed_scene_id": campaign_summary["first_failed_scene_id"],
+        "total_scenes": campaign_summary["total_scenes"],
+        "passed_scenes": campaign_summary["passed_scenes"],
+        "failed_scenes": campaign_summary["failed_scenes"],
+        "parse_failures": campaign_summary["parse_failures"],
+        "success_rate": campaign_summary["success_rate"],
+    }
+
+
+def execute_learning_campaign(
+    *,
+    gamedata: dict,
+    campaign_id: str,
+    character_id: str,
+    prompt_format: str,
+    cfg: PromptConfig | None,
+    model_key: str,
+    max_tokens: int,
+    temperature: float,
+    per_scene_retry_limit: int = 3,
+    total_retry_limit: int = 20,
+    initial_notes: str = "",
+    model_path_override: str | None = None,
+    handler=None,
+) -> dict[str, Any]:
+    campaign = resolve_campaign(gamedata, campaign_id)
+    scene_ids = get_campaign_scene_ids(gamedata, campaign_id)
+    handler = handler or build_handler(model_key, model_path_override=model_path_override)
+    scene_runs: list[dict[str, Any]] = []
+    total_retries_used = 0
+    notes = _normalize_learning_notes(initial_notes)
+
+    for scene_index, scene_id in enumerate(scene_ids):
+        scene_learning = execute_learning_scene(
+            gamedata=gamedata,
+            campaign_id=campaign_id,
+            character_id=character_id,
+            scene_id=scene_id,
+            scene_index=scene_index,
+            prompt_format=prompt_format,
+            cfg=cfg,
+            model_key=model_key,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            current_notes=notes,
+            per_scene_retry_limit=per_scene_retry_limit,
+            total_retry_limit_remaining=max(total_retry_limit - total_retries_used, 0),
+            model_path_override=model_path_override,
+            handler=handler,
+        )
+        scene_result = scene_learning["scene_result"]
+        scene_runs.append(scene_result)
+        notes = scene_learning["updated_notes"]
+        total_retries_used += scene_learning["retries_used"]
+
+    campaign_summary = summarize_scene_results(
+        scene_runs,
+        campaign_id=campaign_id,
+        character_id=character_id,
+        model=scene_runs[-1]["model"] if scene_runs else "",
+        total_scenes=len(scene_ids),
+    )
+    attempts = [attempt for scene_run in scene_runs for attempt in scene_run.get("attempts", [])]
+
+    return {
+        "campaign_id": campaign_id,
+        "campaign_name": campaign.get("name", campaign_id),
+        "character_id": character_id,
+        "model": campaign_summary["model"],
+        "scene_ids": scene_ids,
+        "scene_runs": scene_runs,
+        "ordered_scene_results": scene_runs,
+        "attempts": attempts,
+        "self_learning_enabled": True,
+        "initial_notes": _normalize_learning_notes(initial_notes),
+        "final_notes": notes,
+        "per_scene_retry_limit": per_scene_retry_limit,
+        "total_retry_limit": total_retry_limit,
+        "total_retries_used": total_retries_used,
+        "final_outcome": "success" if campaign_summary["failed_scenes"] == 0 else "failure",
+        "final_reason": (
+            "Learning campaign completed successfully"
+            if campaign_summary["failed_scenes"] == 0
+            else "Learning campaign completed with one or more failed scenes"
+        ),
+        "stop_scene_id": None,
         "first_failed_scene_id": campaign_summary["first_failed_scene_id"],
         "total_scenes": campaign_summary["total_scenes"],
         "passed_scenes": campaign_summary["passed_scenes"],
