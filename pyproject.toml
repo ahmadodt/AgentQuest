@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentquest"
+version = "0.1.0"
+description = "Playable AI-agent RPG for visible LLM tool use"
+requires-python = ">=3.10"
+dependencies = [
+    "streamlit",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
