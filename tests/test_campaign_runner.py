@@ -41,6 +41,7 @@ def test_execute_scene_run_uses_character_tool_ids_and_returns_scene_record(game
     assert scene_run["status"] == "PASS"
     assert scene_run["parsed_tool_call"]["tool_id"] == "common.run"
     assert scene_run["metadata"] == {"stub": True}
+    assert "prompt_messages" not in scene_run
 
 
 def test_execute_campaign_run_stops_on_first_non_success(gamedata, make_tool_call):

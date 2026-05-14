@@ -280,7 +280,6 @@ def execute_scene_run(
         "visible_tool_ids": visible_tool_ids,
         "visible_tools": visible_tools,
         "messages": messages,
-        "prompt_messages": messages,
         "raw_model_output": raw,
         "parsed_tool_call": parsed_tool_call,
         "validation": verdict,
