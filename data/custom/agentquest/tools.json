@@ -1,5 +1,5 @@
 {
-  "version": "1.2",
+  "version": "1.3",
   "tools": [
     {
       "tool_id": "wizard.cast_fireball",
@@ -22,7 +22,9 @@
       },
       "effects": {
         "damage_type": "fire",
-        "base_power": 8
+        "base_power": 8,
+        "combat_effect": true,
+        "effect_tags": ["ranged", "magical", "elemental_fire", "area"]
       },
       "ui": {
         "emoji": "🔥"
@@ -49,7 +51,9 @@
       },
       "effects": {
         "damage_type": "cold",
-        "base_power": 6
+        "base_power": 6,
+        "combat_effect": true,
+        "effect_tags": ["ranged", "magical", "elemental_cold", "single_target", "precise"]
       },
       "ui": {
         "emoji": "🧊"
@@ -76,10 +80,41 @@
       },
       "effects": {
         "damage_type": "water",
-        "base_power": 6
+        "base_power": 6,
+        "combat_effect": true,
+        "effect_tags": ["ranged", "magical", "elemental_water", "single_target"]
       },
       "ui": {
         "emoji": "💧"
+      }
+    },
+    {
+      "tool_id": "wizard.arcane_bolt",
+      "label": "Arcane Bolt",
+      "description": "Fire a focused bolt of raw magic. Useful when elemental damage is resisted or when a reliable magical strike is needed.",
+      "category": "attack",
+      "args": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": ["target"]
+      },
+      "constraints": {
+        "allowed_classes": ["Wizard"],
+        "required_inventory": ["wand"],
+        "forbidden_traits": ["low_mana"]
+      },
+      "effects": {
+        "damage_type": "magic",
+        "base_power": 6,
+        "combat_effect": true,
+        "effect_tags": ["ranged", "magical", "single_target", "reliable"]
+      },
+      "ui": {
+        "emoji": "✨"
       }
     },
     {
@@ -100,7 +135,8 @@
       "effects": {
         "defense_type": "magic",
         "mitigation": 5,
-        "combat_effect": false
+        "combat_effect": false,
+        "effect_tags": ["defense", "magical", "shield", "survival"]
       },
       "ui": {
         "emoji": "🛡️"
@@ -129,7 +165,8 @@
         "damage_type": "knowledge",
         "base_power": 1,
         "knowledge_gain": true,
-        "combat_effect": false
+        "combat_effect": false,
+        "effect_tags": ["knowledge", "puzzle", "runes", "inspection"]
       },
       "ui": {
         "emoji": "📜"
@@ -156,7 +193,9 @@
       },
       "effects": {
         "damage_type": "slashing",
-        "base_power": 5
+        "base_power": 5,
+        "combat_effect": true,
+        "effect_tags": ["melee", "physical", "blade", "single_target"]
       },
       "ui": {
         "emoji": "⚔️"
@@ -183,7 +222,9 @@
       },
       "effects": {
         "damage_type": "bludgeoning",
-        "base_power": 5
+        "base_power": 5,
+        "combat_effect": true,
+        "effect_tags": ["melee", "physical", "blunt", "armor_breaking", "single_target"]
       },
       "ui": {
         "emoji": "🔨"
@@ -210,7 +251,9 @@
       },
       "effects": {
         "damage_type": "piercing",
-        "base_power": 5
+        "base_power": 5,
+        "combat_effect": true,
+        "effect_tags": ["melee", "physical", "reach", "precise", "interrupt", "single_target"]
       },
       "ui": {
         "emoji": "🗡️"
@@ -237,10 +280,71 @@
       },
       "effects": {
         "damage_type": "fire",
-        "base_power": 4
+        "base_power": 4,
+        "combat_effect": true,
+        "effect_tags": ["ranged", "physical", "elemental_fire", "thrown", "light"]
       },
       "ui": {
         "emoji": "🔥"
+      }
+    },
+    {
+      "tool_id": "knight.throw_water_flask",
+      "label": "Throw Water Flask",
+      "description": "Throw a flask of water at the target. Useful against fire creatures and burning hazards.",
+      "category": "attack",
+      "args": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": ["target"]
+      },
+      "constraints": {
+        "allowed_classes": ["Knight"],
+        "required_inventory": ["water_flask"],
+        "forbidden_traits": []
+      },
+      "effects": {
+        "damage_type": "water",
+        "base_power": 5,
+        "combat_effect": true,
+        "effect_tags": ["ranged", "physical", "elemental_water", "thrown"]
+      },
+      "ui": {
+        "emoji": "💧"
+      }
+    },
+    {
+      "tool_id": "knight.inspect_runes",
+      "label": "Inspect Runes",
+      "description": "Carefully inspect runes, markings, clues, or inscriptions. Useful for simple knowledge-based encounters.",
+      "category": "utility",
+      "args": {
+        "type": "object",
+        "properties": {
+          "surface": {
+            "type": "string"
+          }
+        },
+        "required": ["surface"]
+      },
+      "constraints": {
+        "allowed_classes": ["Knight"],
+        "required_inventory": [],
+        "forbidden_traits": ["blinded"]
+      },
+      "effects": {
+        "damage_type": "knowledge",
+        "base_power": 1,
+        "knowledge_gain": true,
+        "combat_effect": false,
+        "effect_tags": ["knowledge", "puzzle", "runes", "inspection"]
+      },
+      "ui": {
+        "emoji": "🔎"
       }
     },
     {
@@ -266,7 +370,8 @@
       "effects": {
         "defense_type": "physical",
         "mitigation": 4,
-        "combat_effect": false
+        "combat_effect": false,
+        "effect_tags": ["defense", "physical", "shield", "block", "survival"]
       },
       "ui": {
         "emoji": "🛡️"
@@ -294,7 +399,8 @@
       },
       "effects": {
         "escape_attempt": true,
-        "combat_effect": false
+        "combat_effect": false,
+        "effect_tags": ["movement", "escape", "non_combat"]
       },
       "ui": {
         "emoji": "🏃"

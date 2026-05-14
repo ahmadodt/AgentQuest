@@ -1,5 +1,5 @@
 {
-  "version": "1.2",
+  "version": "1.3",
   "monsters": [
     {
       "monster_id": "goblin.street_cutpurse",
@@ -11,16 +11,11 @@
       "resistances": ["fire"],
       "immunities": [],
       "special_rules": ["basic_enemy"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "fire": 0.5
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 1.0,
-          "bludgeoning": 0.9,
-          "piercing": 1.0,
-          "fire": 0.5,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 5,
         "knowledge_tools_help": false,
         "escape_allowed": true
@@ -33,20 +28,13 @@
       "description": "A cursed stone figure that taunts intruders and yields only to understanding, not force.",
       "tags": ["tutorial", "knowledge", "construct", "puzzle_enemy"],
       "weaknesses": ["knowledge"],
-      "resistances": ["slashing", "bludgeoning", "piercing", "fire", "magic"],
+      "resistances": ["slashing", "bludgeoning", "piercing", "fire", "cold", "water", "magic"],
       "immunities": [],
       "special_rules": ["knowledge_encounter"],
+      "damage_profile": "knowledge_puzzle",
+      "damage_modifier_overrides": {},
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.2,
-          "bludgeoning": 0.3,
-          "piercing": 0.1,
-          "fire": 0.2,
-          "magic": 0.4,
-          "knowledge": 1.0
-        },
-        "min_power_to_defeat": 99,
+        "min_power_to_defeat": 1,
         "knowledge_tools_help": true,
         "escape_allowed": true
       }
@@ -61,18 +49,9 @@
       "resistances": ["slashing", "bludgeoning", "piercing"],
       "immunities": ["fire"],
       "special_rules": ["no_escape_guardian"],
+      "damage_profile": "fire_elemental",
+      "damage_modifier_overrides": {},
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.5,
-          "bludgeoning": 0.6,
-          "piercing": 0.5,
-          "fire": 0.0,
-          "cold": 1.0,
-          "water": 1.2,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": false
@@ -88,16 +67,11 @@
       "resistances": ["fire"],
       "immunities": [],
       "special_rules": ["basic_enemy"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "fire": 0.5
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 1.0,
-          "bludgeoning": 0.9,
-          "piercing": 1.0,
-          "fire": 0.5,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 5,
         "knowledge_tools_help": false,
         "escape_allowed": true
@@ -116,16 +90,15 @@
       "resistances": ["slashing", "bludgeoning", "piercing", "fire"],
       "immunities": [],
       "special_rules": ["weapon_resistant", "fluid_body"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "slashing": 0.5,
+        "bludgeoning": 0.6,
+        "piercing": 0.4,
+        "fire": 0.3,
+        "magic": 1.4
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.5,
-          "bludgeoning": 0.6,
-          "piercing": 0.4,
-          "fire": 0.3,
-          "magic": 1.4,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 7,
         "knowledge_tools_help": false,
         "escape_allowed": false
@@ -140,20 +113,15 @@
       "type": "elemental",
       "description": "A living blaze with a burning core. Fire only feeds it, and ordinary weapons barely hold its shape back.",
       "tags": ["elemental", "fire", "large", "guardian", "fire_immune"],
-      "weaknesses": ["magic"],
+      "weaknesses": ["cold", "water", "magic"],
       "resistances": ["slashing", "bludgeoning", "piercing"],
       "immunities": ["fire"],
       "special_rules": ["fire_immune", "weapon_resistant"],
+      "damage_profile": "fire_elemental",
+      "damage_modifier_overrides": {
+        "magic": 1.4
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.5,
-          "bludgeoning": 0.6,
-          "piercing": 0.5,
-          "fire": 0.0,
-          "magic": 1.4,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 7,
         "knowledge_tools_help": false,
         "escape_allowed": false
@@ -172,16 +140,14 @@
       "resistances": ["slashing", "bludgeoning", "piercing"],
       "immunities": [],
       "special_rules": ["shadow_body", "light_sensitive"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "slashing": 0.6,
+        "bludgeoning": 0.5,
+        "piercing": 0.7,
+        "fire": 1.5
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.6,
-          "bludgeoning": 0.5,
-          "piercing": 0.7,
-          "fire": 1.5,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 5,
         "knowledge_tools_help": false,
         "escape_allowed": true
@@ -200,16 +166,12 @@
       "resistances": ["slashing", "fire"],
       "immunities": [],
       "special_rules": ["armored_boss", "resists_basic_attacks"],
+      "damage_profile": "armored",
+      "damage_modifier_overrides": {
+        "piercing": 0.9,
+        "fire": 0.2
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.7,
-          "bludgeoning": 1.3,
-          "piercing": 0.9,
-          "fire": 0.2,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": false
@@ -228,16 +190,14 @@
       "resistances": ["slashing", "bludgeoning"],
       "immunities": [],
       "special_rules": ["fire_causes_explosion", "careful_attack_required"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "slashing": 0.8,
+        "bludgeoning": 0.7,
+        "piercing": 1.2,
+        "fire": 0.0
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.8,
-          "bludgeoning": 0.7,
-          "piercing": 1.2,
-          "fire": 0.0,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": true
@@ -256,16 +216,13 @@
       "resistances": ["slashing", "piercing", "fire"],
       "immunities": [],
       "special_rules": ["armor_resists_blades"],
+      "damage_profile": "armored",
+      "damage_modifier_overrides": {
+        "slashing": 0.8,
+        "piercing": 0.8,
+        "fire": 0.5
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.8,
-          "bludgeoning": 1.3,
-          "piercing": 0.8,
-          "fire": 0.5,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": false
@@ -284,16 +241,9 @@
       "resistances": ["slashing", "piercing", "fire"],
       "immunities": [],
       "special_rules": ["shielded", "break_guard_with_blunt_force"],
+      "damage_profile": "shielded",
+      "damage_modifier_overrides": {},
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.5,
-          "bludgeoning": 1.3,
-          "piercing": 0.6,
-          "fire": 0.4,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": true
@@ -312,16 +262,15 @@
       "resistances": ["fire", "bludgeoning"],
       "immunities": [],
       "special_rules": ["must_interrupt_casting", "reach_attack_preferred"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "slashing": 0.9,
+        "bludgeoning": 0.8,
+        "piercing": 1.3,
+        "fire": 0.5,
+        "magic": 0.8
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.9,
-          "bludgeoning": 0.8,
-          "piercing": 1.3,
-          "fire": 0.5,
-          "magic": 0.8,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": false
@@ -340,16 +289,14 @@
       "resistances": ["slashing"],
       "immunities": [],
       "special_rules": ["trained_guard"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "slashing": 0.8,
+        "bludgeoning": 1.1,
+        "piercing": 1.1,
+        "fire": 0.7
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.8,
-          "bludgeoning": 1.1,
-          "piercing": 1.1,
-          "fire": 0.7,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 5,
         "knowledge_tools_help": false,
         "escape_allowed": true
@@ -368,17 +315,13 @@
       "resistances": ["slashing", "piercing", "fire"],
       "immunities": [],
       "special_rules": ["elite_armor", "formation_leader"],
+      "damage_profile": "armored",
+      "damage_modifier_overrides": {
+        "piercing": 0.9,
+        "fire": 0.5
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.7,
-          "bludgeoning": 1.3,
-          "piercing": 0.9,
-          "fire": 0.5,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
-        "min_power_to_defeat": 7,
+        "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": false
       },
@@ -396,17 +339,15 @@
       "resistances": ["slashing", "piercing", "fire"],
       "immunities": [],
       "special_rules": ["boss_enemy", "requires_high_power"],
+      "damage_profile": "armored",
+      "damage_modifier_overrides": {
+        "slashing": 0.6,
+        "piercing": 0.8,
+        "fire": 0.4,
+        "magic": 1.2
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.6,
-          "bludgeoning": 1.3,
-          "piercing": 0.8,
-          "fire": 0.4,
-          "magic": 1.2,
-          "knowledge": 0.0
-        },
-        "min_power_to_defeat": 8,
+        "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": false
       },
@@ -424,17 +365,15 @@
       "resistances": ["slashing", "bludgeoning", "fire"],
       "immunities": [],
       "special_rules": ["mud_armor", "fire_resistant"],
+      "damage_profile": "armored",
+      "damage_modifier_overrides": {
+        "bludgeoning": 0.8,
+        "piercing": 1.3,
+        "fire": 0.2,
+        "magic": 1.2
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.7,
-          "bludgeoning": 0.8,
-          "piercing": 1.3,
-          "fire": 0.2,
-          "magic": 1.2,
-          "knowledge": 0.0
-        },
-        "min_power_to_defeat": 7,
+        "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": false
       },
@@ -452,16 +391,12 @@
       "resistances": ["bludgeoning"],
       "immunities": [],
       "special_rules": ["tiny_target"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "bludgeoning": 0.5,
+        "piercing": 1.2
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 1.0,
-          "bludgeoning": 0.5,
-          "piercing": 1.2,
-          "fire": 1.0,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 3,
         "knowledge_tools_help": false,
         "escape_allowed": true
@@ -480,17 +415,14 @@
       "resistances": ["slashing", "piercing", "bludgeoning"],
       "immunities": [],
       "special_rules": ["swarm_body", "weapon_resistant"],
+      "damage_profile": "swarm",
+      "damage_modifier_overrides": {
+        "bludgeoning": 0.6,
+        "fire": 1.5,
+        "magic": 1.3
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.5,
-          "bludgeoning": 0.6,
-          "piercing": 0.4,
-          "fire": 1.4,
-          "magic": 1.3,
-          "knowledge": 0.0
-        },
-        "min_power_to_defeat": 7,
+        "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": false
       },
@@ -508,16 +440,13 @@
       "resistances": ["bludgeoning"],
       "immunities": [],
       "special_rules": ["keep_distance"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "slashing": 0.9,
+        "bludgeoning": 0.7,
+        "piercing": 1.2
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.9,
-          "bludgeoning": 0.7,
-          "piercing": 1.2,
-          "fire": 1.0,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 5,
         "knowledge_tools_help": false,
         "escape_allowed": true
@@ -536,16 +465,9 @@
       "resistances": ["slashing", "piercing", "bludgeoning"],
       "immunities": [],
       "special_rules": ["swarm_body", "single_target_resistant"],
+      "damage_profile": "swarm",
+      "damage_modifier_overrides": {},
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.5,
-          "bludgeoning": 0.5,
-          "piercing": 0.4,
-          "fire": 1.5,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 5,
         "knowledge_tools_help": false,
         "escape_allowed": true
@@ -564,16 +486,15 @@
       "resistances": ["slashing", "bludgeoning", "fire"],
       "immunities": [],
       "special_rules": ["resists_common_weapons", "precision_attack_preferred"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "slashing": 0.6,
+        "bludgeoning": 0.7,
+        "piercing": 1.2,
+        "fire": 0.6,
+        "magic": 1.3
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.6,
-          "bludgeoning": 0.7,
-          "piercing": 1.2,
-          "fire": 0.6,
-          "magic": 1.3,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": true
@@ -592,16 +513,14 @@
       "resistances": ["bludgeoning"],
       "immunities": [],
       "special_rules": ["disease_risk", "avoid_close_contact"],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "slashing": 0.8,
+        "bludgeoning": 0.7,
+        "piercing": 1.2,
+        "fire": 1.2
+      },
       "interactions": {
-        "damage_type_modifiers": {
-          "physical": 0.0,
-          "slashing": 0.8,
-          "bludgeoning": 0.7,
-          "piercing": 1.2,
-          "fire": 1.2,
-          "magic": 1.0,
-          "knowledge": 0.0
-        },
         "min_power_to_defeat": 5,
         "knowledge_tools_help": false,
         "escape_allowed": true

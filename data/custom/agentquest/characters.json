@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "characters": [
     {
       "character_id": "wizard.ember",
@@ -11,6 +11,7 @@
         "wizard.cast_fireball",
         "wizard.cast_ice_spear",
         "wizard.cast_water_ball",
+        "wizard.arcane_bolt",
         "wizard.arcane_shield",
         "wizard.read_runes",
         "common.run"
@@ -20,13 +21,15 @@
       "character_id": "knight.bram",
       "name": "Bram",
       "class": "Knight",
-      "inventory": ["sword", "shield", "mace", "spear", "torch"],
+      "inventory": ["sword", "shield", "mace", "spear", "torch", "water_flask"],
       "traits": [],
       "tool_ids": [
         "knight.sword_slash",
         "knight.mace_strike",
         "knight.spear_thrust",
         "knight.throw_torch",
+        "knight.throw_water_flask",
+        "knight.inspect_runes",
         "knight.shield_block",
         "common.run"
       ]

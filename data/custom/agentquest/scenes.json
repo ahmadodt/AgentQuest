@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "scenes": [
     {
       "scene_id": "scene.tutorial.001_goblin_alley",
@@ -17,6 +17,12 @@
       "failure_condition": {
         "type": "not_defeated"
       },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
+      },
       "ui": {
         "monster_image_key": "goblin",
         "background_image_key": "alley"
@@ -28,7 +34,7 @@
       "location": "Dungeon Antechamber",
       "monster_id": "cursed.whispering_statue",
       "narrative": "An ancient statue whispers your name. Strange runes glow faintly on the wall beside it.",
-      "knowledge_level": "high",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -38,6 +44,12 @@
       },
       "failure_condition": {
         "type": "wrong_action"
+      },
+      "validation_rules": {
+        "mode": "knowledge_check",
+        "allow_escape_as_success": false,
+        "required_effect_tags": ["knowledge"],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "statue",
@@ -50,7 +62,7 @@
       "location": "Gate of Ash",
       "monster_id": "elemental.flame_sentinel",
       "narrative": "A towering flame elemental blocks the gate. The air ripples with heat. Running is not an option.",
-      "knowledge_level": "medium",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true,
         "no_escape": true
@@ -60,6 +72,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "flame_elemental",
@@ -82,6 +100,12 @@
       "failure_condition": {
         "type": "not_defeated"
       },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
+      },
       "ui": {
         "monster_image_key": "goblin",
         "background_image_key": "cave_entrance"
@@ -93,7 +117,7 @@
       "location": "Narrow Cave Passage",
       "monster_id": "open5e.monster.shadow-goblin",
       "narrative": "A shadowy goblin slips between broken stones, trying to strike before you can clearly see it.",
-      "knowledge_level": "medium",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -102,6 +126,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "shadow_goblin",
@@ -114,7 +144,7 @@
       "location": "Wooden Barricade",
       "monster_id": "open5e.monster.goblin-shieldbearer-a5e",
       "narrative": "A goblin shieldbearer braces behind a cracked wooden barricade, daring you to waste your attack.",
-      "knowledge_level": "medium",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -123,6 +153,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "goblin_shieldbearer",
@@ -135,7 +171,7 @@
       "location": "Goblin Potion Nook",
       "monster_id": "open5e.monster.goblin-alchemist-a5e",
       "narrative": "A goblin alchemist cackles beside bubbling bottles. One wrong move could make the whole cave explode.",
-      "knowledge_level": "high",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -144,6 +180,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": ["area_fire"]
       },
       "ui": {
         "monster_image_key": "goblin_alchemist",
@@ -156,7 +198,7 @@
       "location": "Cracked Stone Shrine",
       "monster_id": "open5e.monster.goblin-warlock-a5e",
       "narrative": "A goblin warlock chants before a broken idol, pulling dark sparks from the stone.",
-      "knowledge_level": "high",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -165,6 +207,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "goblin_warlock",
@@ -177,7 +225,7 @@
       "location": "Goblin Throne Room",
       "monster_id": "open5e.monster.goblin-boss-a5e",
       "narrative": "The goblin boss stands on a stolen chair like a throne, barking orders and pointing a jagged sword at you.",
-      "knowledge_level": "medium",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -186,6 +234,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "goblin_boss",
@@ -198,7 +252,7 @@
       "location": "Deep Goblin Den",
       "monster_id": "open5e.monster.dust-goblin-chieftain",
       "narrative": "The dust goblin chieftain rises from a cloud of ash, stronger and calmer than the others.",
-      "knowledge_level": "high",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -207,6 +261,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "dust_goblin_chieftain",
@@ -229,6 +289,12 @@
       "failure_condition": {
         "type": "not_defeated"
       },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
+      },
       "ui": {
         "monster_image_key": "rat",
         "background_image_key": "sewer_entrance"
@@ -240,7 +306,7 @@
       "location": "Waste Tunnel",
       "monster_id": "open5e.monster.diseased-giant-rat-a5e",
       "narrative": "A swollen giant rat blocks the tunnel, its teeth wet with something green and foul.",
-      "knowledge_level": "medium",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -249,6 +315,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "diseased_rat",
@@ -261,7 +333,7 @@
       "location": "Collapsed Sewer Hall",
       "monster_id": "open5e.monster.rat_swarm_of_rats_bf",
       "narrative": "Dozens of rats pour from cracks in the walls, moving as one hungry swarm.",
-      "knowledge_level": "medium",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -270,6 +342,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "rat_swarm",
@@ -292,6 +370,12 @@
       "failure_condition": {
         "type": "not_defeated"
       },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
+      },
       "ui": {
         "monster_image_key": "giant_rat",
         "background_image_key": "rat_nest"
@@ -303,7 +387,7 @@
       "location": "Hidden Sewer Chamber",
       "monster_id": "open5e.monster.wererat-a5e",
       "narrative": "A thin figure steps from the shadows, smiling with rat-like teeth and holding a curved knife.",
-      "knowledge_level": "high",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -312,6 +396,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "wererat",
@@ -324,7 +414,7 @@
       "location": "Sewer Throne Pit",
       "monster_id": "open5e.monster.rat-king",
       "narrative": "A mass of rats rises into a single horrible shape, crowned with bones and sewer gold.",
-      "knowledge_level": "high",
+      "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
       },
@@ -333,6 +423,12 @@
       },
       "failure_condition": {
         "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
       },
       "ui": {
         "monster_image_key": "rat_king",
