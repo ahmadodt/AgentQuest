@@ -28,7 +28,6 @@ BLIND_ADVENTURER = PromptConfig(
     tools_include_effects=False,
 )
 
-
 # Tool-focused mode:
 # Monster info stays minimal/basic, but the agent sees full tool information.
 # Useful to test whether failures come from not understanding the tools.

@@ -62,6 +62,12 @@ Example:
 python -m src.runner.run_campaign --campaign-id campaign.goblin_den_v1 --character-id knight.bram
 ```
 
+Evaluation-style example that continues after failures:
+
+```bash
+python -m src.runner.run_campaign --campaign-id campaign.goblin_den_v1 --character-id knight.bram --continue-on-failure
+```
+
 ### Run The Streamlit Viewer
 
 Install Streamlit if it is not already available:
@@ -73,17 +79,18 @@ pip install streamlit
 Launch the run viewer:
 
 ```bash
-streamlit run streamlit_app.py
+streamlit run src/app/ui_streamlit.py
 ```
 
 The viewer lets you choose:
 
 - a local GGUF model from `local_models/`
+- a campaign-first run flow with character selection
+- an optional single-scene mode
 - a character
 - either a campaign or a single scene
 
-When you run, it updates `configs/run_config.json` to point at the selected model, then renders each scene result with the scene id, monster, character, model tool call, and success/failure verdict.
-The Streamlit app also reads `preset` and `prompt_format` from `configs/run_config.json` when building prompts. If `preset` is omitted, it falls back to `BATTLE_PLAN`.
+The Streamlit app keeps the configured prompt settings from `configs/run_config.json`, uses the selected local GGUF model as a runtime override, and shows ordered campaign progress with per-scene PASS/FAIL results. If `preset` is omitted, it falls back to `BATTLE_PLAN`.
 
 ### Runner Requirements
 

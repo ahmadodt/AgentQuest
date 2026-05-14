@@ -7,8 +7,12 @@ def build_handler(
     model_key: str | None = None,
     *,
     config_path: str = DEFAULT_RUN_CONFIG_PATH,
+    model_path_override: str | None = None,
 ) -> ModelHandler:
-    runtime_cfg = load_runtime_model_config(config_path)
+    runtime_cfg = load_runtime_model_config(
+        config_path,
+        model_path_override=model_path_override,
+    )
     backend_name = (model_key or runtime_cfg.backend).strip()
 
     if backend_name != runtime_cfg.backend:

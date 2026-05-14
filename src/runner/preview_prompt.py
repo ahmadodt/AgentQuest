@@ -1,19 +1,19 @@
 import argparse
 import json
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
-from src.engine.loader import load_gamedata, DataValidationError
+from src.engine.loader import DataValidationError, load_gamedata
 from src.prompts.base_prompt import build_messages
-from src.runner.runner_utils import DEFAULT_CHARACTER_ID, DEFAULT_SCENE_ID, load_preset
 from src.prompts.presets import DEFAULT_PRESET_NAME
+from src.runner.runner_utils import DEFAULT_CHARACTER_ID, DEFAULT_SCENE_ID, load_preset
 
 
 def _print_messages(messages: List[Dict[str, str]]) -> None:
     print("\n================ PROMPT PREVIEW ================\n")
-    for i, m in enumerate(messages, start=1):
-        role = m.get("role", "?")
-        content = m.get("content", "")
-        print(f"--- message {i} ({role}) ---\n{content}\n")
+    for index, message in enumerate(messages, start=1):
+        role = message.get("role", "?")
+        content = message.get("content", "")
+        print(f"--- message {index} ({role}) ---\n{content}\n")
 
 
 def main():
@@ -33,13 +33,11 @@ def main():
 
     try:
         gamedata = load_gamedata(args.data_dir)
-
         character = gamedata["characters_by_id"][args.character_id]
         scene = gamedata["scenes_by_id"][args.scene_id]
 
         visible_tool_ids = character["tool_ids"]
-        visible_tools = [gamedata["tools_by_id"][tid] for tid in visible_tool_ids]
-
+        visible_tools = [gamedata["tools_by_id"][tool_id] for tool_id in visible_tool_ids]
         cfg = load_preset(args.preset)
 
         messages = build_messages(
@@ -55,16 +53,16 @@ def main():
         _print_messages(messages)
 
         if args.save_json:
-            with open(args.save_json, "w", encoding="utf-8") as f:
-                json.dump(messages, f, ensure_ascii=False, indent=2)
+            with open(args.save_json, "w", encoding="utf-8") as file_obj:
+                json.dump(messages, file_obj, ensure_ascii=False, indent=2)
             print(f"\nSaved messages JSON to: {args.save_json}")
 
-    except DataValidationError as e:
-        print("✖ Data validation error:")
-        print(e)
-    except Exception as e:
-        print("✖ Unexpected error:")
-        print(e)
+    except DataValidationError as error:
+        print("Data validation error:")
+        print(error)
+    except Exception as error:
+        print("Unexpected error:")
+        print(error)
 
 
 if __name__ == "__main__":

@@ -28,7 +28,11 @@ def _resolve_model_path(config_path: str, model_path: str) -> str:
     return os.path.abspath(os.path.join(os.path.dirname(config_path), model_path))
 
 
-def load_runtime_model_config(config_path: str = DEFAULT_RUN_CONFIG_PATH) -> RuntimeModelConfig:
+def load_runtime_model_config(
+    config_path: str = DEFAULT_RUN_CONFIG_PATH,
+    *,
+    model_path_override: str | None = None,
+) -> RuntimeModelConfig:
     resolved_config_path = os.path.abspath(config_path)
 
     with open(resolved_config_path, "r", encoding="utf-8") as f:
@@ -38,11 +42,13 @@ def load_runtime_model_config(config_path: str = DEFAULT_RUN_CONFIG_PATH) -> Run
     if not isinstance(backend, str) or not backend.strip():
         raise ValueError("run_config.json must contain a non-empty string 'backend'.")
 
-    model_value = raw.get("model")
-    if not isinstance(model_value, str) or not model_value.strip():
-        raise ValueError("run_config.json must contain a non-empty string 'model'.")
-
-    model_path = _resolve_model_path(resolved_config_path, model_value.strip())
+    if model_path_override is not None:
+        model_path = os.path.abspath(model_path_override)
+    else:
+        model_value = raw.get("model")
+        if not isinstance(model_value, str) or not model_value.strip():
+            raise ValueError("run_config.json must contain a non-empty string 'model'.")
+        model_path = _resolve_model_path(resolved_config_path, model_value.strip())
 
     if not model_path.lower().endswith(".gguf"):
         raise ValueError(f"Configured model path must point to a .gguf file: {model_path}")

@@ -6,16 +6,30 @@ from typing import Any
 from src.models.config import (
     DEFAULT_RUN_CONFIG_PATH,
     DEFAULT_RUNTIME_PRESET_NAME,
+    load_runtime_model_config,
     load_runtime_prompt_config,
 )
 from src.prompts.prompt_config import PromptConfig
-from src.runner.runner_utils import default_run_path, ensure_dir, load_preset
+from src.runner.runner_utils import (
+    default_run_path,
+    ensure_dir,
+    get_campaign_scene_ids,
+    load_preset,
+    scene_status_from_verdict,
+)
 
 
 DEFAULT_LOCAL_MODELS_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "local_models")
 )
 DEFAULT_STREAMLIT_PRESET = DEFAULT_RUNTIME_PRESET_NAME
+DEFAULT_STREAMLIT_PRESET_ORDER = [
+    "BLIND_ADVENTURER",
+    "TOOL_MANUAL",
+    "SCOUT_REPORT",
+    "BATTLE_PLAN",
+    "FULL_INFO",
+]
 
 
 def discover_local_models(models_dir: str = DEFAULT_LOCAL_MODELS_DIR) -> list[str]:
@@ -33,14 +47,14 @@ def discover_local_models(models_dir: str = DEFAULT_LOCAL_MODELS_DIR) -> list[st
 def discover_streamlit_presets() -> list[str]:
     from src.prompts import presets  # type: ignore
 
-    preset_names = [
+    preset_names = {
         name
         for name, value in vars(presets).items()
         if name.isupper() and name != "DEFAULT_PRESET_NAME" and name != "PRESETS" and isinstance(value, PromptConfig)
-    ]
+    }
 
-    ordered = [DEFAULT_STREAMLIT_PRESET]
-    ordered.extend(sorted(name for name in preset_names if name != DEFAULT_STREAMLIT_PRESET))
+    ordered = [name for name in DEFAULT_STREAMLIT_PRESET_ORDER if name in preset_names]
+    ordered.extend(sorted(name for name in preset_names if name not in ordered))
     return ordered
 
 
@@ -54,11 +68,14 @@ def normalize_streamlit_preset_name(preset_name: str) -> str:
 def load_streamlit_run_settings(config_path: str = DEFAULT_RUN_CONFIG_PATH) -> dict[str, Any]:
     prompt_cfg = load_runtime_prompt_config(config_path)
     preset_name = normalize_streamlit_preset_name(prompt_cfg.preset_name)
+    model_cfg = load_runtime_model_config(config_path)
 
     return {
         "preset_name": preset_name,
         "prompt_format": prompt_cfg.prompt_format,
         "preset_config": load_preset(preset_name),
+        "model_path": model_cfg.model_path,
+        "backend": model_cfg.backend,
     }
 
 
@@ -117,8 +134,16 @@ def rewrite_run_config_for_model(
 
 def normalize_single_scene_run(scene_run: dict) -> dict[str, Any]:
     verdict = scene_run["verdict"]
+    status = scene_run.get("status") or scene_status_from_verdict(verdict)
     return {
         "scene_runs": [scene_run],
+        "ordered_scene_results": [scene_run],
+        "model": scene_run.get("model", ""),
+        "total_scenes": 1,
+        "passed_scenes": 1 if status == "PASS" else 0,
+        "failed_scenes": 0 if status == "PASS" else 1,
+        "parse_failures": 1 if status == "PARSE_ERROR" else 0,
+        "success_rate": 100.0 if status == "PASS" else 0.0,
         "final_outcome": verdict.get("outcome", "invalid"),
         "final_reason": verdict.get("reason", ""),
         "stop_scene_id": scene_run["scene_id"]
@@ -132,28 +157,73 @@ def build_scene_result_rows(scene_runs: list[dict], gamedata: dict) -> list[dict
 
     for scene_run in scene_runs:
         scene = gamedata["scenes_by_id"][scene_run["scene_id"]]
-        monster = gamedata["monsters_by_id"][scene["monster_id"]]
+        monster = gamedata["monsters_by_id"].get(scene["monster_id"], {})
         character = gamedata["characters_by_id"][scene_run["character_id"]]
-        verdict = scene_run["verdict"]
-        outcome = verdict.get("outcome", "invalid")
+        verdict = scene_run.get("verdict", {})
+        status = scene_run.get("status") or scene_status_from_verdict(verdict)
+        parsed_tool_call = scene_run.get("parsed_tool_call") or verdict.get("parsed_tool_call")
 
         rows.append(
             {
                 "scene_id": scene_run["scene_id"],
+                "scene_index": scene_run.get("scene_index"),
                 "scene_title": scene.get("title", scene_run["scene_id"]),
+                "scene_location": scene.get("location", ""),
+                "scene_narrative": scene.get("narrative", ""),
+                "scene_constraints": scene.get("constraints", {}),
                 "monster_id": scene["monster_id"],
                 "monster_name": monster.get("name", scene["monster_id"]),
+                "monster_type": monster.get("type", ""),
+                "monster_description": monster.get("description", ""),
+                "monster_interactions": monster.get("interactions", {}),
                 "character_id": scene_run["character_id"],
                 "character_name": character.get("name", scene_run["character_id"]),
+                "character_class": character.get("class", ""),
+                "character_inventory": character.get("inventory", []),
+                "character_traits": character.get("traits", []),
+                "visible_tool_ids": scene_run.get("visible_tool_ids", []),
+                "visible_tools": scene_run.get("visible_tools", []),
                 "raw_model_output": scene_run.get("raw_model_output", ""),
-                "messages": scene_run.get("messages", []),
+                "messages": scene_run.get("prompt_messages", scene_run.get("messages", [])),
+                "parsed_tool_call": parsed_tool_call,
+                "selected_tool_id": (parsed_tool_call or {}).get("tool_id"),
                 "verdict": verdict,
-                "status": "success" if outcome == "success" else "failure",
-                "status_label": "Success" if outcome == "success" else "Failure",
-                "reason": verdict.get("reason", ""),
+                "validation": scene_run.get("validation", verdict),
+                "model": scene_run.get("model", ""),
+                "status": status,
+                "status_label": status.replace("_", " "),
+                "reason": scene_run.get("reason", verdict.get("reason", "")),
             }
         )
 
+    return rows
+
+
+def build_campaign_progress_rows(
+    *,
+    gamedata: dict,
+    campaign_id: str,
+    scene_results_by_id: dict[str, dict[str, Any]],
+    current_scene_index: int | None = None,
+    running_scene_index: int | None = None,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for index, scene_id in enumerate(get_campaign_scene_ids(gamedata, campaign_id)):
+        scene = gamedata["scenes_by_id"][scene_id]
+        scene_result = scene_results_by_id.get(scene_id)
+        status = "RUNNING" if running_scene_index == index else "NOT_RUN"
+        if scene_result:
+            status = scene_result.get("status", status)
+
+        rows.append(
+            {
+                "scene_index": index,
+                "scene_id": scene_id,
+                "scene_title": scene.get("title", scene_id),
+                "status": status,
+                "is_current": current_scene_index == index,
+            }
+        )
     return rows
 
 
