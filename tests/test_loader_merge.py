@@ -2,7 +2,7 @@ import json
 import os
 
 from src.engine.loader import load_gamedata
-from src.prompts.base_prompt import build_messages
+from src.prompts.base_prompt import build_messages, build_note_update_messages
 from src.prompts.prompt_config import PromptConfig
 
 
@@ -382,6 +382,42 @@ def test_build_messages_includes_learning_notes_when_provided(tmp_path):
 
     assert "CAMPAIGN NOTES:" in messages[1]["content"]
     assert "Fire works better on sticky enemies." in messages[1]["content"]
+
+
+def test_build_note_update_messages_uses_prompt_visible_context_and_grounding_rules(tmp_path):
+    dataset = _base_custom_dataset()
+    _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)
+
+    gamedata = load_gamedata(str(tmp_path))
+    character = gamedata["characters_by_id"]["mage.aria"]
+    scene = gamedata["scenes_by_id"]["scene.slime"]
+    visible_tools = [gamedata["tools_by_id"][tool_id] for tool_id in character["tool_ids"]]
+    messages = build_note_update_messages(
+        scene=scene,
+        character=character,
+        visible_tools=visible_tools,
+        scene_run={
+            "scene_id": "scene.slime",
+            "raw_model_output": '{"tool_id":"mage.arc_bolt","arguments":{"target":"slime"}}',
+            "parsed_tool_call": {
+                "tool_id": "mage.arc_bolt",
+                "arguments": {"target": "slime"},
+            },
+            "status": "FAIL",
+            "reason": "The slime resisted the chosen approach.",
+        },
+        existing_notes="- Old note",
+        gamedata=gamedata,
+        cfg=PromptConfig(tools_include_constraints=True, tools_include_effects=True),
+    )
+
+    assert "Do not invent or change tool mechanics, damage, power, cooldowns, requirements, hidden stats, or monster rules." in messages[0]["content"]
+    assert "Do not introduce numeric thresholds unless they appear explicitly in the provided prompt-visible information." in messages[0]["content"]
+    assert "VISIBLE TOOLS (schemas):" in messages[1]["content"]
+    assert "A short custom attack." in messages[1]["content"]
+    assert '"base_power": 4' in messages[1]["content"]
+    assert "FAILED ATTEMPT:" in messages[1]["content"]
+    assert "OLD NOTES:\n- Old note" in messages[1]["content"]
 
 
 def test_load_gamedata_keeps_custom_only_flow_when_generated_content_is_absent(tmp_path):

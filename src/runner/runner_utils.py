@@ -5,7 +5,7 @@ from typing import Any
 
 from src.engine.validator import ToolCallValidator
 from src.models.registry import build_handler
-from src.prompts.base_prompt import build_messages
+from src.prompts.base_prompt import build_messages, build_note_update_messages
 from src.prompts.prompt_config import DEFAULT_PROMPT_CONFIG, PromptConfig
 from src.prompts.presets import DEFAULT_PRESET_NAME
 
@@ -148,46 +148,6 @@ def _normalize_learning_notes(notes: str, *, max_chars: int = 4000) -> str:
     return normalized[:max_chars].rstrip()
 
 
-def _build_note_update_messages(
-    *,
-    scene: dict[str, Any],
-    character: dict[str, Any],
-    existing_notes: str,
-    scene_run: dict[str, Any],
-) -> list[dict[str, str]]:
-    system = (
-        "You maintain compact campaign notes for a learning agent.\n"
-        "Return ONLY a valid JSON object with exactly one key: notes.\n"
-        'Example: {"notes":"- note one\\n- note two"}\n'
-        "Revise the old notes conservatively. Keep only actionable lessons.\n"
-        "Remove redundant or incorrect notes. Keep the notes concise.\n"
-    )
-    user = "\n\n".join(
-        [
-            "CHARACTER:\n"
-            f"- name: {character.get('name', scene_run.get('character_id', 'character'))}\n"
-            f"- class: {character.get('class', 'Unknown')}",
-            "SCENE:\n"
-            f"- scene_id: {scene.get('scene_id', scene_run['scene_id'])}\n"
-            f"- title: {scene.get('title', scene_run['scene_id'])}\n"
-            f"- monster_id: {scene.get('monster_id', '')}\n"
-            f"- narrative: {scene.get('narrative', '')}",
-            "OLD NOTES:\n" + (existing_notes or "(empty)"),
-            "FAILED ATTEMPT:\n"
-            f"- raw_model_output: {scene_run.get('raw_model_output', '')}\n"
-            f"- parsed_tool_call: {json.dumps(scene_run.get('parsed_tool_call') or {})}\n"
-            f"- status: {scene_run.get('status', 'FAIL')}\n"
-            f"- reason: {scene_run.get('reason', '')}",
-            "TASK:\n"
-            "Update the notes so the agent can do better on the next attempt or later scenes in this campaign.",
-        ]
-    )
-    return [
-        {"role": "system", "content": system},
-        {"role": "user", "content": user},
-    ]
-
-
 def _extract_updated_notes(raw_output: str, existing_notes: str) -> str:
     raw_output = (raw_output or "").strip()
     if not raw_output:
@@ -210,6 +170,8 @@ def execute_note_update(
     scene_id: str,
     existing_notes: str,
     scene_run: dict[str, Any],
+    prompt_format: str,
+    cfg: PromptConfig | None,
     model_key: str,
     max_tokens: int,
     temperature: float,
@@ -218,11 +180,16 @@ def execute_note_update(
 ) -> dict[str, Any]:
     character = resolve_character(gamedata, character_id)
     scene = resolve_scene(gamedata, scene_id)
-    messages = _build_note_update_messages(
+    _, _, visible_tools = get_visible_tools(gamedata, character_id)
+    messages = build_note_update_messages(
         scene=scene,
         character=character,
-        existing_notes=existing_notes,
+        visible_tools=visible_tools,
+        gamedata=gamedata,
+        prompt_format=prompt_format,
+        cfg=cfg,
         scene_run=scene_run,
+        existing_notes=existing_notes,
     )
     handler = handler or build_handler(model_key, model_path_override=model_path_override)
     gen = handler.generate(messages, max_tokens=max_tokens, temperature=temperature)
@@ -394,6 +361,8 @@ def execute_learning_scene(
             scene_id=scene_id,
             existing_notes=notes_before_attempt,
             scene_run=scene_run,
+            prompt_format=prompt_format,
+            cfg=cfg,
             model_key=model_key,
             max_tokens=max(max_tokens, 256),
             temperature=temperature,

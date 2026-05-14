@@ -101,6 +101,48 @@ def _render_scene(scene: Dict[str, Any], cfg: PromptConfig) -> str:
     return "\n".join(lines).strip()
 
 
+def _build_visible_tool_block(
+    visible_tools: List[Dict[str, Any]],
+    gamedata: Optional[Dict[str, Any]],
+    cfg: PromptConfig,
+) -> tuple[list[str], str]:
+    llm_tools_by_id = (gamedata or {}).get("llm_tools_by_id", {}) if gamedata else {}
+    llm_visible_tools = [
+        llm_tools_by_id.get(tool.get("tool_id"), tool) for tool in visible_tools
+    ]
+    allowed_tool_ids = [t.get("tool_id", "") for t in visible_tools if t.get("tool_id")]
+    return allowed_tool_ids, render_tools_compact(llm_visible_tools, cfg)
+
+
+def _build_character_block(character: Dict[str, Any], cfg: PromptConfig) -> str:
+    char_lines = [
+        f"- name: {character.get('name', character.get('character_id', 'character'))}",
+        f"- class: {character.get('class', character.get('char_class', 'Unknown'))}",
+    ]
+    if cfg.include_inventory:
+        char_lines.append(f"- inventory: {json.dumps(character.get('inventory', []))}")
+    if cfg.include_traits:
+        char_lines.append(f"- traits: {json.dumps(character.get('traits', []))}")
+    return "\n".join(char_lines)
+
+
+def _build_monster_block(
+    scene: Dict[str, Any],
+    gamedata: Optional[Dict[str, Any]],
+    cfg: PromptConfig,
+) -> str:
+    if not gamedata or cfg.monster_detail_level == "none":
+        return ""
+
+    mid = scene.get("monster_id")
+    llm_monsters_by_id = gamedata.get("llm_monsters_by_id", {})
+    if mid and mid in llm_monsters_by_id:
+        return _render_monster(llm_monsters_by_id[mid], cfg.monster_detail_level)
+    if mid and mid in gamedata.get("monsters_by_id", {}):
+        return _render_monster(gamedata["monsters_by_id"][mid], cfg.monster_detail_level)
+    return ""
+
+
 def build_json_only_messages(
     scene: Dict[str, Any],
     character: Dict[str, Any],
@@ -110,39 +152,10 @@ def build_json_only_messages(
     learning_notes: str = "",
 ) -> List[Dict[str, str]]:
     cfg = cfg or PromptConfig()
-
-    llm_tools_by_id = (gamedata or {}).get("llm_tools_by_id", {}) if gamedata else {}
-    llm_visible_tools = [
-        llm_tools_by_id.get(tool.get("tool_id"), tool) for tool in visible_tools
-    ]
-
-    allowed_tool_ids = [t.get("tool_id", "") for t in visible_tools if t.get("tool_id")]
-    tool_block = render_tools_compact(llm_visible_tools, cfg)
-
-    # Character
-    char_lines = [
-        f"- name: {character.get('name', character.get('character_id', 'character'))}",
-        f"- class: {character.get('class', character.get('char_class', 'Unknown'))}",
-    ]
-    if cfg.include_inventory:
-        char_lines.append(f"- inventory: {json.dumps(character.get('inventory', []))}")
-    if cfg.include_traits:
-        char_lines.append(f"- traits: {json.dumps(character.get('traits', []))}")
-
-    # Scene
+    allowed_tool_ids, tool_block = _build_visible_tool_block(visible_tools, gamedata, cfg)
+    char_block = _build_character_block(character, cfg)
     scene_block = _render_scene(scene, cfg)
-
-    # Monster block (optional)
-    monster_block = ""
-    if gamedata and cfg.monster_detail_level != "none":
-        mid = scene.get("monster_id")
-        llm_monsters_by_id = gamedata.get("llm_monsters_by_id", {})
-        if mid and mid in llm_monsters_by_id:
-            monster = llm_monsters_by_id[mid]
-            monster_block = _render_monster(monster, cfg.monster_detail_level)
-        elif mid and mid in gamedata.get("monsters_by_id", {}):
-            monster = gamedata["monsters_by_id"][mid]
-            monster_block = _render_monster(monster, cfg.monster_detail_level)
+    monster_block = _build_monster_block(scene, gamedata, cfg)
 
     system = (
         "You are an assistant that must choose exactly ONE tool call.\n"
@@ -156,7 +169,7 @@ def build_json_only_messages(
     )
 
     user_parts: List[str] = []
-    user_parts.append("CHARACTER:\n" + "\n".join(char_lines))
+    user_parts.append("CHARACTER:\n" + char_block)
     user_parts.append("SCENE:\n" + scene_block)
 
     if monster_block:
@@ -179,6 +192,62 @@ def build_json_only_messages(
 
     user = "\n\n".join(user_parts) + "\n"
 
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
+
+def build_json_only_note_update_messages(
+    scene: Dict[str, Any],
+    character: Dict[str, Any],
+    visible_tools: List[Dict[str, Any]],
+    scene_run: Dict[str, Any],
+    existing_notes: str,
+    gamedata: Optional[Dict[str, Any]] = None,
+    cfg: Optional[PromptConfig] = None,
+) -> List[Dict[str, str]]:
+    cfg = cfg or PromptConfig()
+    allowed_tool_ids, tool_block = _build_visible_tool_block(visible_tools, gamedata, cfg)
+    char_block = _build_character_block(character, cfg)
+    scene_block = _render_scene(scene, cfg)
+    monster_block = _build_monster_block(scene, gamedata, cfg)
+    parsed_tool_call = scene_run.get("parsed_tool_call") or {}
+
+    system = (
+        "You maintain compact campaign notes for a learning agent.\n"
+        "Return ONLY a valid JSON object with exactly one key: notes.\n"
+        'Example: {"notes":"- note one\\n- note two"}\n'
+        "Keep only actionable lessons that are grounded in the provided prompt-visible information or the validator result.\n"
+        "Do not repeat the same lesson in different words.\n"
+        "Do not invent or change tool mechanics, damage, power, cooldowns, requirements, hidden stats, or monster rules.\n"
+        "Do not introduce numeric thresholds unless they appear explicitly in the provided prompt-visible information.\n"
+        "Prefer notes about failed tool choice, visible tool constraints or effects, visible monster traits, and scene-specific constraints.\n"
+        "If the failure only shows that one tool was wrong, note what to try or avoid next without guessing extra mechanics.\n"
+    )
+
+    user_parts: List[str] = []
+    user_parts.append("CHARACTER:\n" + char_block)
+    user_parts.append("SCENE:\n" + scene_block)
+    if monster_block:
+        user_parts.append("MONSTER INFO:\n" + monster_block)
+    user_parts.append("OLD NOTES:\n" + (existing_notes or "(empty)"))
+    user_parts.append(
+        "FAILED ATTEMPT:\n"
+        f"- selected_tool_id: {parsed_tool_call.get('tool_id', '')}\n"
+        f"- selected_arguments: {json.dumps(parsed_tool_call.get('arguments') or {})}\n"
+        f"- raw_model_output: {scene_run.get('raw_model_output', '')}\n"
+        f"- status: {scene_run.get('status', 'FAIL')}\n"
+        f"- reason: {scene_run.get('reason', '')}"
+    )
+    user_parts.append("ALLOWED tool_id values (JSON array):\n" + json.dumps(allowed_tool_ids))
+    user_parts.append("VISIBLE TOOLS (schemas):\n" + tool_block)
+    user_parts.append(
+        "TASK:\n"
+        "Revise the notes for the next attempt. Keep them short, non-redundant, and strictly tied to the information shown above."
+    )
+
+    user = "\n\n".join(user_parts) + "\n"
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
