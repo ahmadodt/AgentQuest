@@ -1,5 +1,5 @@
 from src.models.base import GenerationResult
-from src.runner.runner_utils import execute_campaign_run, execute_scene_run
+from src.runner.runner_utils import execute_campaign_run, execute_learning_campaign, execute_learning_scene, execute_scene_run
 
 
 class StubHandler:
@@ -134,3 +134,74 @@ def test_execute_campaign_run_succeeds_when_all_scenes_succeed(gamedata, make_to
     assert campaign_run["stop_scene_id"] is None
     assert campaign_run["passed_scenes"] == 3
     assert campaign_run["failed_scenes"] == 0
+
+
+def test_execute_learning_scene_retries_after_failure_and_updates_notes(gamedata, make_tool_call):
+    handler = StubHandler(
+        [
+            make_tool_call("wizard.arcane_shield", {}),
+            '{"notes":"- The runes scene needs a knowledge-oriented tool.\\n- Arcane Shield is not enough here."}',
+            make_tool_call("wizard.read_runes", {"surface": "wall"}),
+        ]
+    )
+
+    learning_scene = execute_learning_scene(
+        gamedata=gamedata,
+        campaign_id="campaign.tutorial_v1",
+        character_id="wizard.ember",
+        scene_id="scene.tutorial.002_runes_on_wall",
+        scene_index=1,
+        prompt_format="json_only",
+        cfg=None,
+        model_key="",
+        max_tokens=64,
+        temperature=0.0,
+        current_notes="",
+        per_scene_retry_limit=3,
+        total_retry_limit_remaining=5,
+        handler=handler,
+    )
+
+    scene_result = learning_scene["scene_result"]
+    assert scene_result["status"] == "PASS"
+    assert scene_result["attempt_count"] == 2
+    assert scene_result["retry_count"] == 1
+    assert learning_scene["retries_used"] == 1
+    assert "knowledge-oriented tool" in learning_scene["updated_notes"]
+    assert scene_result["attempts"][0]["note_update"]["updated_notes"] == learning_scene["updated_notes"]
+    assert scene_result["attempts"][1]["learning_notes"] == learning_scene["updated_notes"]
+
+
+def test_execute_learning_campaign_carries_notes_across_scenes(gamedata, make_tool_call):
+    handler = StubHandler(
+        [
+            make_tool_call("common.run", {"direction": "backtrack"}),
+            make_tool_call("wizard.arcane_shield", {}),
+            '{"notes":"- Use rune-reading on glowing walls or statues."}',
+            make_tool_call("wizard.read_runes", {"surface": "wall"}),
+            make_tool_call("wizard.cast_ice_spear", {"target": "flame sentinel"}),
+        ]
+    )
+
+    campaign_run = execute_learning_campaign(
+        gamedata=gamedata,
+        campaign_id="campaign.tutorial_v1",
+        character_id="wizard.ember",
+        prompt_format="json_only",
+        cfg=None,
+        model_key="",
+        max_tokens=64,
+        temperature=0.0,
+        per_scene_retry_limit=2,
+        total_retry_limit=5,
+        initial_notes="",
+        handler=handler,
+    )
+
+    assert campaign_run["self_learning_enabled"] is True
+    assert campaign_run["passed_scenes"] == 3
+    assert campaign_run["failed_scenes"] == 0
+    assert campaign_run["total_retries_used"] == 1
+    assert "Use rune-reading" in campaign_run["final_notes"]
+    assert len(campaign_run["attempts"]) == 4
+    assert campaign_run["scene_runs"][1]["resolved_after_learning"] is True
