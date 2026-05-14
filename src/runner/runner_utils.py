@@ -161,7 +161,6 @@ def _build_note_update_messages(
         'Example: {"notes":"- note one\\n- note two"}\n'
         "Revise the old notes conservatively. Keep only actionable lessons.\n"
         "Remove redundant or incorrect notes. Keep the notes concise.\n"
-        "you cannot chnage the power of your actions.\n"
     )
     user = "\n\n".join(
         [

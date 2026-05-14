@@ -363,6 +363,27 @@ def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_pat
     assert '- constraints: {"exactly_one_tool_call": true, "no_escape": true}' in full_messages[1]["content"]
 
 
+def test_build_messages_includes_learning_notes_when_provided(tmp_path):
+    dataset = _base_custom_dataset()
+    _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)
+
+    gamedata = load_gamedata(str(tmp_path))
+    character = gamedata["characters_by_id"]["mage.aria"]
+    scene = gamedata["scenes_by_id"]["scene.slime"]
+    visible_tools = [gamedata["tools_by_id"][tool_id] for tool_id in character["tool_ids"]]
+    messages = build_messages(
+        scene=scene,
+        character=character,
+        visible_tools=visible_tools,
+        gamedata=gamedata,
+        cfg=PromptConfig(),
+        learning_notes="- Fire works better on sticky enemies.",
+    )
+
+    assert "CAMPAIGN NOTES:" in messages[1]["content"]
+    assert "Fire works better on sticky enemies." in messages[1]["content"]
+
+
 def test_load_gamedata_keeps_custom_only_flow_when_generated_content_is_absent(tmp_path):
     dataset = _base_custom_dataset()
     _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)

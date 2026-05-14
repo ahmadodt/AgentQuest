@@ -11,6 +11,7 @@ def build_messages(
     gamedata: Optional[Dict[str, Any]] = None,
     prompt_format: str = "json_only",
     cfg: Optional[PromptConfig] = None,
+    learning_notes: str = "",
 ) -> List[Dict[str, str]]:
     cfg = cfg or DEFAULT_PROMPT_CONFIG
 
@@ -21,6 +22,7 @@ def build_messages(
             visible_tools=visible_tools,
             gamedata=gamedata,
             cfg=cfg,
+            learning_notes=learning_notes,
         )
 
     raise ValueError(f"Unknown prompt_format: {prompt_format}")

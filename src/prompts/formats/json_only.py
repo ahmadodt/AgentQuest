@@ -107,6 +107,7 @@ def build_json_only_messages(
     visible_tools: List[Dict[str, Any]],
     gamedata: Optional[Dict[str, Any]] = None,
     cfg: Optional[PromptConfig] = None,
+    learning_notes: str = "",
 ) -> List[Dict[str, str]]:
     cfg = cfg or PromptConfig()
 
@@ -160,6 +161,14 @@ def build_json_only_messages(
 
     if monster_block:
         user_parts.append("MONSTER INFO:\n" + monster_block)
+
+    if learning_notes.strip():
+        user_parts.append(
+            "CAMPAIGN NOTES:\n"
+            "These are notes from earlier failed attempts in this campaign. "
+            "Use them if they help, but still choose exactly one tool call.\n"
+            + learning_notes.strip()
+        )
 
     user_parts.append("ALLOWED tool_id values (JSON array):\n" + json.dumps(allowed_tool_ids))
     user_parts.append("VISIBLE TOOLS (schemas):\n" + tool_block)
