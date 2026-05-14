@@ -30,8 +30,7 @@ def test_discover_streamlit_presets_starts_with_battle_plan_and_hides_default():
     assert "FULL_INFO" in presets
 
 
-def test_normalize_streamlit_preset_name_maps_default_to_battle_plan():
-    assert normalize_streamlit_preset_name("default") == "BATTLE_PLAN"
+def test_normalize_streamlit_preset_name_uses_battle_plan_for_empty_only():
     assert normalize_streamlit_preset_name("") == "BATTLE_PLAN"
     assert normalize_streamlit_preset_name("FULL_INFO") == "FULL_INFO"
 
@@ -49,7 +48,7 @@ def test_rewrite_run_config_for_streamlit_selection_updates_model_and_preset_and
             {
                 "backend": "llama_cpp",
                 "model": "../local_models/old.gguf",
-                "preset": "default",
+                "preset": "BATTLE_PLAN",
                 "extra": "keep-me",
             }
         ),
@@ -124,30 +123,6 @@ def test_load_streamlit_run_settings_uses_preset_and_prompt_format_from_config(t
     assert settings["preset_name"] == "FULL_INFO"
     assert settings["prompt_format"] == "json_only"
     assert settings["preset_config"] is sentinel
-
-
-def test_load_streamlit_run_settings_maps_default_to_battle_plan(tmp_path, monkeypatch):
-    config_path = tmp_path / "run_config.json"
-    config_path.write_text(
-        json.dumps(
-            {
-                "backend": "llama_cpp",
-                "model": "../local_models/Qwen_Qwen3-4B-Q4_K_L.gguf",
-                "preset": "default",
-                "prompt_format": "json_only",
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    sentinel = object()
-    monkeypatch.setattr("src.runner.streamlit_utils.load_preset", lambda preset_name: sentinel)
-
-    settings = load_streamlit_run_settings(str(config_path))
-
-    assert settings["preset_name"] == "BATTLE_PLAN"
-    assert settings["preset_config"] is sentinel
-
 
 def test_normalize_single_scene_run_wraps_scene_and_derives_summary(make_tool_call):
     scene_run = {

@@ -328,6 +328,41 @@ def test_llm_tool_projection_shortens_generated_spell_description_and_prompt_use
     assert "source" not in user_message
 
 
+def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_path):
+    dataset = _base_custom_dataset()
+    dataset["monsters"]["monsters"][0]["interactions"]["escape_allowed"] = False
+    dataset["scenes"]["scenes"][0]["constraints"] = {
+        "exactly_one_tool_call": True,
+        "no_escape": True,
+    }
+    _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)
+
+    gamedata = load_gamedata(str(tmp_path))
+    character = gamedata["characters_by_id"]["mage.aria"]
+    scene = gamedata["scenes_by_id"]["scene.slime"]
+    visible_tools = [gamedata["tools_by_id"][tool_id] for tool_id in character["tool_ids"]]
+
+    from src.prompts.presets import BATTLE_PLAN, FULL_INFO
+
+    battle_messages = build_messages(
+        scene=scene,
+        character=character,
+        visible_tools=visible_tools,
+        gamedata=gamedata,
+        cfg=BATTLE_PLAN,
+    )
+    full_messages = build_messages(
+        scene=scene,
+        character=character,
+        visible_tools=visible_tools,
+        gamedata=gamedata,
+        cfg=FULL_INFO,
+    )
+
+    assert "- constraints:" not in battle_messages[1]["content"]
+    assert '- constraints: {"exactly_one_tool_call": true, "no_escape": true}' in full_messages[1]["content"]
+
+
 def test_load_gamedata_keeps_custom_only_flow_when_generated_content_is_absent(tmp_path):
     dataset = _base_custom_dataset()
     _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)

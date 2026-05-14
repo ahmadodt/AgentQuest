@@ -6,6 +6,7 @@ from src.engine.validator import ToolCallValidator
 from src.models.registry import build_handler
 from src.prompts.base_prompt import build_messages
 from src.prompts.prompt_config import DEFAULT_PROMPT_CONFIG, PromptConfig
+from src.prompts.presets import DEFAULT_PRESET_NAME
 
 
 DEFAULT_CHARACTER_ID = "knight.bram"
@@ -14,15 +15,12 @@ DEFAULT_CAMPAIGN_ID = "campaign.goblin_den_v1"
 
 
 def load_preset(preset_name: str) -> PromptConfig:
-    if preset_name == "default":
-        return DEFAULT_PROMPT_CONFIG
-
     try:
         from src.prompts import presets  # type: ignore
     except Exception as e:
         raise RuntimeError(
             "Could not import src/prompts/presets.py. "
-            "Create it (or use --preset default). "
+            f"Create it (or use --preset {DEFAULT_PRESET_NAME}). "
             f"Original error: {e}"
         )
 

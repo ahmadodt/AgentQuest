@@ -13,7 +13,7 @@ def _write_run_config(
     *,
     backend="llama_cpp",
     model="model.gguf",
-    preset="default",
+    preset="BATTLE_PLAN",
     prompt_format="json_only",
 ):
     model_path = tmp_path / model
@@ -53,7 +53,7 @@ def test_load_runtime_model_config_rejects_non_gguf_path(tmp_path):
             {
                 "backend": "llama_cpp",
                 "model": bad_model_path.name,
-                "preset": "default",
+                "preset": "BATTLE_PLAN",
                 "prompt_format": "json_only",
             }
         ),
@@ -71,7 +71,7 @@ def test_load_runtime_model_config_rejects_missing_model_file(tmp_path):
             {
                 "backend": "llama_cpp",
                 "model": "missing.gguf",
-                "preset": "default",
+                "preset": "BATTLE_PLAN",
                 "prompt_format": "json_only",
             }
         ),
@@ -166,5 +166,5 @@ def test_load_runtime_prompt_config_defaults_when_fields_missing(tmp_path):
 
     cfg = load_runtime_prompt_config(str(config_path))
 
-    assert cfg.preset_name == "default"
+    assert cfg.preset_name == "BATTLE_PLAN"
     assert cfg.prompt_format == "json_only"

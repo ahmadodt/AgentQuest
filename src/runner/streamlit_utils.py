@@ -3,7 +3,11 @@ import os
 from datetime import datetime
 from typing import Any
 
-from src.models.config import DEFAULT_RUN_CONFIG_PATH, load_runtime_prompt_config
+from src.models.config import (
+    DEFAULT_RUN_CONFIG_PATH,
+    DEFAULT_RUNTIME_PRESET_NAME,
+    load_runtime_prompt_config,
+)
 from src.prompts.prompt_config import PromptConfig
 from src.runner.runner_utils import default_run_path, ensure_dir, load_preset
 
@@ -11,7 +15,7 @@ from src.runner.runner_utils import default_run_path, ensure_dir, load_preset
 DEFAULT_LOCAL_MODELS_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "local_models")
 )
-DEFAULT_STREAMLIT_PRESET = "BATTLE_PLAN"
+DEFAULT_STREAMLIT_PRESET = DEFAULT_RUNTIME_PRESET_NAME
 
 
 def discover_local_models(models_dir: str = DEFAULT_LOCAL_MODELS_DIR) -> list[str]:
@@ -42,7 +46,7 @@ def discover_streamlit_presets() -> list[str]:
 
 def normalize_streamlit_preset_name(preset_name: str) -> str:
     normalized = (preset_name or "").strip()
-    if not normalized or normalized == "default":
+    if not normalized:
         return DEFAULT_STREAMLIT_PRESET
     return normalized
 

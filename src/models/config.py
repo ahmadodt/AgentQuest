@@ -2,6 +2,8 @@ import json
 import os
 from dataclasses import dataclass
 
+DEFAULT_RUNTIME_PRESET_NAME = "BATTLE_PLAN"
+DEFAULT_RUNTIME_PROMPT_FORMAT = "json_only"
 
 DEFAULT_RUN_CONFIG_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "configs", "run_config.json")
@@ -57,11 +59,11 @@ def load_runtime_prompt_config(config_path: str = DEFAULT_RUN_CONFIG_PATH) -> Ru
     with open(resolved_config_path, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
-    preset_name = raw.get("preset", "default")
+    preset_name = raw.get("preset", DEFAULT_RUNTIME_PRESET_NAME)
     if not isinstance(preset_name, str) or not preset_name.strip():
         raise ValueError("run_config.json field 'preset' must be a non-empty string when present.")
 
-    prompt_format = raw.get("prompt_format", "json_only")
+    prompt_format = raw.get("prompt_format", DEFAULT_RUNTIME_PROMPT_FORMAT)
     if not isinstance(prompt_format, str) or not prompt_format.strip():
         raise ValueError("run_config.json field 'prompt_format' must be a non-empty string when present.")
 

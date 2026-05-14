@@ -25,13 +25,13 @@ python -m src.runner.preview_prompt
 Example:
 
 ```bash
-python -m src.runner.preview_prompt --preset MINIMAL
+python -m src.runner.preview_prompt --preset BATTLE_PLAN
 ```
 
 Save the prompt preview:
 
 ```bash
-python -m src.runner.preview_prompt --preset MINIMAL --save-json runs/prompt_preview.json
+python -m src.runner.preview_prompt --preset BATTLE_PLAN --save-json runs/prompt_preview.json
 ```
 
 ### Run One Scene
@@ -83,7 +83,7 @@ The viewer lets you choose:
 - either a campaign or a single scene
 
 When you run, it updates `configs/run_config.json` to point at the selected model, then renders each scene result with the scene id, monster, character, model tool call, and success/failure verdict.
-The Streamlit app also reads `preset` and `prompt_format` from `configs/run_config.json` when building prompts. If `preset` is omitted, it falls back to `default`.
+The Streamlit app also reads `preset` and `prompt_format` from `configs/run_config.json` when building prompts. If `preset` is omitted, it falls back to `BATTLE_PLAN`.
 
 ### Runner Requirements
 

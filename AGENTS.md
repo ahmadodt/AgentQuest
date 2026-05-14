@@ -33,3 +33,6 @@ Treat these as generated/debug outputs unless explicitly requested:
 - `runs/*.jsonl`
 - `.pytest_cache/`
 - `__pycache__/`
+
+
+for git commits ues the already exisitng format for commmits: fix: or refactor: or feat: or docs:....

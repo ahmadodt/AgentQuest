@@ -16,6 +16,7 @@ class PromptConfig:
     include_knowledge_level: bool = True
     include_success_condition: bool = True
     include_failure_condition: bool = True
+    include_scene_constraints: bool = False
 
     # Monster detail: none | basic | stats | full
     monster_detail_level: str = "none"  # start conservative

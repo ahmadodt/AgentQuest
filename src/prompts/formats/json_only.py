@@ -93,7 +93,11 @@ def _render_scene(scene: Dict[str, Any], cfg: PromptConfig) -> str:
         if isinstance(fc, dict) and fc.get("type"):
             lines.append(f"- failure_condition: {fc['type']}")
 
-    # NOTE: scene["constraints"] intentionally NOT rendered (per your decision)
+    if cfg.include_scene_constraints:
+        constraints = scene.get("constraints")
+        if isinstance(constraints, dict):
+            lines.append(f"- constraints: {json.dumps(constraints)}")
+
     return "\n".join(lines).strip()
 
 
