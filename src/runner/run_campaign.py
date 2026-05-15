@@ -5,6 +5,7 @@ from datetime import datetime
 
 from src.engine.loader import DataValidationError, load_gamedata
 from src.models.config import load_runtime_model_config, load_runtime_prompt_config
+from src.runtime_paths import get_data_dir
 from src.runner.runner_utils import (
     DEFAULT_CAMPAIGN_ID,
     DEFAULT_CHARACTER_ID,
@@ -18,7 +19,7 @@ from src.runner.runner_utils import (
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-dir", type=str, default="data")
+    parser.add_argument("--data-dir", type=str, default=get_data_dir())
     parser.add_argument("--campaign-id", type=str, default=DEFAULT_CAMPAIGN_ID)
     parser.add_argument("--character-id", type=str, default=DEFAULT_CHARACTER_ID)
     parser.add_argument("--prompt-format", type=str, default="")

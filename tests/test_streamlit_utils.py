@@ -1,4 +1,5 @@
 import json
+import os
 
 from src.runner.streamlit_utils import (
     build_scene_result_rows,
@@ -12,6 +13,7 @@ from src.runner.streamlit_utils import (
     rewrite_run_config_for_streamlit_selection,
     save_streamlit_run_log,
 )
+from src.runner.runner_utils import default_run_path
 
 
 def test_discover_local_models_returns_sorted_gguf_only(tmp_path):
@@ -277,3 +279,12 @@ def test_save_streamlit_run_log_writes_json_file(monkeypatch, tmp_path):
 
     assert path.endswith("run_one_test.json")
     assert json.loads((tmp_path / "run_one_test.json").read_text(encoding="utf-8")) == {"ok": True}
+
+
+def test_default_run_path_uses_agentquest_runs_dir_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("AGENTQUEST_RUNS_DIR", str(tmp_path))
+
+    path = default_run_path("run_one")
+
+    assert os.path.dirname(path) == str(tmp_path)
+    assert os.path.basename(path).startswith("run_one_")

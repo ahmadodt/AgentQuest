@@ -85,7 +85,7 @@ pip install streamlit
 Launch the run viewer:
 
 ```bash
-streamlit run src/app/ui_streamlit.py
+streamlit run streamlit_app.py
 ```
 
 The viewer lets you choose:
@@ -98,6 +98,65 @@ The viewer lets you choose:
 
 The Streamlit app keeps the configured prompt settings from `configs/run_config.json`, uses the selected local GGUF model as a runtime override, and shows ordered campaign progress with per-scene PASS/FAIL results. If `preset` is omitted, it falls back to `BATTLE_PLAN`.
 Campaign mode also supports a self-learning run toggle that lets the same model update campaign notes after failed attempts and reuse them on retries.
+
+Environment overrides:
+
+- `AGENTQUEST_DATA_DIR` = runtime data root. Defaults to `data/`
+- `AGENTQUEST_MODEL_PATH` = GGUF file path used by the backend when no explicit runtime override is passed
+- `AGENTQUEST_RUNS_DIR` = directory for saved run logs. Defaults to `runs/`
+- `AGENTQUEST_MODELS_DIR` = optional model discovery directory for the Streamlit UI when `AGENTQUEST_MODEL_PATH` is not set
+
+## Docker
+
+The local/demo Docker flow runs the Streamlit app through `docker compose` and keeps models, data, and run logs on mounted host volumes.
+
+### Build
+
+Create a `.env` file from the example:
+
+```bash
+copy .env.example .env
+```
+
+Build the image:
+
+```bash
+docker compose build
+```
+
+### Run
+
+Start the app:
+
+```bash
+docker compose up
+```
+
+Then open:
+
+```text
+http://localhost:8501
+```
+
+### Mount Local Models
+
+The compose file mounts:
+
+- `./local_models` to `/app/local_models` (read-only)
+- `./data` to `/app/data`
+- `./runs` to `/app/runs`
+
+Set `AGENTQUEST_MODEL_PATH` in `.env` to the GGUF file you want to use inside the container, for example:
+
+```bash
+AGENTQUEST_MODEL_PATH=/app/local_models/Qwen_Qwen3-4B-Q4_K_L.gguf
+```
+
+`local_models/` is intentionally excluded from the Docker build context and is never copied into the image.
+
+### Logs And Run Outputs
+
+Saved run logs go to `AGENTQUEST_RUNS_DIR`, which defaults to `/app/runs` in Docker and is mounted to the host `./runs/` directory by `docker-compose.yml`.
 
 ### Runner Requirements
 

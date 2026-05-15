@@ -8,6 +8,7 @@ from src.models.registry import build_handler
 from src.prompts.base_prompt import build_messages, build_note_update_messages
 from src.prompts.prompt_config import DEFAULT_PROMPT_CONFIG, PromptConfig
 from src.prompts.presets import DEFAULT_PRESET_NAME
+from src.runtime_paths import get_runs_dir
 
 
 DEFAULT_CHARACTER_ID = "knight.bram"
@@ -48,7 +49,7 @@ def ensure_dir(dirpath: str) -> None:
 
 def default_run_path(prefix: str) -> str:
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    return os.path.join("runs", f"{prefix}_{timestamp}.json")
+    return os.path.join(get_runs_dir(), f"{prefix}_{timestamp}.json")
 
 
 def resolve_character(gamedata: dict, character_id: str) -> dict:

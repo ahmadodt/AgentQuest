@@ -10,6 +10,7 @@ from src.models.config import (
     load_runtime_prompt_config,
 )
 from src.prompts.prompt_config import PromptConfig
+from src.runtime_paths import get_local_models_dir
 from src.runner.runner_utils import (
     default_run_path,
     ensure_dir,
@@ -19,9 +20,7 @@ from src.runner.runner_utils import (
 )
 
 
-DEFAULT_LOCAL_MODELS_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "local_models")
-)
+DEFAULT_LOCAL_MODELS_DIR = get_local_models_dir()
 DEFAULT_STREAMLIT_PRESET = DEFAULT_RUNTIME_PRESET_NAME
 DEFAULT_STREAMLIT_PRESET_ORDER = [
     "BLIND_ADVENTURER",

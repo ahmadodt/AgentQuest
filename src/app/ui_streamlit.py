@@ -5,6 +5,7 @@ import streamlit as st
 
 from src.engine.loader import DataValidationError, load_gamedata
 from src.models.registry import build_handler
+from src.runtime_paths import get_data_dir, get_local_models_dir
 from src.runner.runner_utils import (
     execute_scene_run,
     execute_learning_campaign,
@@ -18,7 +19,6 @@ from src.runner.runner_utils import (
     summarize_scene_results,
 )
 from src.runner.streamlit_utils import (
-    DEFAULT_LOCAL_MODELS_DIR,
     build_campaign_progress_rows,
     build_run_log_payload,
     build_scene_result_rows,
@@ -51,7 +51,7 @@ def _get_cached_handler(model_path: str):
 
 
 def _model_path_from_filename(model_filename: str) -> str:
-    model_path = os.path.abspath(os.path.join(DEFAULT_LOCAL_MODELS_DIR, model_filename))
+    model_path = os.path.abspath(os.path.join(get_local_models_dir(), model_filename))
     if not os.path.isfile(model_path):
         raise FileNotFoundError(f"Selected GGUF model does not exist: {model_path}")
     return model_path
@@ -195,7 +195,7 @@ def _save_campaign_log(
     )
     runlog = build_run_log_payload(
         run_mode="campaign",
-        data_dir="data",
+        data_dir=get_data_dir(),
         preset_name=run_settings["preset_name"],
         prompt_format=run_settings["prompt_format"],
         character_id=character_id,
@@ -717,7 +717,7 @@ def _render_single_scene_mode(
             st.session_state[SINGLE_SCENE_KEY] = scene_run
             runlog = build_run_log_payload(
                 run_mode="scene",
-                data_dir="data",
+                data_dir=get_data_dir(),
                 preset_name=run_settings["preset_name"],
                 prompt_format=run_settings["prompt_format"],
                 character_id=character_id,
@@ -740,9 +740,11 @@ def _render_single_scene_mode(
 def main() -> None:
     st.title("AgentQuest Run Viewer")
     st.caption("Campaign mode is the primary flow. Single-scene runs remain available.")
+    data_dir = get_data_dir()
+    models_dir = get_local_models_dir()
 
     try:
-        gamedata = load_gamedata("data")
+        gamedata = load_gamedata(data_dir)
     except DataValidationError as error:
         st.error(f"Data validation error: {error}")
         return
@@ -750,9 +752,9 @@ def main() -> None:
         st.error(f"Unexpected error while loading game data: {error}")
         return
 
-    model_options = discover_local_models()
+    model_options = discover_local_models(models_dir)
     if not model_options:
-        st.error("No GGUF models were found under local_models/.")
+        st.error(f"No GGUF models were found under {models_dir}.")
         return
 
     try:
@@ -770,13 +772,13 @@ def main() -> None:
     scenes = gamedata["raw"]["scenes"]
 
     if not campaigns:
-        st.error("No campaigns were found in data/custom/agentquest/campaigns.json.")
+        st.error(f"No campaigns were found in {os.path.join(data_dir, 'custom', 'agentquest', 'campaigns.json')}.")
         return
     if not scenes:
-        st.error("No scenes were found in data/custom/agentquest/scenes.json.")
+        st.error(f"No scenes were found in {os.path.join(data_dir, 'custom', 'agentquest', 'scenes.json')}.")
         return
     if not characters:
-        st.error("No characters were found in data/custom/agentquest/characters.json.")
+        st.error(f"No characters were found in {os.path.join(data_dir, 'custom', 'agentquest', 'characters.json')}.")
         return
 
     current_model_name = os.path.basename(run_settings.get("model_path", ""))

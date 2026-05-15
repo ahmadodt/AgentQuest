@@ -1,0 +1,16 @@
+.git
+.gitignore
+.pytest_cache
+.mypy_cache
+.ruff_cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.venv
+venv
+myenv
+agentquest.egg-info
+runs
+local_models
+data
