@@ -142,6 +142,9 @@ def soft_validate_tool_call(gamedata: dict, scene_id: str, tool_id: str) -> dict
             return {
                 "soft_valid": True,
                 "outcome": "success",
+                "effective_power": power["effective_power"],
+                "base_power": power["base_power"],
+                "damage_modifier": power["modifier"],
                 "reason": (
                     f"Monster defeated: effective_power={power['effective_power']} "
                     f"(base_power={power['base_power']}, modifier={power['modifier']})"
@@ -156,6 +159,9 @@ def soft_validate_tool_call(gamedata: dict, scene_id: str, tool_id: str) -> dict
             reason_code="insufficient_effective_power",
             soft_valid=False,
             outcome="failure",
+            effective_power=power["effective_power"],
+            base_power=power["base_power"],
+            damage_modifier=power["modifier"],
         )
 
     return {

@@ -82,6 +82,19 @@ def test_load_runtime_model_config_rejects_missing_model_file(tmp_path):
         load_runtime_model_config(str(config_path))
 
 
+def test_load_runtime_model_config_uses_agentquest_model_path_env(monkeypatch, tmp_path):
+    config_path, _ = _write_run_config(tmp_path)
+    env_model_path = tmp_path / "env-model.gguf"
+    env_model_path.write_text("stub", encoding="utf-8")
+
+    monkeypatch.setenv("AGENTQUEST_MODEL_PATH", str(env_model_path))
+
+    cfg = load_runtime_model_config(str(config_path))
+
+    assert cfg.backend == "llama_cpp"
+    assert cfg.model_path == str(env_model_path)
+
+
 def test_build_handler_uses_llama_cpp_backend(monkeypatch, tmp_path):
     config_path, model_path = _write_run_config(tmp_path)
 

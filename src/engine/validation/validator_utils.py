@@ -8,6 +8,7 @@ def build_invalid_verdict(
     hard_valid=None,
     soft_valid=None,
     outcome: str = "invalid",
+    **extra_fields,
 ) -> dict:
     verdict = {
         "outcome": outcome,
@@ -19,6 +20,7 @@ def build_invalid_verdict(
         verdict["hard_valid"] = hard_valid
     if soft_valid is not None:
         verdict["soft_valid"] = soft_valid
+    verdict.update(extra_fields)
     return verdict
 
 

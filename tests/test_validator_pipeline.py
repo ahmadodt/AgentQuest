@@ -80,14 +80,14 @@ def test_validator_pipeline_returns_soft_success_for_valid_action(
         scene_id="scene.tutorial.001_goblin_alley",
     )
 
-    verdict = validator.validate(make_tool_call("common.run", {"direction": "backtrack"}))
+    verdict = validator.validate(make_tool_call("wizard.arcane_bolt", {"target": "goblin"}))
 
     assert verdict["ast_valid"] is True
     assert verdict["hard_valid"] is True
     assert verdict["soft_valid"] is True
     assert verdict["outcome"] == "success"
     assert verdict["parsed_tool_call"] == {
-        "tool_id": "common.run",
-        "arguments": {"direction": "backtrack"},
+        "tool_id": "wizard.arcane_bolt",
+        "arguments": {"target": "goblin"},
     }
-    assert verdict["reason"] == "Escape attempt succeeded"
+    assert "Monster defeated" in verdict["reason"]
