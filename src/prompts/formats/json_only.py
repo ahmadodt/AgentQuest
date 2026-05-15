@@ -179,7 +179,8 @@ def build_json_only_messages(
         user_parts.append(
             "CAMPAIGN NOTES:\n"
             "These are notes from earlier failed attempts in this campaign. "
-            "Use them if they help, but still choose exactly one tool call.\n"
+            "Treat them as optional hypotheses, not facts. "
+            "Use them only when they fit the visible context in this scene, and ignore them when they do not.\n"
             + learning_notes.strip()
         )
 
@@ -222,8 +223,11 @@ def build_json_only_note_update_messages(
         "Do not repeat the same lesson in different words.\n"
         "Do not invent or change tool mechanics, damage, power, cooldowns, requirements, hidden stats, or monster rules.\n"
         "Do not introduce numeric thresholds unless they appear explicitly in the provided prompt-visible information.\n"
+        "Because these notes carry into later scenes, prefer transferable lessons over enemy-specific instructions whenever possible.\n"
+        "Prefer qualitative guidance instead of copying raw validator mechanics or hidden comparisons.\n"
         "Prefer notes about failed tool choice, visible tool constraints or effects, visible monster traits, and scene-specific constraints.\n"
         "If the failure only shows that one tool was wrong, note what to try or avoid next without guessing extra mechanics.\n"
+        "Treat the validator reason as evidence, then rewrite it into natural guidance rather than copying it literally.\n"
     )
 
     user_parts: List[str] = []
@@ -244,7 +248,7 @@ def build_json_only_note_update_messages(
     user_parts.append("VISIBLE TOOLS (schemas):\n" + tool_block)
     user_parts.append(
         "TASK:\n"
-        "Revise the notes for the next attempt. Keep them short, non-redundant, and strictly tied to the information shown above."
+        "Revise the notes for the next attempt. Keep them short, non-redundant, grounded in the information shown above, and phrased so they can still help in later scenes without pretending to be universal facts."
     )
 
     user = "\n\n".join(user_parts) + "\n"

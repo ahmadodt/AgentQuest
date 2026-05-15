@@ -413,6 +413,7 @@ def test_build_messages_includes_learning_notes_when_provided(tmp_path):
     )
 
     assert "CAMPAIGN NOTES:" in messages[1]["content"]
+    assert "Treat them as optional hypotheses, not facts." in messages[1]["content"]
     assert "Fire works better on sticky enemies." in messages[1]["content"]
 
 
@@ -445,6 +446,8 @@ def test_build_note_update_messages_uses_prompt_visible_context_and_grounding_ru
 
     assert "Do not invent or change tool mechanics, damage, power, cooldowns, requirements, hidden stats, or monster rules." in messages[0]["content"]
     assert "Do not introduce numeric thresholds unless they appear explicitly in the provided prompt-visible information." in messages[0]["content"]
+    assert "Because these notes carry into later scenes, prefer transferable lessons over enemy-specific instructions whenever possible." in messages[0]["content"]
+    assert "Treat the validator reason as evidence, then rewrite it into natural guidance rather than copying it literally." in messages[0]["content"]
     assert "VISIBLE TOOLS (schemas):" in messages[1]["content"]
     assert "A short custom attack." in messages[1]["content"]
     assert '"base_power": 4' in messages[1]["content"]
