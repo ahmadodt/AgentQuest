@@ -1,6 +1,7 @@
 from src.engine.validation.validator_ast import AstValidationError, ast_validate_tool_call
 from src.engine.validation.validator_hard import hard_validate_tool_call
 from src.engine.validation.validator_soft import soft_validate_tool_call
+from src.prompts.prompt_config import PromptConfig
 
 
 class ToolCallValidator:
@@ -16,12 +17,14 @@ class ToolCallValidator:
         character_id: str,
         scene_id: str,
         visible_tool_ids: list,
+        prompt_cfg: PromptConfig | None = None,
     ) -> None:
         self.gamedata = gamedata
         self.character_id = character_id
         self.scene_id = scene_id
         self.visible_tool_ids = visible_tool_ids
         self.tools_by_id = gamedata["tools_by_id"]
+        self.prompt_cfg = prompt_cfg
 
     def validate(self, raw_model_output: str) -> dict:
         try:
@@ -51,6 +54,7 @@ class ToolCallValidator:
             gamedata=self.gamedata,
             scene_id=self.scene_id,
             tool_id=parsed["tool_id"],
+            prompt_cfg=self.prompt_cfg,
         )
         return self._attach_context(
             soft_verdict,

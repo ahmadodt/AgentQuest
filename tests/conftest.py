@@ -6,6 +6,7 @@ import pytest
 
 from src.engine.loader import load_gamedata
 from src.engine.validator import ToolCallValidator
+from src.prompts.prompt_config import PromptConfig
 
 
 def project_root() -> str:
@@ -48,6 +49,7 @@ def validator_factory():
         character_id: str,
         scene_id: str,
         visible_tool_ids: list | None = None,
+        prompt_cfg: PromptConfig | None = None,
     ) -> ToolCallValidator:
         character = gamedata["characters_by_id"][character_id]
         return ToolCallValidator(
@@ -57,6 +59,7 @@ def validator_factory():
             visible_tool_ids=visible_tool_ids
             if visible_tool_ids is not None
             else character["tool_ids"],
+            prompt_cfg=prompt_cfg,
         )
 
     return _build

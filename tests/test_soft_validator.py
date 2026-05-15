@@ -1,4 +1,5 @@
 from src.engine.validation.validator_soft import soft_validate_tool_call
+from src.prompts.presets import BATTLE_PLAN, BLIND_ADVENTURER
 
 
 def test_soft_attack_succeeds_when_effective_power_meets_threshold(gamedata):
@@ -23,6 +24,33 @@ def test_soft_attack_fails_when_effective_power_is_too_low(gamedata):
     assert verdict["soft_valid"] is False
     assert verdict["outcome"] == "failure"
     assert verdict["reason_code"] == "insufficient_effective_power"
+
+
+def test_soft_attack_failure_uses_numeric_reason_for_high_information_presets(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
+        scene_id="scene.tutorial.001_goblin_alley",
+        tool_id="wizard.cast_fireball",
+        prompt_cfg=BATTLE_PLAN,
+    )
+
+    assert verdict["reason_code"] == "insufficient_effective_power"
+    assert "effective_power=" in verdict["reason"]
+    assert "min_power_to_defeat=" in verdict["reason"]
+
+
+def test_soft_attack_failure_uses_natural_language_reason_for_low_information_presets(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
+        scene_id="scene.tutorial.001_goblin_alley",
+        tool_id="wizard.cast_fireball",
+        prompt_cfg=BLIND_ADVENTURER,
+    )
+
+    assert verdict["reason_code"] == "insufficient_effective_power"
+    assert "effective_power=" not in verdict["reason"]
+    assert "min_power_to_defeat=" not in verdict["reason"]
+    assert "too weak" in verdict["reason"].lower()
 
 
 def test_soft_knowledge_scene_accepts_knowledge_tool(gamedata):

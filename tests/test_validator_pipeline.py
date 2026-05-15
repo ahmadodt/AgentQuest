@@ -91,3 +91,25 @@ def test_validator_pipeline_returns_soft_success_for_valid_action(
         "arguments": {"target": "goblin"},
     }
     assert "Monster defeated" in verdict["reason"]
+
+
+def test_validator_pipeline_uses_natural_language_soft_failure_for_low_information_presets(
+    validator_factory,
+    gamedata,
+    make_tool_call,
+):
+    from src.prompts.presets import BLIND_ADVENTURER
+
+    validator = validator_factory(
+        gamedata=gamedata,
+        character_id="wizard.ember",
+        scene_id="scene.tutorial.001_goblin_alley",
+        prompt_cfg=BLIND_ADVENTURER,
+    )
+
+    verdict = validator.validate(make_tool_call("wizard.cast_fireball", {"target": "goblin"}))
+
+    assert verdict["soft_valid"] is False
+    assert verdict["reason_code"] == "insufficient_effective_power"
+    assert "effective_power=" not in verdict["reason"]
+    assert "min_power_to_defeat=" not in verdict["reason"]

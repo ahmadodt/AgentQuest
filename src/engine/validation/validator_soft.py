@@ -1,3 +1,5 @@
+from src.prompts.prompt_config import PromptConfig
+
 from src.engine.validation.validator_utils import (
     build_invalid_verdict,
     compute_effective_power,
@@ -9,7 +11,41 @@ from src.engine.validation.validator_utils import (
 )
 
 
-def soft_validate_tool_call(gamedata: dict, scene_id: str, tool_id: str) -> dict:
+def _uses_high_information_feedback(prompt_cfg: PromptConfig | None) -> bool:
+    if prompt_cfg is None:
+        return True
+    return bool(
+        prompt_cfg.tools_include_effects
+        and prompt_cfg.monster_detail_level in {"stats", "full"}
+    )
+
+
+def _format_insufficient_power_reason(
+    *,
+    tool: dict,
+    monster: dict,
+    power: dict,
+    min_power: int | float,
+    high_information: bool,
+) -> str:
+    if high_information:
+        return (
+            f"insufficient_effective_power: effective_power={power['effective_power']} "
+            f"< min_power_to_defeat={min_power}"
+        )
+    tool_label = tool.get("label") or tool.get("tool_id", "That action")
+    monster_name = monster.get("name") or "the foe"
+    return (
+        f"insufficient_effective_power: {tool_label} looked too weak to bring down {monster_name}."
+    )
+
+
+def soft_validate_tool_call(
+    gamedata: dict,
+    scene_id: str,
+    tool_id: str,
+    prompt_cfg: PromptConfig | None = None,
+) -> dict:
     """
     Stage 3: Soft validator (scene/monster outcome logic).
 
@@ -39,6 +75,7 @@ def soft_validate_tool_call(gamedata: dict, scene_id: str, tool_id: str) -> dict
     validation_rules = scene.get("validation_rules", {}) or {}
     tool_effects = get_tool_effects(tool)
     interactions = monster.get("interactions", {}) or {}
+    high_information = _uses_high_information_feedback(prompt_cfg)
     effect_tags = set(tool_effects.get("effect_tags", []) or [])
     forbidden_effect_tags = set(validation_rules.get("forbidden_effect_tags", []) or [])
     forbidden_overlap = sorted(forbidden_effect_tags.intersection(effect_tags))
@@ -152,9 +189,12 @@ def soft_validate_tool_call(gamedata: dict, scene_id: str, tool_id: str) -> dict
             }
 
         return build_invalid_verdict(
-            (
-                f"insufficient_effective_power: effective_power={power['effective_power']} "
-                f"< min_power_to_defeat={min_power}"
+            _format_insufficient_power_reason(
+                tool=tool,
+                monster=monster,
+                power=power,
+                min_power=min_power,
+                high_information=high_information,
             ),
             reason_code="insufficient_effective_power",
             soft_valid=False,
