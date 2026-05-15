@@ -40,7 +40,8 @@ def hard_validate_tool_call(gamedata: dict, character_id: str, tool_id: str) -> 
     tool_ids = character.get("tool_ids", [])
     if tool_id not in tool_ids:
         return build_invalid_verdict(
-            f"Tool '{tool_id}' is not available to character '{character_id}'",
+            f"tool_not_available_to_character: tool '{tool_id}' is not available to character '{character_id}'",
+            reason_code="tool_not_available_to_character",
             hard_valid=False,
         )
 
@@ -49,7 +50,8 @@ def hard_validate_tool_call(gamedata: dict, character_id: str, tool_id: str) -> 
     char_class = character.get("class")
     if char_class not in allowed_classes:
         return build_invalid_verdict(
-            f"Character class '{char_class}' cannot use '{tool_id}'",
+            f"class_not_allowed: character class '{char_class}' cannot use '{tool_id}'",
+            reason_code="class_not_allowed",
             hard_valid=False,
         )
 
@@ -59,7 +61,8 @@ def hard_validate_tool_call(gamedata: dict, character_id: str, tool_id: str) -> 
     missing_items = [item for item in required_inventory if item not in inv_set]
     if missing_items:
         return build_invalid_verdict(
-            f"Missing required inventory: {missing_items}",
+            f"missing_required_inventory: missing required inventory {missing_items}",
+            reason_code="missing_required_inventory",
             hard_valid=False,
         )
 
@@ -69,7 +72,8 @@ def hard_validate_tool_call(gamedata: dict, character_id: str, tool_id: str) -> 
     blocked = sorted(list(forbidden_traits.intersection(traits)))
     if blocked:
         return build_invalid_verdict(
-            f"Forbidden trait(s) present: {blocked}",
+            f"forbidden_trait: forbidden trait(s) present {blocked}",
+            reason_code="forbidden_trait",
             hard_valid=False,
         )
 

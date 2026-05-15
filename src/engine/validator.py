@@ -60,12 +60,17 @@ class ToolCallValidator:
         )
 
     def _build_ast_error_verdict(self, error: Exception) -> dict:
+        message = str(error)
+        reason_code = None
+        if message.startswith("Unknown tool_id"):
+            reason_code = "unknown_tool"
         return {
             "ast_valid": False,
             "hard_valid": None,
             "soft_valid": None,
             "outcome": "invalid",
             "reason": f"AST error: {error}",
+            "reason_code": reason_code,
             "parsed_tool_call": None,
             "character_id": self.character_id,
             "scene_id": self.scene_id,

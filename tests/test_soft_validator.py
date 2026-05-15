@@ -22,7 +22,7 @@ def test_soft_attack_fails_when_effective_power_is_too_low(gamedata):
 
     assert verdict["soft_valid"] is False
     assert verdict["outcome"] == "failure"
-    assert "too weak" in verdict["reason"]
+    assert verdict["reason_code"] == "insufficient_effective_power"
 
 
 def test_soft_knowledge_scene_accepts_knowledge_tool(gamedata):
@@ -30,6 +30,17 @@ def test_soft_knowledge_scene_accepts_knowledge_tool(gamedata):
         gamedata=gamedata,
         scene_id="scene.tutorial.002_runes_on_wall",
         tool_id="wizard.read_runes",
+    )
+
+    assert verdict["soft_valid"] is True
+    assert verdict["outcome"] == "success"
+
+
+def test_soft_knowledge_scene_accepts_knight_knowledge_tool(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
+        scene_id="scene.tutorial.002_runes_on_wall",
+        tool_id="knight.inspect_runes",
     )
 
     assert verdict["soft_valid"] is True
@@ -45,7 +56,7 @@ def test_soft_knowledge_scene_rejects_non_knowledge_tool(gamedata):
 
     assert verdict["soft_valid"] is False
     assert verdict["outcome"] == "failure"
-    assert "knowledge-oriented" in verdict["reason"]
+    assert verdict["reason_code"] == "missing_required_effect_tag"
 
 
 def test_soft_escape_fails_when_scene_forbids_escape(gamedata):
@@ -57,15 +68,16 @@ def test_soft_escape_fails_when_scene_forbids_escape(gamedata):
 
     assert verdict["soft_valid"] is False
     assert verdict["outcome"] == "failure"
-    assert "forbids escape" in verdict["reason"]
+    assert verdict["reason_code"] == "escape_not_success"
 
 
-def test_soft_escape_succeeds_when_allowed(gamedata):
+def test_soft_escape_does_not_count_as_success_when_scene_allows_escape_but_not_success(gamedata):
     verdict = soft_validate_tool_call(
         gamedata=gamedata,
         scene_id="scene.tutorial.001_goblin_alley",
         tool_id="common.run",
     )
 
-    assert verdict["soft_valid"] is True
-    assert verdict["outcome"] == "success"
+    assert verdict["soft_valid"] is False
+    assert verdict["outcome"] == "failure"
+    assert verdict["reason_code"] == "escape_not_success"

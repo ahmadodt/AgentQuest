@@ -20,7 +20,7 @@ class StubHandler:
 
 
 def test_execute_scene_run_uses_character_tool_ids_and_returns_scene_record(gamedata, make_tool_call):
-    handler = StubHandler([make_tool_call("common.run", {"direction": "backtrack"})])
+    handler = StubHandler([make_tool_call("wizard.arcane_bolt", {"target": "goblin"})])
 
     scene_run = execute_scene_run(
         gamedata=gamedata,
@@ -39,7 +39,7 @@ def test_execute_scene_run_uses_character_tool_ids_and_returns_scene_record(game
     assert scene_run["visible_tool_ids"] == gamedata["characters_by_id"]["wizard.ember"]["tool_ids"]
     assert scene_run["verdict"]["outcome"] == "success"
     assert scene_run["status"] == "PASS"
-    assert scene_run["parsed_tool_call"]["tool_id"] == "common.run"
+    assert scene_run["parsed_tool_call"]["tool_id"] == "wizard.arcane_bolt"
     assert scene_run["metadata"] == {"stub": True}
     assert "prompt_messages" not in scene_run
 
@@ -47,7 +47,7 @@ def test_execute_scene_run_uses_character_tool_ids_and_returns_scene_record(game
 def test_execute_campaign_run_stops_on_first_non_success(gamedata, make_tool_call):
     handler = StubHandler(
         [
-            make_tool_call("common.run", {"direction": "backtrack"}),
+            make_tool_call("wizard.arcane_bolt", {"target": "goblin"}),
             make_tool_call("wizard.arcane_shield", {}),
         ]
     )
@@ -77,7 +77,7 @@ def test_execute_campaign_run_stops_on_first_non_success(gamedata, make_tool_cal
 def test_execute_campaign_run_can_continue_after_failure(gamedata, make_tool_call):
     handler = StubHandler(
         [
-            make_tool_call("common.run", {"direction": "backtrack"}),
+            make_tool_call("wizard.arcane_bolt", {"target": "goblin"}),
             make_tool_call("wizard.arcane_shield", {}),
             make_tool_call("wizard.cast_ice_spear", {"target": "flame sentinel"}),
         ]
@@ -112,7 +112,7 @@ def test_execute_campaign_run_can_continue_after_failure(gamedata, make_tool_cal
 def test_execute_campaign_run_succeeds_when_all_scenes_succeed(gamedata, make_tool_call):
     handler = StubHandler(
         [
-            make_tool_call("common.run", {"direction": "backtrack"}),
+            make_tool_call("wizard.arcane_bolt", {"target": "goblin"}),
             make_tool_call("wizard.read_runes", {"surface": "wall"}),
             make_tool_call("wizard.cast_ice_spear", {"target": "flame sentinel"}),
         ]
@@ -176,7 +176,7 @@ def test_execute_learning_scene_retries_after_failure_and_updates_notes(gamedata
 def test_execute_learning_campaign_carries_notes_across_scenes(gamedata, make_tool_call):
     handler = StubHandler(
         [
-            make_tool_call("common.run", {"direction": "backtrack"}),
+            make_tool_call("wizard.arcane_bolt", {"target": "goblin"}),
             make_tool_call("wizard.arcane_shield", {}),
             '{"notes":"- Use rune-reading on glowing walls or statues."}',
             make_tool_call("wizard.read_runes", {"surface": "wall"}),

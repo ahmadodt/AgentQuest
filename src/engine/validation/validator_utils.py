@@ -1,6 +1,10 @@
+from src.engine.data_utils import resolve_monster_damage_modifiers
+
+
 def build_invalid_verdict(
     reason: str,
     *,
+    reason_code: str | None = None,
     hard_valid=None,
     soft_valid=None,
     outcome: str = "invalid",
@@ -9,6 +13,8 @@ def build_invalid_verdict(
         "outcome": outcome,
         "reason": reason,
     }
+    if reason_code is not None:
+        verdict["reason_code"] = reason_code
     if hard_valid is not None:
         verdict["hard_valid"] = hard_valid
     if soft_valid is not None:
@@ -31,7 +37,8 @@ def get_tool_or_error(gamedata: dict, tool_id: str, *, layer: str):
     if tool_id not in tools_by_id:
         verdict_key = "hard_valid" if layer == "hard" else "soft_valid"
         return None, build_invalid_verdict(
-            f"Unknown tool_id '{tool_id}'",
+            f"unknown_tool: unknown tool_id '{tool_id}'",
+            reason_code="unknown_tool",
             **{verdict_key: False},
         )
     return tools_by_id[tool_id], None
@@ -68,15 +75,25 @@ def get_tool_effects(tool: dict) -> dict:
 
 def compute_effective_power(tool: dict, monster: dict):
     effects = get_tool_effects(tool)
-    interactions = monster.get("interactions", {}) or {}
 
     damage_type = effects.get("damage_type")
     base_power = effects.get("base_power")
     if damage_type is None or base_power is None:
         return None
 
-    modifiers = interactions.get("damage_type_modifiers", {}) or {}
-    modifier = modifiers.get(damage_type, 1.0)
+    modifiers = monster.get("resolved_damage_modifiers")
+    if not isinstance(modifiers, dict):
+        modifiers = (monster.get("interactions", {}) or {}).get("damage_type_modifiers", {}) or {}
+
+    if damage_type not in modifiers:
+        return {
+            "damage_type": damage_type,
+            "base_power": base_power,
+            "modifier": None,
+            "effective_power": None,
+        }
+
+    modifier = modifiers[damage_type]
 
     return {
         "damage_type": damage_type,
@@ -84,3 +101,7 @@ def compute_effective_power(tool: dict, monster: dict):
         "modifier": modifier,
         "effective_power": base_power * modifier,
     }
+
+
+def get_monster_damage_modifiers(gamedata: dict, monster: dict) -> dict[str, float]:
+    return resolve_monster_damage_modifiers(gamedata, monster)

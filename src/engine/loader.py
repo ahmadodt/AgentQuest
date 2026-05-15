@@ -1,6 +1,8 @@
 import json
 import os
 
+from src.engine.data_utils import resolve_monster_damage_modifiers
+
 
 class DataValidationError(Exception):
     """Raised when game data is invalid (missing fields, bad references, duplicates)."""
@@ -173,12 +175,50 @@ def _validate_tools(tools_root: dict) -> dict:
                 raise DataValidationError(f"{tctx}: constraints.{key} must be a list")
 
         # Optional sections: effects/ui are allowed but not required
-        if "effects" in tool and not isinstance(tool["effects"], dict):
-            raise DataValidationError(f"{tctx}: effects must be an object/dict if present")
+        if "effects" in tool:
+            if not isinstance(tool["effects"], dict):
+                raise DataValidationError(f"{tctx}: effects must be an object/dict if present")
+            effects = tool["effects"]
+            if "combat_effect" in effects and not isinstance(effects["combat_effect"], bool):
+                raise DataValidationError(f"{tctx}: effects.combat_effect must be boolean if present")
+            if "effect_tags" in effects:
+                if not isinstance(effects["effect_tags"], list):
+                    raise DataValidationError(f"{tctx}: effects.effect_tags must be a list if present")
+                for i, tag in enumerate(effects["effect_tags"]):
+                    if not isinstance(tag, str):
+                        raise DataValidationError(f"{tctx}: effects.effect_tags[{i}] must be a string")
         if "ui" in tool and not isinstance(tool["ui"], dict):
             raise DataValidationError(f"{tctx}: ui must be an object/dict if present")
 
     return tools_by_id
+
+
+def _validate_damage_profiles(damage_profiles_root: dict | None) -> dict:
+    if not damage_profiles_root:
+        return {}
+
+    ctx = "damage_profiles.json"
+    _require(damage_profiles_root, "profiles", ctx)
+    _require_type(damage_profiles_root["profiles"], dict, ctx, "profiles")
+
+    profiles_by_id = {}
+    for profile_id, modifiers in damage_profiles_root["profiles"].items():
+        if not isinstance(profile_id, str):
+            raise DataValidationError(f"{ctx}: profile ids must be strings")
+        if not isinstance(modifiers, dict):
+            raise DataValidationError(f"{ctx}:{profile_id}: profile modifiers must be an object/dict")
+
+        normalized_modifiers = {}
+        for damage_type, modifier in modifiers.items():
+            if not isinstance(damage_type, str):
+                raise DataValidationError(f"{ctx}:{profile_id}: damage type keys must be strings")
+            if not isinstance(modifier, (int, float)):
+                raise DataValidationError(f"{ctx}:{profile_id}: modifier for '{damage_type}' must be numeric")
+            normalized_modifiers[damage_type] = float(modifier)
+
+        profiles_by_id[profile_id] = normalized_modifiers
+
+    return profiles_by_id
 
 
 def _validate_characters(char_root: dict, tools_by_id: dict) -> dict:
@@ -222,7 +262,7 @@ def _validate_characters(char_root: dict, tools_by_id: dict) -> dict:
     return chars_by_id
 
 
-def _validate_monsters(mon_root: dict) -> dict:
+def _validate_monsters(mon_root: dict, damage_profiles_by_id: dict) -> dict:
     ctx = "monsters.json"
     _require(mon_root, "monsters", ctx)
     _require_type(mon_root["monsters"], list, ctx, "monsters")
@@ -243,10 +283,27 @@ def _validate_monsters(mon_root: dict) -> dict:
         if not isinstance(interactions, dict):
             raise DataValidationError(f"{mctx}: interactions must be an object/dict")
 
-        for key in ["damage_type_modifiers", "min_power_to_defeat", "escape_allowed"]:
+        for key in ["min_power_to_defeat", "escape_allowed"]:
             _require(interactions, key, mctx + ".interactions")
 
-        if not isinstance(interactions["damage_type_modifiers"], dict):
+        if "damage_profile" in m:
+            if not isinstance(m["damage_profile"], str):
+                raise DataValidationError(f"{mctx}: damage_profile must be a string")
+            if m["damage_profile"] not in damage_profiles_by_id:
+                raise DataValidationError(
+                    f"{mctx}: unknown damage_profile '{m['damage_profile']}'"
+                )
+        elif "damage_type_modifiers" not in interactions:
+            raise DataValidationError(
+                f"{mctx}: monster must define damage_profile or interactions.damage_type_modifiers"
+            )
+
+        overrides = m.get("damage_modifier_overrides", {}) or {}
+        if not isinstance(overrides, dict):
+            raise DataValidationError(f"{mctx}: damage_modifier_overrides must be an object/dict if present")
+
+        legacy_modifiers = interactions.get("damage_type_modifiers")
+        if legacy_modifiers is not None and not isinstance(legacy_modifiers, dict):
             raise DataValidationError(f"{mctx}: interactions.damage_type_modifiers must be an object/dict")
 
         # allow int or float
@@ -255,6 +312,12 @@ def _validate_monsters(mon_root: dict) -> dict:
 
         if not isinstance(interactions["escape_allowed"], bool):
             raise DataValidationError(f"{mctx}: interactions.escape_allowed must be boolean")
+
+        resolved_modifiers = resolve_monster_damage_modifiers(
+            {"damage_profiles_by_id": damage_profiles_by_id},
+            m,
+        )
+        m["resolved_damage_modifiers"] = resolved_modifiers
 
     return monsters_by_id
 
@@ -293,6 +356,37 @@ def _validate_scenes(scene_root: dict, monsters_by_id: dict) -> dict:
             raise DataValidationError(f"{sctx}: success_condition must be an object/dict")
         if not isinstance(s["failure_condition"], dict):
             raise DataValidationError(f"{sctx}: failure_condition must be an object/dict")
+        validation_rules = s.get("validation_rules")
+        if validation_rules is None:
+            validation_rules = {
+                "mode": "standard",
+                "allow_escape_as_success": False,
+                "required_effect_tags": [],
+                "forbidden_effect_tags": [],
+            }
+            s["validation_rules"] = validation_rules
+        if not isinstance(validation_rules, dict):
+            raise DataValidationError(f"{sctx}: validation_rules must be an object/dict")
+        if "mode" not in validation_rules:
+            validation_rules["mode"] = "standard"
+        if "allow_escape_as_success" not in validation_rules:
+            validation_rules["allow_escape_as_success"] = False
+        if "required_effect_tags" not in validation_rules:
+            validation_rules["required_effect_tags"] = []
+        if "forbidden_effect_tags" not in validation_rules:
+            validation_rules["forbidden_effect_tags"] = []
+        if not isinstance(validation_rules["mode"], str):
+            raise DataValidationError(f"{sctx}: validation_rules.mode must be a string")
+        if not isinstance(validation_rules["allow_escape_as_success"], bool):
+            raise DataValidationError(f"{sctx}: validation_rules.allow_escape_as_success must be boolean")
+        if not isinstance(validation_rules["required_effect_tags"], list):
+            raise DataValidationError(f"{sctx}: validation_rules.required_effect_tags must be a list")
+        if not isinstance(validation_rules["forbidden_effect_tags"], list):
+            raise DataValidationError(f"{sctx}: validation_rules.forbidden_effect_tags must be a list")
+        for key in ["required_effect_tags", "forbidden_effect_tags"]:
+            for i, tag in enumerate(validation_rules[key]):
+                if not isinstance(tag, str):
+                    raise DataValidationError(f"{sctx}: validation_rules.{key}[{i}] must be a string")
 
         # Reference check (monster only now)
         if s["monster_id"] not in monsters_by_id:
@@ -342,7 +436,7 @@ def _validate_campaigns(campaign_root: dict, scenes_by_id: dict) -> dict:
     return campaigns_by_id
 
 
-def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict, dict]:
+def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict, dict, dict | None]:
     runtime_data_dir = _resolve_runtime_data_dir(data_dir)
     generated_data_dir = os.path.join(data_dir, "generated", "open5e")
 
@@ -351,6 +445,7 @@ def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict, dict]:
     monsters_root = _load_json_file(os.path.join(runtime_data_dir, "monsters.json"))
     scenes_root = _load_json_file(os.path.join(runtime_data_dir, "scenes.json"))
     campaigns_root = _load_json_file(os.path.join(runtime_data_dir, "campaigns.json"))
+    damage_profiles_root = _optional_load_json_file(os.path.join(runtime_data_dir, "damage_profiles.json"))
 
     custom_tools = [_normalize_custom_tool(tool) for tool in tools_root.get("tools", [])]
     custom_monsters = [_normalize_custom_monster(monster) for monster in monsters_root.get("monsters", [])]
@@ -375,7 +470,7 @@ def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict, dict]:
         custom_monsters, generated_monsters, "monster_id"
     )
 
-    return merged_tools_root, chars_root, merged_monsters_root, scenes_root, campaigns_root
+    return merged_tools_root, chars_root, merged_monsters_root, scenes_root, campaigns_root, damage_profiles_root
 
 
 def load_gamedata(data_dir: str = "data") -> dict:
@@ -384,11 +479,12 @@ def load_gamedata(data_dir: str = "data") -> dict:
     """
     from src.prompts.projections import project_monster_for_llm, project_tool_for_llm
 
-    tools_root, chars_root, monsters_root, scenes_root, campaigns_root = _load_merged_content(data_dir)
+    tools_root, chars_root, monsters_root, scenes_root, campaigns_root, damage_profiles_root = _load_merged_content(data_dir)
 
     tools_by_id = _validate_tools(tools_root)
+    damage_profiles_by_id = _validate_damage_profiles(damage_profiles_root)
     characters_by_id = _validate_characters(chars_root, tools_by_id)
-    monsters_by_id = _validate_monsters(monsters_root)
+    monsters_by_id = _validate_monsters(monsters_root, damage_profiles_by_id)
     scenes_by_id = _validate_scenes(scenes_root, monsters_by_id)
     campaigns_by_id = _validate_campaigns(campaigns_root, scenes_by_id)
     llm_tools_by_id = {
@@ -402,6 +498,7 @@ def load_gamedata(data_dir: str = "data") -> dict:
         "tools_by_id": tools_by_id,
         "characters_by_id": characters_by_id,
         "monsters_by_id": monsters_by_id,
+        "damage_profiles_by_id": damage_profiles_by_id,
         "scenes_by_id": scenes_by_id,
         "campaigns_by_id": campaigns_by_id,
         "llm_tools_by_id": llm_tools_by_id,
@@ -410,6 +507,7 @@ def load_gamedata(data_dir: str = "data") -> dict:
             "tools": tools_root.get("tools", []),
             "characters": chars_root.get("characters", []),
             "monsters": monsters_root.get("monsters", []),
+            "damage_profiles": (damage_profiles_root or {}).get("profiles", {}),
             "scenes": scenes_root.get("scenes", []),
             "campaigns": campaigns_root.get("campaigns", []),
         },

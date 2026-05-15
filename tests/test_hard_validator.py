@@ -36,6 +36,7 @@ def test_hard_rejects_tool_not_in_character_tool_ids_even_if_visible(gamedata_co
 
     verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])
     assert verdict["hard_valid"] is False
+    assert verdict["reason_code"] == "tool_not_available_to_character"
     assert "not available" in verdict["reason"].lower()
 
 
@@ -55,6 +56,7 @@ def test_hard_rejects_forbidden_trait(gamedata_copy, make_tool_call):
 
     verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])
     assert verdict["hard_valid"] is False
+    assert verdict["reason_code"] == "forbidden_trait"
     assert "forbidden trait" in verdict["reason"].lower()
 
 
@@ -83,4 +85,5 @@ def test_hard_rejects_missing_required_inventory(gamedata_copy, make_tool_call):
 
     verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])
     assert verdict["hard_valid"] is False
+    assert verdict["reason_code"] == "missing_required_inventory"
     assert "missing required inventory" in verdict["reason"].lower()

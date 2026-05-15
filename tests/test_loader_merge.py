@@ -270,6 +270,38 @@ def test_generated_monsters_are_normalized_for_runtime_and_projected_for_llm(tmp
     assert "condition_immunities" not in llm_monster
 
 
+def test_load_gamedata_resolves_damage_profile_modifiers(tmp_path):
+    dataset = _base_custom_dataset()
+    dataset["monsters"]["monsters"][0].pop("interactions")
+    dataset["monsters"]["monsters"][0]["damage_profile"] = "slime_profile"
+    dataset["monsters"]["monsters"][0]["damage_modifier_overrides"] = {"force": 1.5}
+    dataset["monsters"]["monsters"][0]["interactions"] = {
+        "min_power_to_defeat": 2,
+        "knowledge_tools_help": False,
+        "escape_allowed": True,
+    }
+    _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)
+    _write_json(
+        os.path.join(tmp_path, "custom", "agentquest", "damage_profiles.json"),
+        {
+            "version": "1.0",
+            "profiles": {
+                "slime_profile": {
+                    "fire": 2.0,
+                    "force": 1.0,
+                }
+            },
+        },
+    )
+
+    gamedata = load_gamedata(str(tmp_path))
+    monster = gamedata["monsters_by_id"]["custom.slime"]
+
+    assert gamedata["damage_profiles_by_id"]["slime_profile"]["fire"] == 2.0
+    assert monster["resolved_damage_modifiers"]["fire"] == 2.0
+    assert monster["resolved_damage_modifiers"]["force"] == 1.5
+
+
 def test_llm_tool_projection_shortens_generated_spell_description_and_prompt_uses_it(tmp_path):
     dataset = _base_custom_dataset()
     dataset["characters"]["characters"][0]["tool_ids"] = ["open5e.spell.spark"]
