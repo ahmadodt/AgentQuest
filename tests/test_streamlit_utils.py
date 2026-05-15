@@ -319,6 +319,12 @@ def test_build_run_log_payload_compacts_campaign_attempt_payloads():
                 "validation": {"outcome": "failure", "reason": "wrong tool"},
                 "messages": [{"role": "system", "content": "prompt"}],
                 "visible_tools": [{"tool_id": "tool.alpha", "description": "Large blob"}],
+                "visible_tool_ids": ["tool.alpha"],
+                "attempt_index": 2,
+                "attempt_count": 2,
+                "retry_count": 1,
+                "notes_before_scene": "",
+                "notes_after_scene": "- Try another tool",
                 "attempts": [
                     {
                         "scene_id": "scene.alpha",
@@ -331,15 +337,8 @@ def test_build_run_log_payload_compacts_campaign_attempt_payloads():
                         "validation": {"outcome": "failure", "reason": "wrong tool"},
                         "messages": [{"role": "system", "content": "attempt prompt"}],
                         "visible_tools": [{"tool_id": "tool.alpha", "description": "Large blob"}],
-                        "note_update": {
-                            "scene_id": "scene.alpha",
-                            "character_id": "wizard.ember",
-                            "old_notes": "",
-                            "updated_notes": "- Try another tool",
-                            "raw_model_output": '{"notes":"- Try another tool"}',
-                            "messages": [{"role": "system", "content": "note prompt"}],
-                            "metadata": {"stub": True},
-                        },
+                        "notes_before_attempt": "",
+                        "notes_after_attempt": "- Try another tool",
                     }
                 ],
             }
@@ -374,17 +373,24 @@ def test_build_run_log_payload_compacts_campaign_attempt_payloads():
         run_result=run_result,
     )
 
+    scene = payload["scene_runs"][0]
     attempt = payload["scene_runs"][0]["attempts"][0]
-    top_level_attempt = payload["attempts"][0]
-    note_update = attempt["note_update"]
 
-    assert "messages" not in payload["scene_runs"][0]
-    assert "visible_tools" not in payload["scene_runs"][0]
+    assert "messages" not in scene
+    assert "visible_tools" not in scene
+    assert scene["visible_tool_ids"] == ["tool.alpha"]
+    assert scene["attempt_count"] == 2
+    assert scene["retry_count"] == 1
+    assert "attempt_index" not in scene
+    assert "notes_before_scene" not in scene
+    assert "notes_after_scene" not in scene
     assert "messages" not in attempt
     assert "visible_tools" not in attempt
-    assert "messages" not in note_update
-    assert "metadata" not in note_update
-    assert "messages" not in top_level_attempt
+    assert "note_update" not in attempt
+    assert payload["prompt_snapshot"]["scene_id"] == "scene.alpha"
+    assert payload["prompt_snapshot"]["messages"] == [{"role": "system", "content": "prompt"}]
+    assert "ordered_scene_results" not in payload
+    assert "attempts" not in payload
 
 
 def test_save_streamlit_run_log_writes_json_file(monkeypatch, tmp_path):

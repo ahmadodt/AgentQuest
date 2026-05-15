@@ -142,16 +142,6 @@ def summarize_scene_results(
     }
 
 
-def _compact_note_update_for_log(note_update: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "scene_id": note_update.get("scene_id"),
-        "character_id": note_update.get("character_id"),
-        "old_notes": note_update.get("old_notes", ""),
-        "updated_notes": note_update.get("updated_notes", ""),
-        "raw_model_output": note_update.get("raw_model_output", ""),
-    }
-
-
 def _compact_attempt_for_log(attempt: dict[str, Any]) -> dict[str, Any]:
     compact_attempt = {
         "scene_id": attempt.get("scene_id"),
@@ -166,8 +156,6 @@ def _compact_attempt_for_log(attempt: dict[str, Any]) -> dict[str, Any]:
         "notes_before_attempt": attempt.get("notes_before_attempt", ""),
         "notes_after_attempt": attempt.get("notes_after_attempt", ""),
     }
-    if attempt.get("note_update"):
-        compact_attempt["note_update"] = _compact_note_update_for_log(attempt["note_update"])
     return compact_attempt
 
 
@@ -187,20 +175,12 @@ def compact_scene_run_for_log(scene_run: dict[str, Any]) -> dict[str, Any]:
         compact_scene["visible_tool_ids"] = scene_run.get("visible_tool_ids", [])
     if "learning_notes" in scene_run:
         compact_scene["learning_notes"] = scene_run.get("learning_notes", "")
-    if "attempt_index" in scene_run:
-        compact_scene["attempt_index"] = scene_run.get("attempt_index")
     if "attempt_count" in scene_run:
         compact_scene["attempt_count"] = scene_run.get("attempt_count")
     if "retry_count" in scene_run:
         compact_scene["retry_count"] = scene_run.get("retry_count")
-    if "notes_before_scene" in scene_run:
-        compact_scene["notes_before_scene"] = scene_run.get("notes_before_scene", "")
-    if "notes_after_scene" in scene_run:
-        compact_scene["notes_after_scene"] = scene_run.get("notes_after_scene", "")
     if "resolved_after_learning" in scene_run:
         compact_scene["resolved_after_learning"] = bool(scene_run.get("resolved_after_learning"))
-    if scene_run.get("note_update"):
-        compact_scene["note_update"] = _compact_note_update_for_log(scene_run["note_update"])
     if scene_run.get("attempts"):
         compact_scene["attempts"] = [
             _compact_attempt_for_log(attempt)
@@ -226,13 +206,15 @@ def compact_run_result_for_log(run_result: dict[str, Any]) -> dict[str, Any]:
     ]
     if "scene_runs" in run_result:
         compact_result["scene_runs"] = scene_runs
-    if "ordered_scene_results" in run_result:
-        compact_result["ordered_scene_results"] = list(scene_runs)
-    if "attempts" in run_result:
-        compact_result["attempts"] = [
-            _compact_attempt_for_log(attempt)
-            for attempt in run_result.get("attempts", [])
-        ]
+    original_scene_runs = run_result.get("scene_runs", [])
+    if original_scene_runs:
+        first_scene = original_scene_runs[0]
+        compact_result["prompt_snapshot"] = {
+            "scene_id": first_scene.get("scene_id"),
+            "scene_index": first_scene.get("scene_index"),
+            "visible_tool_ids": first_scene.get("visible_tool_ids", []),
+            "messages": first_scene.get("messages", []),
+        }
 
     return compact_result
 
@@ -360,6 +342,7 @@ def execute_scene_run(
         character_id=character_id,
         scene_id=scene_id,
         visible_tool_ids=visible_tool_ids,
+        prompt_cfg=cfg,
     )
     verdict = validator.validate(raw)
     status = scene_status_from_verdict(verdict)
