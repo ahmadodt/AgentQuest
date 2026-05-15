@@ -12,6 +12,7 @@ from src.models.config import (
 from src.prompts.prompt_config import PromptConfig
 from src.runtime_paths import get_local_models_dir
 from src.runner.runner_utils import (
+    compact_run_result_for_log,
     default_run_path,
     ensure_dir,
     get_campaign_scene_ids,
@@ -255,7 +256,7 @@ def build_run_log_payload(
     else:
         payload["scene_id"] = scene_id
 
-    payload.update(run_result)
+    payload.update(compact_run_result_for_log(run_result))
     return payload
 
 

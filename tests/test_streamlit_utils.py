@@ -272,6 +272,121 @@ def test_build_run_log_payload_matches_campaign_shape():
     assert payload["stop_scene_id"] == "scene.alpha"
 
 
+def test_build_run_log_payload_compacts_scene_prompt_and_tool_payloads():
+    run_result = {
+        "scene_id": "scene.alpha",
+        "scene_index": 0,
+        "scene_title": "Alpha",
+        "status": "FAIL",
+        "reason": "wrong tool",
+        "raw_model_output": '{"tool_id":"tool.alpha","arguments":{}}',
+        "parsed_tool_call": {"tool_id": "tool.alpha", "arguments": {}},
+        "validation": {"outcome": "failure", "reason": "wrong tool"},
+        "messages": [{"role": "system", "content": "prompt"}],
+        "visible_tools": [{"tool_id": "tool.alpha", "description": "Large blob"}],
+        "visible_tool_ids": ["tool.alpha"],
+        "metadata": {"stub": True},
+    }
+
+    payload = build_run_log_payload(
+        run_mode="scene",
+        data_dir="data",
+        preset_name="BATTLE_PLAN",
+        prompt_format="json_only",
+        character_id="knight.bram",
+        scene_id="scene.alpha",
+        run_result=run_result,
+    )
+
+    assert payload["scene_id"] == "scene.alpha"
+    assert payload["visible_tool_ids"] == ["tool.alpha"]
+    assert "messages" not in payload
+    assert "visible_tools" not in payload
+    assert "metadata" not in payload
+
+
+def test_build_run_log_payload_compacts_campaign_attempt_payloads():
+    run_result = {
+        "campaign_id": "campaign.alpha",
+        "scene_runs": [
+            {
+                "scene_id": "scene.alpha",
+                "scene_index": 0,
+                "status": "FAIL",
+                "reason": "wrong tool",
+                "raw_model_output": '{"tool_id":"tool.alpha","arguments":{}}',
+                "parsed_tool_call": {"tool_id": "tool.alpha", "arguments": {}},
+                "validation": {"outcome": "failure", "reason": "wrong tool"},
+                "messages": [{"role": "system", "content": "prompt"}],
+                "visible_tools": [{"tool_id": "tool.alpha", "description": "Large blob"}],
+                "attempts": [
+                    {
+                        "scene_id": "scene.alpha",
+                        "scene_index": 0,
+                        "attempt_index": 1,
+                        "status": "FAIL",
+                        "reason": "wrong tool",
+                        "raw_model_output": '{"tool_id":"tool.alpha","arguments":{}}',
+                        "parsed_tool_call": {"tool_id": "tool.alpha", "arguments": {}},
+                        "validation": {"outcome": "failure", "reason": "wrong tool"},
+                        "messages": [{"role": "system", "content": "attempt prompt"}],
+                        "visible_tools": [{"tool_id": "tool.alpha", "description": "Large blob"}],
+                        "note_update": {
+                            "scene_id": "scene.alpha",
+                            "character_id": "wizard.ember",
+                            "old_notes": "",
+                            "updated_notes": "- Try another tool",
+                            "raw_model_output": '{"notes":"- Try another tool"}',
+                            "messages": [{"role": "system", "content": "note prompt"}],
+                            "metadata": {"stub": True},
+                        },
+                    }
+                ],
+            }
+        ],
+        "ordered_scene_results": [],
+        "attempts": [
+            {
+                "scene_id": "scene.alpha",
+                "scene_index": 0,
+                "attempt_index": 1,
+                "status": "FAIL",
+                "reason": "wrong tool",
+                "raw_model_output": '{"tool_id":"tool.alpha","arguments":{}}',
+                "parsed_tool_call": {"tool_id": "tool.alpha", "arguments": {}},
+                "validation": {"outcome": "failure", "reason": "wrong tool"},
+                "messages": [{"role": "system", "content": "attempt prompt"}],
+                "visible_tools": [{"tool_id": "tool.alpha", "description": "Large blob"}],
+            }
+        ],
+        "final_outcome": "failure",
+        "final_reason": "stop",
+        "stop_scene_id": "scene.alpha",
+    }
+
+    payload = build_run_log_payload(
+        run_mode="campaign",
+        data_dir="data",
+        preset_name="FULL_INFO",
+        prompt_format="json_only",
+        character_id="wizard.ember",
+        campaign_id="campaign.alpha",
+        run_result=run_result,
+    )
+
+    attempt = payload["scene_runs"][0]["attempts"][0]
+    top_level_attempt = payload["attempts"][0]
+    note_update = attempt["note_update"]
+
+    assert "messages" not in payload["scene_runs"][0]
+    assert "visible_tools" not in payload["scene_runs"][0]
+    assert "messages" not in attempt
+    assert "visible_tools" not in attempt
+    assert "messages" not in note_update
+    assert "metadata" not in note_update
+    assert "messages" not in top_level_attempt
+
+
 def test_save_streamlit_run_log_writes_json_file(monkeypatch, tmp_path):
     monkeypatch.setattr("src.runner.streamlit_utils.default_run_path", lambda prefix: str(tmp_path / f"{prefix}_test.json"))
 

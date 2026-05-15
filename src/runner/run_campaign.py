@@ -9,6 +9,7 @@ from src.runtime_paths import get_data_dir
 from src.runner.runner_utils import (
     DEFAULT_CAMPAIGN_ID,
     DEFAULT_CHARACTER_ID,
+    compact_run_result_for_log,
     default_run_path,
     ensure_dir,
     execute_campaign_run,
@@ -141,7 +142,7 @@ def main():
                 "character_id": args.character_id,
                 "preset": preset_name,
                 "prompt_format": prompt_format,
-                **campaign_run,
+                **compact_run_result_for_log(campaign_run),
             }
             with open(args.save_run, "w", encoding="utf-8") as f:
                 json.dump(runlog, f, ensure_ascii=False, indent=2)

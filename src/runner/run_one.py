@@ -9,6 +9,7 @@ from src.runtime_paths import get_data_dir
 from src.runner.runner_utils import (
     DEFAULT_CHARACTER_ID,
     DEFAULT_SCENE_ID,
+    compact_run_result_for_log,
     default_run_path,
     ensure_dir,
     execute_scene_run,
@@ -82,7 +83,7 @@ def main():
                 "scene_id": args.scene_id,
                 "preset": preset_name,
                 "prompt_format": prompt_format,
-                **scene_run,
+                **compact_run_result_for_log(scene_run),
             }
             with open(args.save_run, "w", encoding="utf-8") as f:
                 json.dump(runlog, f, ensure_ascii=False, indent=2)
