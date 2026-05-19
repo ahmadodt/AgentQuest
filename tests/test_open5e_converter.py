@@ -195,7 +195,8 @@ def test_monster_vulnerability_becomes_damage_modifier_and_weakness():
     )
 
     assert monster["weaknesses"] == ["fire"]
-    assert monster["interactions"]["damage_type_modifiers"]["fire"] == 2.0
+    assert monster["damage_profile"] == "open5e.profile.ember-beast"
+    assert monster["damage_modifier_overrides"]["fire"] == 2.0
 
 
 def test_monster_resistance_becomes_damage_modifier_and_resistance():
@@ -215,7 +216,7 @@ def test_monster_resistance_becomes_damage_modifier_and_resistance():
     )
 
     assert monster["resistances"] == ["fire"]
-    assert monster["interactions"]["damage_type_modifiers"]["fire"] == 0.5
+    assert monster["damage_modifier_overrides"]["fire"] == 0.5
 
 
 def test_monster_immunity_becomes_damage_modifier_and_immunity():
@@ -235,7 +236,7 @@ def test_monster_immunity_becomes_damage_modifier_and_immunity():
     )
 
     assert monster["immunities"] == ["cold"]
-    assert monster["interactions"]["damage_type_modifiers"]["cold"] == 0.0
+    assert monster["damage_modifier_overrides"]["cold"] == 0.0
 
 
 def test_monster_description_does_not_create_inferred_fire_weakness():
@@ -255,7 +256,7 @@ def test_monster_description_does_not_create_inferred_fire_weakness():
     )
 
     assert "fire" not in monster["weaknesses"]
-    assert "fire" not in monster["interactions"]["damage_type_modifiers"]
+    assert "fire" not in monster["damage_modifier_overrides"]
 
 
 def test_monster_description_is_copied_fully():

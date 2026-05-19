@@ -1,6 +1,5 @@
 import json
 import os
-from datetime import datetime
 from typing import Any
 
 from src.models.config import (
@@ -12,11 +11,11 @@ from src.models.config import (
 from src.prompts.prompt_config import PromptConfig
 from src.runtime_paths import get_local_models_dir
 from src.runner.runner_utils import (
-    compact_run_result_for_log,
-    default_run_path,
-    ensure_dir,
+    build_run_log_payload,
     get_campaign_scene_ids,
     load_preset,
+    normalize_single_scene_run,
+    save_run_log,
     scene_status_from_verdict,
 )
 
@@ -132,26 +131,6 @@ def rewrite_run_config_for_model(
     )
 
 
-def normalize_single_scene_run(scene_run: dict) -> dict[str, Any]:
-    verdict = scene_run["verdict"]
-    status = scene_run.get("status") or scene_status_from_verdict(verdict)
-    return {
-        "scene_runs": [scene_run],
-        "ordered_scene_results": [scene_run],
-        "model": scene_run.get("model", ""),
-        "total_scenes": 1,
-        "passed_scenes": 1 if status == "PASS" else 0,
-        "failed_scenes": 0 if status == "PASS" else 1,
-        "parse_failures": 1 if status == "PARSE_ERROR" else 0,
-        "success_rate": 100.0 if status == "PASS" else 0.0,
-        "final_outcome": verdict.get("outcome", "invalid"),
-        "final_reason": verdict.get("reason", ""),
-        "stop_scene_id": scene_run["scene_id"]
-        if verdict.get("outcome") != "success"
-        else None,
-    }
-
-
 def build_scene_result_rows(scene_runs: list[dict], gamedata: dict) -> list[dict[str, Any]]:
     rows = []
 
@@ -184,7 +163,7 @@ def build_scene_result_rows(scene_runs: list[dict], gamedata: dict) -> list[dict
                 "visible_tool_ids": scene_run.get("visible_tool_ids", []),
                 "visible_tools": scene_run.get("visible_tools", []),
                 "raw_model_output": scene_run.get("raw_model_output", ""),
-                "messages": scene_run.get("prompt_messages", scene_run.get("messages", [])),
+                "messages": scene_run.get("messages", []),
                 "attempts": scene_run.get("attempts", []),
                 "attempt_count": scene_run.get("attempt_count"),
                 "retry_count": scene_run.get("retry_count"),
@@ -232,40 +211,5 @@ def build_campaign_progress_rows(
     return rows
 
 
-def build_run_log_payload(
-    *,
-    run_mode: str,
-    data_dir: str,
-    preset_name: str,
-    prompt_format: str,
-    character_id: str,
-    run_result: dict,
-    campaign_id: str | None = None,
-    scene_id: str | None = None,
-) -> dict[str, Any]:
-    payload = {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "data_dir": data_dir,
-        "character_id": character_id,
-        "preset": preset_name,
-        "prompt_format": prompt_format,
-    }
-
-    if run_mode == "campaign":
-        payload["campaign_id"] = campaign_id
-    else:
-        payload["scene_id"] = scene_id
-
-    payload.update(compact_run_result_for_log(run_result))
-    return payload
-
-
 def save_streamlit_run_log(run_mode: str, runlog: dict[str, Any]) -> str:
-    prefix = "run_campaign" if run_mode == "campaign" else "run_one"
-    save_path = default_run_path(prefix)
-    ensure_dir(os.path.dirname(save_path))
-
-    with open(save_path, "w", encoding="utf-8") as f:
-        json.dump(runlog, f, ensure_ascii=False, indent=2)
-
-    return save_path
+    return save_run_log(run_mode, runlog)

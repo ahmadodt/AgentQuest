@@ -394,7 +394,7 @@ def test_build_run_log_payload_compacts_campaign_attempt_payloads():
 
 
 def test_save_streamlit_run_log_writes_json_file(monkeypatch, tmp_path):
-    monkeypatch.setattr("src.runner.streamlit_utils.default_run_path", lambda prefix: str(tmp_path / f"{prefix}_test.json"))
+    monkeypatch.setattr("src.runner.runner_utils.default_run_path", lambda prefix: str(tmp_path / f"{prefix}_test.json"))
 
     path = save_streamlit_run_log("scene", {"ok": True})
 

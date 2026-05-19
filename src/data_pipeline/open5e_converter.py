@@ -271,6 +271,7 @@ def convert_open5e_monster(record: dict) -> dict:
 
     return {
         "monster_id": f"open5e.monster.{slug}",
+        "damage_profile": f"open5e.profile.{slug}",
         "source_slug": slug,
         "name": record.get("name", slug),
         "type": monster_type,
@@ -288,10 +289,10 @@ def convert_open5e_monster(record: dict) -> dict:
         ],
         "special_rules": [],
         "interactions": {
-            "damage_type_modifiers": modifiers,
             "min_power_to_defeat": max(1, math.ceil(cr_value)) if cr_value > 0 else 1,
             "knowledge_tools_help": False,
         },
+        "damage_modifier_overrides": modifiers,
         "source": {
             "dataset": "open5e",
             "document_slug": record.get("document__slug"),
@@ -418,6 +419,21 @@ def _build_monster_payload(monsters: list[dict]) -> dict:
     }
 
 
+def _build_damage_profile_payload(monsters: list[dict]) -> dict:
+    profiles = {}
+    for monster in monsters:
+        profile_id = monster.get("damage_profile")
+        modifiers = monster.get("damage_modifier_overrides", {}) or {}
+        if isinstance(profile_id, str) and profile_id:
+            profiles[profile_id] = dict(modifiers)
+    return {
+        "version": "1.0",
+        "source": "open5e",
+        "generated_from": "local_json",
+        "profiles": profiles,
+    }
+
+
 def _build_tool_payload(tools: list[dict]) -> dict:
     return {
         "version": "1.0",
@@ -429,15 +445,18 @@ def _build_tool_payload(tools: list[dict]) -> dict:
 
 def _write_output_payloads(output_dir: str, monsters: list[dict], spells: list[dict], weapons: list[dict]) -> dict:
     monster_payload = _build_monster_payload(monsters)
+    damage_profile_payload = _build_damage_profile_payload(monsters)
     spell_payload = _build_tool_payload(spells)
     weapon_payload = _build_tool_payload(weapons)
 
     _write_json(os.path.join(output_dir, "monsters.json"), monster_payload)
+    _write_json(os.path.join(output_dir, "damage_profiles.json"), damage_profile_payload)
     _write_json(os.path.join(output_dir, "tools_spells.json"), spell_payload)
     _write_json(os.path.join(output_dir, "tools_weapons.json"), weapon_payload)
 
     return {
         "monsters": monster_payload,
+        "damage_profiles": damage_profile_payload,
         "spells": spell_payload,
         "weapons": weapon_payload,
         "output_dir": output_dir,

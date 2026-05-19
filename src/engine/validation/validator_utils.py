@@ -85,7 +85,7 @@ def compute_effective_power(tool: dict, monster: dict):
 
     modifiers = monster.get("resolved_damage_modifiers")
     if not isinstance(modifiers, dict):
-        modifiers = (monster.get("interactions", {}) or {}).get("damage_type_modifiers", {}) or {}
+        modifiers = {}
 
     if damage_type not in modifiers:
         return {

@@ -62,8 +62,9 @@ def _base_custom_dataset() -> dict:
                     "resistances": [],
                     "immunities": [],
                     "special_rules": [],
+                    "damage_profile": "custom.profile.slime",
+                    "damage_modifier_overrides": {"fire": 2.0},
                     "interactions": {
-                        "damage_type_modifiers": {"fire": 2.0},
                         "min_power_to_defeat": 2,
                         "knowledge_tools_help": False,
                         "escape_allowed": True,
@@ -109,6 +110,15 @@ def _write_runtime_dataset(base_dir: str, dataset: dict, use_custom_subdir: bool
     _write_json(os.path.join(root, "monsters.json"), dataset["monsters"])
     _write_json(os.path.join(root, "scenes.json"), dataset["scenes"])
     _write_json(os.path.join(root, "campaigns.json"), dataset["campaigns"])
+    _write_json(
+        os.path.join(root, "damage_profiles.json"),
+        {
+            "version": "1.0",
+            "profiles": {
+                "custom.profile.slime": {},
+            },
+        },
+    )
 
 
 def test_load_gamedata_merges_custom_and_generated_with_custom_precedence(tmp_path):
@@ -182,8 +192,9 @@ def test_load_gamedata_merges_custom_and_generated_with_custom_precedence(tmp_pa
                     "resistances": [],
                     "immunities": [],
                     "special_rules": [],
+                    "damage_profile": "open5e.profile.slime",
+                    "damage_modifier_overrides": {},
                     "interactions": {
-                        "damage_type_modifiers": {},
                         "min_power_to_defeat": 1,
                         "knowledge_tools_help": False,
                     },
@@ -198,13 +209,24 @@ def test_load_gamedata_merges_custom_and_generated_with_custom_precedence(tmp_pa
                     "resistances": [],
                     "immunities": [],
                     "special_rules": [],
+                    "damage_profile": "open5e.profile.bat",
+                    "damage_modifier_overrides": {},
                     "interactions": {
-                        "damage_type_modifiers": {},
                         "min_power_to_defeat": 1,
                         "knowledge_tools_help": False,
                     },
                 },
             ],
+        },
+    )
+    _write_json(
+        os.path.join(tmp_path, "generated", "open5e", "damage_profiles.json"),
+        {
+            "version": "1.0",
+            "profiles": {
+                "open5e.profile.slime": {},
+                "open5e.profile.bat": {},
+            },
         },
     )
 
@@ -243,14 +265,24 @@ def test_generated_monsters_are_normalized_for_runtime_and_projected_for_llm(tmp
                     "condition_immunities": ["poisoned"],
                     "special_rules": ["messy"],
                     "cr": 1.0,
+                    "damage_profile": "open5e.profile.mud_mephit",
+                    "damage_modifier_overrides": {"fire": 2.0},
                     "source": {"dataset": "open5e"},
                     "interactions": {
-                        "damage_type_modifiers": {"fire": 2.0},
                         "min_power_to_defeat": 1,
                         "knowledge_tools_help": True,
                     },
                 }
             ],
+        },
+    )
+    _write_json(
+        os.path.join(tmp_path, "generated", "open5e", "damage_profiles.json"),
+        {
+            "version": "1.0",
+            "profiles": {
+                "open5e.profile.mud_mephit": {},
+            },
         },
     )
 
@@ -300,6 +332,21 @@ def test_load_gamedata_resolves_damage_profile_modifiers(tmp_path):
     assert gamedata["damage_profiles_by_id"]["slime_profile"]["fire"] == 2.0
     assert monster["resolved_damage_modifiers"]["fire"] == 2.0
     assert monster["resolved_damage_modifiers"]["force"] == 1.5
+
+
+def test_load_gamedata_rejects_legacy_damage_modifier_field(tmp_path):
+    dataset = _base_custom_dataset()
+    monster = dataset["monsters"]["monsters"][0]
+    monster.pop("damage_profile")
+    monster.pop("damage_modifier_overrides")
+    monster["interactions"]["damage_type_modifiers"] = {"fire": 2.0}
+    _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)
+
+    try:
+        load_gamedata(str(tmp_path))
+        assert False, "Expected load_gamedata to reject legacy damage_type_modifiers"
+    except Exception as error:
+        assert "monster must define damage_profile" in str(error)
 
 
 def test_llm_tool_projection_shortens_generated_spell_description_and_prompt_uses_it(tmp_path):

@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from src.engine.validator import ToolCallValidator
+from src.models.config import load_runtime_prompt_config
 from src.models.registry import build_handler
 from src.prompts.base_prompt import build_messages, build_note_update_messages
 from src.prompts.prompt_config import DEFAULT_PROMPT_CONFIG, PromptConfig
@@ -50,6 +51,24 @@ def ensure_dir(dirpath: str) -> None:
 def default_run_path(prefix: str) -> str:
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     return os.path.join(get_runs_dir(), f"{prefix}_{timestamp}.json")
+
+
+def write_json_file(path: str, payload: object) -> None:
+    ensure_dir(os.path.dirname(path))
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, ensure_ascii=False, indent=2)
+
+
+def resolve_prompt_settings(
+    *,
+    prompt_format: str,
+    preset_name: str,
+    config_path: str | None = None,
+) -> tuple[str, str, PromptConfig]:
+    runtime_prompt_cfg = load_runtime_prompt_config(config_path) if config_path else load_runtime_prompt_config()
+    resolved_prompt_format = prompt_format or runtime_prompt_cfg.prompt_format
+    resolved_preset_name = preset_name or runtime_prompt_cfg.preset_name
+    return resolved_prompt_format, resolved_preset_name, load_preset(resolved_preset_name)
 
 
 def resolve_character(gamedata: dict, character_id: str) -> dict:
@@ -217,6 +236,59 @@ def compact_run_result_for_log(run_result: dict[str, Any]) -> dict[str, Any]:
         }
 
     return compact_result
+
+
+def normalize_single_scene_run(scene_run: dict[str, Any]) -> dict[str, Any]:
+    verdict = scene_run["verdict"]
+    status = scene_run.get("status") or scene_status_from_verdict(verdict)
+    return {
+        "scene_runs": [scene_run],
+        "ordered_scene_results": [scene_run],
+        "model": scene_run.get("model", ""),
+        "total_scenes": 1,
+        "passed_scenes": 1 if status == "PASS" else 0,
+        "failed_scenes": 0 if status == "PASS" else 1,
+        "parse_failures": 1 if status == "PARSE_ERROR" else 0,
+        "success_rate": 100.0 if status == "PASS" else 0.0,
+        "final_outcome": verdict.get("outcome", "invalid"),
+        "final_reason": verdict.get("reason", ""),
+        "stop_scene_id": scene_run["scene_id"] if verdict.get("outcome") != "success" else None,
+    }
+
+
+def build_run_log_payload(
+    *,
+    run_mode: str,
+    data_dir: str,
+    preset_name: str,
+    prompt_format: str,
+    character_id: str,
+    run_result: dict[str, Any],
+    campaign_id: str | None = None,
+    scene_id: str | None = None,
+) -> dict[str, Any]:
+    payload = {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "data_dir": data_dir,
+        "character_id": character_id,
+        "preset": preset_name,
+        "prompt_format": prompt_format,
+    }
+
+    if run_mode == "campaign":
+        payload["campaign_id"] = campaign_id
+    else:
+        payload["scene_id"] = scene_id
+
+    payload.update(compact_run_result_for_log(run_result))
+    return payload
+
+
+def save_run_log(run_mode: str, runlog: dict[str, Any]) -> str:
+    prefix = "run_campaign" if run_mode == "campaign" else "run_one"
+    save_path = default_run_path(prefix)
+    write_json_file(save_path, runlog)
+    return save_path
 
 
 def _normalize_learning_notes(notes: str, *, max_chars: int = 4000) -> str:

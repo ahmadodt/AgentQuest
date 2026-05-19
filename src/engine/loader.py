@@ -88,6 +88,12 @@ def _merge_records_by_id(custom_items: list, generated_items: list, id_key: str)
     return [merged[item_id] for item_id in ordered_ids]
 
 
+def _merge_damage_profile_maps(custom_profiles: dict | None, generated_profiles: dict | None) -> dict:
+    merged = dict(generated_profiles or {})
+    merged.update(custom_profiles or {})
+    return merged
+
+
 def _normalize_generated_monster(monster: dict) -> dict:
     normalized = dict(monster)
     normalized["origin"] = "generated"
@@ -286,25 +292,18 @@ def _validate_monsters(mon_root: dict, damage_profiles_by_id: dict) -> dict:
         for key in ["min_power_to_defeat", "escape_allowed"]:
             _require(interactions, key, mctx + ".interactions")
 
-        if "damage_profile" in m:
-            if not isinstance(m["damage_profile"], str):
-                raise DataValidationError(f"{mctx}: damage_profile must be a string")
-            if m["damage_profile"] not in damage_profiles_by_id:
-                raise DataValidationError(
-                    f"{mctx}: unknown damage_profile '{m['damage_profile']}'"
-                )
-        elif "damage_type_modifiers" not in interactions:
+        if "damage_profile" not in m:
+            raise DataValidationError(f"{mctx}: monster must define damage_profile")
+        if not isinstance(m["damage_profile"], str):
+            raise DataValidationError(f"{mctx}: damage_profile must be a string")
+        if m["damage_profile"] not in damage_profiles_by_id:
             raise DataValidationError(
-                f"{mctx}: monster must define damage_profile or interactions.damage_type_modifiers"
+                f"{mctx}: unknown damage_profile '{m['damage_profile']}'"
             )
 
         overrides = m.get("damage_modifier_overrides", {}) or {}
         if not isinstance(overrides, dict):
             raise DataValidationError(f"{mctx}: damage_modifier_overrides must be an object/dict if present")
-
-        legacy_modifiers = interactions.get("damage_type_modifiers")
-        if legacy_modifiers is not None and not isinstance(legacy_modifiers, dict):
-            raise DataValidationError(f"{mctx}: interactions.damage_type_modifiers must be an object/dict")
 
         # allow int or float
         if not isinstance(interactions["min_power_to_defeat"], (int, float)):
@@ -445,12 +444,13 @@ def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict, dict, d
     monsters_root = _load_json_file(os.path.join(runtime_data_dir, "monsters.json"))
     scenes_root = _load_json_file(os.path.join(runtime_data_dir, "scenes.json"))
     campaigns_root = _load_json_file(os.path.join(runtime_data_dir, "campaigns.json"))
-    damage_profiles_root = _optional_load_json_file(os.path.join(runtime_data_dir, "damage_profiles.json"))
+    custom_damage_profiles_root = _optional_load_json_file(os.path.join(runtime_data_dir, "damage_profiles.json"))
 
     custom_tools = [_normalize_custom_tool(tool) for tool in tools_root.get("tools", [])]
     custom_monsters = [_normalize_custom_monster(monster) for monster in monsters_root.get("monsters", [])]
 
     generated_monsters_root = _optional_load_json_file(os.path.join(generated_data_dir, "monsters.json")) or {}
+    generated_damage_profiles_root = _optional_load_json_file(os.path.join(generated_data_dir, "damage_profiles.json")) or {}
     generated_spells_root = _optional_load_json_file(os.path.join(generated_data_dir, "tools_spells.json")) or {}
 
     generated_monsters = [
@@ -470,7 +470,16 @@ def _load_merged_content(data_dir: str) -> tuple[dict, dict, dict, dict, dict, d
         custom_monsters, generated_monsters, "monster_id"
     )
 
-    return merged_tools_root, chars_root, merged_monsters_root, scenes_root, campaigns_root, damage_profiles_root
+    merged_damage_profiles_root = None
+    if custom_damage_profiles_root or generated_damage_profiles_root:
+        merged_damage_profiles_root = {
+            "profiles": _merge_damage_profile_maps(
+                (custom_damage_profiles_root or {}).get("profiles"),
+                generated_damage_profiles_root.get("profiles"),
+            )
+        }
+
+    return merged_tools_root, chars_root, merged_monsters_root, scenes_root, campaigns_root, merged_damage_profiles_root
 
 
 def load_gamedata(data_dir: str = "data") -> dict:
@@ -512,3 +521,11 @@ def load_gamedata(data_dir: str = "data") -> dict:
             "campaigns": campaigns_root.get("campaigns", []),
         },
     }
+    merged_damage_profiles_root = None
+    if custom_damage_profiles_root or generated_damage_profiles_root:
+        merged_damage_profiles_root = {
+            "profiles": _merge_damage_profile_maps(
+                (custom_damage_profiles_root or {}).get("profiles"),
+                generated_damage_profiles_root.get("profiles"),
+            )
+        }

@@ -1,5 +1,4 @@
 import argparse
-import json
 import os
 import sys
 import time
@@ -11,7 +10,7 @@ from src.models.config import load_runtime_model_config, load_runtime_prompt_con
 from src.models.registry import build_handler
 from src.runtime_paths import get_data_dir, get_runs_dir
 from src.runner.benchmark_utils import aggregate_benchmark_records, build_benchmark_record
-from src.runner.runner_utils import ensure_dir, execute_scene_run, get_campaign_scene_ids, load_preset
+from src.runner.runner_utils import ensure_dir, execute_scene_run, get_campaign_scene_ids, load_preset, write_json_file
 
 
 def _parse_multi_option(values: list[str] | None) -> list[str]:
@@ -60,9 +59,7 @@ def _benchmark_output_dir() -> str:
 
 
 def _write_json(path: str, payload: object) -> None:
-    ensure_dir(os.path.dirname(path))
-    with open(path, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, ensure_ascii=False, indent=2)
+    write_json_file(path, payload)
 
 
 def main() -> int:

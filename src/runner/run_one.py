@@ -1,19 +1,16 @@
 import argparse
 import json
-import os
-from datetime import datetime
 
 from src.engine.loader import load_gamedata, DataValidationError
-from src.models.config import load_runtime_prompt_config
 from src.runtime_paths import get_data_dir
 from src.runner.runner_utils import (
     DEFAULT_CHARACTER_ID,
     DEFAULT_SCENE_ID,
-    compact_run_result_for_log,
+    build_run_log_payload,
     default_run_path,
-    ensure_dir,
     execute_scene_run,
-    load_preset,
+    resolve_prompt_settings,
+    write_json_file,
 )
 
 def main():
@@ -45,11 +42,10 @@ def main():
 
     try:
         gamedata = load_gamedata(args.data_dir)
-        runtime_prompt_cfg = load_runtime_prompt_config()
-        prompt_format = args.prompt_format or runtime_prompt_cfg.prompt_format
-        preset_name = args.preset or runtime_prompt_cfg.preset_name
-
-        cfg = load_preset(preset_name)
+        prompt_format, preset_name, cfg = resolve_prompt_settings(
+            prompt_format=args.prompt_format,
+            preset_name=args.preset,
+        )
 
         scene_run = execute_scene_run(
             gamedata=gamedata,
@@ -75,18 +71,16 @@ def main():
         print(json.dumps(metadata, indent=2, ensure_ascii=False))
         
         if args.save_run:
-            ensure_dir(os.path.dirname(args.save_run))
-            runlog = {
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "data_dir": args.data_dir,
-                "character_id": args.character_id,
-                "scene_id": args.scene_id,
-                "preset": preset_name,
-                "prompt_format": prompt_format,
-                **compact_run_result_for_log(scene_run),
-            }
-            with open(args.save_run, "w", encoding="utf-8") as f:
-                json.dump(runlog, f, ensure_ascii=False, indent=2)
+            runlog = build_run_log_payload(
+                run_mode="scene",
+                data_dir=args.data_dir,
+                preset_name=preset_name,
+                prompt_format=prompt_format,
+                character_id=args.character_id,
+                scene_id=args.scene_id,
+                run_result=scene_run,
+            )
+            write_json_file(args.save_run, runlog)
             print(f"\nSaved run log to: {args.save_run}")
 
     except DataValidationError as e:

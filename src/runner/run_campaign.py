@@ -1,20 +1,17 @@
 import argparse
-import json
-import os
-from datetime import datetime
 
 from src.engine.loader import DataValidationError, load_gamedata
-from src.models.config import load_runtime_model_config, load_runtime_prompt_config
+from src.models.config import load_runtime_model_config
 from src.runtime_paths import get_data_dir
 from src.runner.runner_utils import (
     DEFAULT_CAMPAIGN_ID,
     DEFAULT_CHARACTER_ID,
-    compact_run_result_for_log,
+    build_run_log_payload,
     default_run_path,
-    ensure_dir,
     execute_campaign_run,
     execute_learning_campaign,
-    load_preset,
+    resolve_prompt_settings,
+    write_json_file,
 )
 
 
@@ -71,11 +68,11 @@ def main():
 
     try:
         gamedata = load_gamedata(args.data_dir)
-        runtime_prompt_cfg = load_runtime_prompt_config()
         runtime_model_cfg = load_runtime_model_config()
-        prompt_format = args.prompt_format or runtime_prompt_cfg.prompt_format
-        preset_name = args.preset or runtime_prompt_cfg.preset_name
-        cfg = load_preset(preset_name)
+        prompt_format, preset_name, cfg = resolve_prompt_settings(
+            prompt_format=args.prompt_format,
+            preset_name=args.preset,
+        )
 
         if args.self_learning:
             campaign_run = execute_learning_campaign(
@@ -134,18 +131,16 @@ def main():
             print(campaign_run.get("final_notes", ""))
 
         if args.save_run:
-            ensure_dir(os.path.dirname(args.save_run))
-            runlog = {
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "data_dir": args.data_dir,
-                "campaign_id": args.campaign_id,
-                "character_id": args.character_id,
-                "preset": preset_name,
-                "prompt_format": prompt_format,
-                **compact_run_result_for_log(campaign_run),
-            }
-            with open(args.save_run, "w", encoding="utf-8") as f:
-                json.dump(runlog, f, ensure_ascii=False, indent=2)
+            runlog = build_run_log_payload(
+                run_mode="campaign",
+                data_dir=args.data_dir,
+                preset_name=preset_name,
+                prompt_format=prompt_format,
+                character_id=args.character_id,
+                campaign_id=args.campaign_id,
+                run_result=campaign_run,
+            )
+            write_json_file(args.save_run, runlog)
             print(f"\nSaved campaign run log to: {args.save_run}")
 
     except DataValidationError as e:
