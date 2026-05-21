@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Any
 
@@ -5,9 +6,12 @@ import streamlit as st
 
 from src.engine.loader import DataValidationError, load_gamedata
 from src.models.registry import build_handler
+from src.prompts.tool_renderers.compact_tools import render_tools_compact
 from src.runtime_paths import get_data_dir, get_local_models_dir
 from src.runner.runner_utils import (
+    build_scene_prompt_context,
     execute_scene_run,
+    execute_scene_tool_call,
     execute_learning_campaign,
     execute_learning_scene,
     get_campaign_scene_ids,
@@ -41,6 +45,7 @@ CAMPAIGN_NOTES_KEY = "aq_campaign_notes"
 CAMPAIGN_INITIAL_NOTES_KEY = "aq_campaign_initial_notes"
 CAMPAIGN_TOTAL_RETRIES_KEY = "aq_campaign_total_retries"
 CAMPAIGN_LEARNING_KEY = "aq_campaign_learning_enabled"
+HUMAN_ACTOR_VALUE = "__human__"
 SINGLE_SCENE_KEY = "aq_single_scene_result"
 SINGLE_LOG_KEY = "aq_single_scene_log_path"
 
@@ -61,7 +66,7 @@ def _campaign_signature(
     *,
     campaign_id: str,
     character_id: str,
-    model_filename: str,
+    actor_selection: str,
     preset_name: str,
     prompt_format: str,
     self_learning_enabled: bool,
@@ -72,7 +77,7 @@ def _campaign_signature(
     return (
         campaign_id,
         character_id,
-        model_filename,
+        actor_selection,
         preset_name,
         prompt_format,
         self_learning_enabled,
@@ -334,6 +339,173 @@ def _render_progress_view(progress_rows: list[dict[str, Any]]) -> None:
         )
 
 
+def _render_prompt_messages(messages: list[dict[str, str]]) -> None:
+    st.markdown("**Prompt Messages**")
+    for index, message in enumerate(messages, start=1):
+        st.markdown(f"**Message {index} ({message.get('role', '?')})**")
+        st.code(message.get("content", ""), language="text")
+
+
+def _resolve_tool_for_display(gamedata: dict, tool: dict[str, Any]) -> dict[str, Any]:
+    llm_tools_by_id = gamedata.get("llm_tools_by_id", {})
+    return llm_tools_by_id.get(tool.get("tool_id"), tool)
+
+
+def _build_human_tool_call(
+    *,
+    form_key: str,
+    tool: dict[str, Any],
+) -> dict[str, Any]:
+    arguments: dict[str, Any] = {}
+    args_schema = tool.get("args", {}) or {}
+    properties = args_schema.get("properties", {}) or {}
+    required = set(args_schema.get("required", []) or [])
+
+    for arg_name, schema in properties.items():
+        field_key = f"{form_key}_{tool.get('tool_id')}_{arg_name}"
+        arg_type = schema.get("type", "string")
+        value: Any
+
+        if isinstance(schema.get("enum"), list) and schema["enum"]:
+            value = st.selectbox(
+                f"{arg_name}{' *' if arg_name in required else ''}",
+                schema["enum"],
+                key=field_key,
+            )
+        elif arg_type == "boolean":
+            value = st.checkbox(arg_name, key=field_key)
+        elif arg_type == "integer":
+            minimum = schema.get("minimum")
+            maximum = schema.get("maximum")
+            default_value = minimum if isinstance(minimum, int) else 0
+            input_label = f"{arg_name}{' *' if arg_name in required else ''}"
+            if isinstance(minimum, int) and isinstance(maximum, int):
+                value = st.number_input(input_label, min_value=minimum, max_value=maximum, value=default_value, step=1, key=field_key)
+            elif isinstance(minimum, int):
+                value = st.number_input(input_label, min_value=minimum, value=default_value, step=1, key=field_key)
+            elif isinstance(maximum, int):
+                value = st.number_input(input_label, max_value=maximum, value=min(default_value, maximum), step=1, key=field_key)
+            else:
+                value = st.number_input(input_label, value=default_value, step=1, key=field_key)
+        elif arg_type == "number":
+            minimum = schema.get("minimum")
+            maximum = schema.get("maximum")
+            default_value = float(minimum) if isinstance(minimum, (int, float)) else 0.0
+            input_label = f"{arg_name}{' *' if arg_name in required else ''}"
+            if isinstance(minimum, (int, float)) and isinstance(maximum, (int, float)):
+                value = st.number_input(input_label, min_value=float(minimum), max_value=float(maximum), value=default_value, key=field_key)
+            elif isinstance(minimum, (int, float)):
+                value = st.number_input(input_label, min_value=float(minimum), value=default_value, key=field_key)
+            elif isinstance(maximum, (int, float)):
+                value = st.number_input(input_label, max_value=float(maximum), value=min(default_value, float(maximum)), key=field_key)
+            else:
+                value = st.number_input(input_label, value=default_value, key=field_key)
+        elif arg_type in {"object", "array"}:
+            raw_json = st.text_area(
+                f"{arg_name}{' *' if arg_name in required else ''} (JSON)",
+                value="{}" if arg_type == "object" else "[]",
+                key=field_key,
+            )
+            if raw_json.strip():
+                value = raw_json
+            else:
+                value = None
+        else:
+            value = st.text_input(
+                f"{arg_name}{' *' if arg_name in required else ''}",
+                key=field_key,
+            )
+
+        if arg_type in {"object", "array"}:
+            if value is None or (isinstance(value, str) and not value.strip()):
+                if arg_name in required:
+                    arguments[arg_name] = value
+                continue
+            arguments[arg_name] = value
+            continue
+
+        if arg_name in required or value not in ("", None):
+            arguments[arg_name] = value
+
+    return arguments
+
+
+def _parse_human_arguments(
+    *,
+    tool: dict[str, Any],
+    arguments: dict[str, Any],
+) -> tuple[dict[str, Any], str | None]:
+    parsed_arguments: dict[str, Any] = {}
+    properties = ((tool.get("args", {}) or {}).get("properties", {}) or {})
+    for arg_name, value in arguments.items():
+        schema = properties.get(arg_name, {})
+        arg_type = schema.get("type")
+        if arg_type in {"object", "array"} and isinstance(value, str):
+            try:
+                parsed_arguments[arg_name] = json.loads(value)
+            except Exception:
+                return {}, f"Argument '{arg_name}' must be valid JSON."
+        else:
+            parsed_arguments[arg_name] = value
+    return parsed_arguments, None
+
+
+def _render_human_tool_panel(
+    *,
+    gamedata: dict,
+    run_settings: dict[str, Any],
+    scene_context: dict[str, Any],
+    submit_label: str,
+    form_key: str,
+) -> str | None:
+    cfg = run_settings["preset_config"]
+    visible_tools = scene_context["visible_tools"]
+
+    st.subheader("Choose a Tool")
+    tool_labels = {
+        tool["tool_id"]: f"{tool.get('label') or tool['tool_id']} ({tool['tool_id']})"
+        for tool in visible_tools
+    }
+    selected_tool_id = st.selectbox(
+        "Selected tool",
+        list(tool_labels.keys()),
+        format_func=lambda item: tool_labels[item],
+        key=f"{form_key}_selected_tool",
+    )
+
+    tool_cols = st.columns(min(3, len(visible_tools)) or 1)
+    for index, visible_tool in enumerate(visible_tools):
+        display_tool = _resolve_tool_for_display(gamedata, visible_tool)
+        with tool_cols[index % len(tool_cols)]:
+            with st.container(border=True):
+                st.markdown(f"**{visible_tool.get('label') or visible_tool['tool_id']}**")
+                st.caption(visible_tool["tool_id"])
+                with st.expander("Tool details", expanded=visible_tool["tool_id"] == selected_tool_id):
+                    st.code(render_tools_compact([display_tool], cfg), language="text")
+
+    selected_tool = next(tool for tool in visible_tools if tool["tool_id"] == selected_tool_id)
+    with st.form(key=f"{form_key}_tool_form"):
+        st.caption("Required fields are marked with *.")
+        raw_arguments = _build_human_tool_call(form_key=form_key, tool=selected_tool)
+        submitted = st.form_submit_button(submit_label)
+
+    if not submitted:
+        return None
+
+    parsed_arguments, argument_error = _parse_human_arguments(tool=selected_tool, arguments=raw_arguments)
+    if argument_error:
+        st.error(argument_error)
+        return None
+
+    return json.dumps(
+        {
+            "tool_id": selected_tool_id,
+            "arguments": parsed_arguments,
+        },
+        ensure_ascii=False,
+    )
+
+
 def _render_scene_detail(
     *,
     gamedata: dict,
@@ -381,7 +553,7 @@ def _render_scene_detail(
     reason = row["reason"] if row else ""
     _render_status_banner(status, reason)
 
-    st.markdown("**Model Tool Call**")
+    st.markdown("**Submitted Tool Call**")
     st.code((row or {}).get("raw_model_output") or "No run output for this scene yet.", language="json")
 
     with st.expander("Parsed Tool Call JSON", expanded=bool(row and row.get("parsed_tool_call"))):
@@ -391,10 +563,7 @@ def _render_scene_detail(
         st.json((row or {}).get("validation") or {})
 
     with st.expander("Prompt Messages"):
-        prompt_messages = (row or {}).get("messages") or []
-        for index, message in enumerate(prompt_messages, start=1):
-            st.markdown(f"**Message {index} ({message.get('role', '?')})**")
-            st.code(message.get("content", ""), language="text")
+        _render_prompt_messages((row or {}).get("messages") or [])
 
     if row and row.get("attempts"):
         with st.expander("Learning Attempts"):
@@ -420,7 +589,7 @@ def _render_campaign_history(history_rows: list[dict[str, Any]]) -> None:
     for row in history_rows:
         label = (
             f"Scene {row['scene_index'] + 1 if row.get('scene_index') is not None else '?'} | "
-            f"{row['scene_id']} | {row['status']}"
+            f"{row['scene_id']} | {row.get('actor_type', 'model')} | {row['status']}"
         )
         if row.get("selected_tool_id"):
             label += f" | {row['selected_tool_id']}"
@@ -475,7 +644,7 @@ def _render_campaign_mode(
     *,
     gamedata: dict,
     run_settings: dict[str, Any],
-    model_filename: str,
+    actor_selection: str,
     character_id: str,
     campaign_id: str,
     self_learning_enabled: bool,
@@ -484,10 +653,11 @@ def _render_campaign_mode(
     initial_notes: str,
 ) -> None:
     scene_ids = get_campaign_scene_ids(gamedata, campaign_id)
+    is_human_actor = actor_selection == HUMAN_ACTOR_VALUE
     signature = _campaign_signature(
         campaign_id=campaign_id,
         character_id=character_id,
-        model_filename=model_filename,
+        actor_selection=actor_selection,
         preset_name=run_settings["preset_name"],
         prompt_format=run_settings["prompt_format"],
         self_learning_enabled=self_learning_enabled,
@@ -507,23 +677,29 @@ def _render_campaign_mode(
         st.session_state[CAMPAIGN_NOTES_KEY] = initial_notes
     st.session_state[CAMPAIGN_LEARNING_KEY] = self_learning_enabled
 
-    model_path = _model_path_from_filename(model_filename)
-    handler = _get_cached_handler(model_path)
+    model_path = ""
+    handler = None
+    if not is_human_actor:
+        model_path = _model_path_from_filename(actor_selection)
+        handler = _get_cached_handler(model_path)
     current_scene_index = min(st.session_state.get(CAMPAIGN_INDEX_KEY, 0), len(scene_ids) - 1)
     st.session_state[CAMPAIGN_INDEX_KEY] = current_scene_index
 
     control_cols = st.columns(6)
-    run_current = control_cols[0].button("Run current scene")
+    run_current = control_cols[0].button("Run current scene", disabled=is_human_actor)
     prev_scene = control_cols[1].button("Previous scene")
     next_scene = control_cols[2].button("Next scene")
     reset_campaign = control_cols[3].button("Reset campaign")
-    run_remaining = control_cols[4].button("Run remaining scenes")
-    run_full = control_cols[5].button("Run full campaign")
+    run_remaining = control_cols[4].button("Run remaining scenes", disabled=is_human_actor)
+    run_full = control_cols[5].button("Run full campaign", disabled=is_human_actor)
     save_results = st.button(
         "Save results",
         disabled=not st.session_state.get(CAMPAIGN_RESULTS_KEY),
         help="Save the current campaign evaluation state as a run log.",
     )
+
+    if is_human_actor:
+        st.caption("Human mode is step-driven. Submit one tool choice at a time for the current scene.")
 
     if self_learning_enabled:
         st.subheader("Learning Notes")
@@ -658,6 +834,14 @@ def _render_campaign_mode(
 
     current_scene_index = st.session_state.get(CAMPAIGN_INDEX_KEY, 0)
     current_scene_id = scene_ids[current_scene_index]
+    scene_context = build_scene_prompt_context(
+        gamedata=gamedata,
+        character_id=character_id,
+        scene_id=current_scene_id,
+        prompt_format=run_settings["prompt_format"],
+        cfg=run_settings["preset_config"],
+        learning_notes=st.session_state.get(CAMPAIGN_NOTES_KEY, "") if self_learning_enabled else "",
+    )
     progress_rows = build_campaign_progress_rows(
         gamedata=gamedata,
         campaign_id=campaign_id,
@@ -665,6 +849,35 @@ def _render_campaign_mode(
         current_scene_index=current_scene_index,
     )
     _render_progress_view(progress_rows)
+
+    if is_human_actor:
+        with st.expander("Prompt Messages", expanded=True):
+            _render_prompt_messages(scene_context["messages"])
+        human_tool_call = _render_human_tool_panel(
+            gamedata=gamedata,
+            run_settings=run_settings,
+            scene_context=scene_context,
+            submit_label="Submit tool choice",
+            form_key=f"campaign_{campaign_id}_{current_scene_id}_{run_settings['preset_name']}",
+        )
+        if human_tool_call:
+            scene_result = execute_scene_tool_call(
+                gamedata=gamedata,
+                character_id=character_id,
+                scene_id=current_scene_id,
+                prompt_format=run_settings["prompt_format"],
+                cfg=run_settings["preset_config"],
+                raw_tool_call=human_tool_call,
+                campaign_id=campaign_id,
+                scene_index=current_scene_index,
+                messages=scene_context["messages"],
+                visible_tool_ids=scene_context["visible_tool_ids"],
+                visible_tools=scene_context["visible_tools"],
+                scene_title=scene_context["scene"].get("title", current_scene_id),
+                actor_type="human",
+            )
+            _record_campaign_scene_result(scene_result)
+            st.rerun()
 
     current_scene_result = st.session_state.get(CAMPAIGN_RESULTS_KEY, {}).get(current_scene_id)
     _render_scene_detail(
@@ -693,26 +906,42 @@ def _render_single_scene_mode(
     *,
     gamedata: dict,
     run_settings: dict[str, Any],
-    model_filename: str,
+    actor_selection: str,
     character_id: str,
     scene_id: str,
 ) -> None:
-    model_path = _model_path_from_filename(model_filename)
-    handler = _get_cached_handler(model_path)
+    is_human_actor = actor_selection == HUMAN_ACTOR_VALUE
+    scene_context = build_scene_prompt_context(
+        gamedata=gamedata,
+        character_id=character_id,
+        scene_id=scene_id,
+        prompt_format=run_settings["prompt_format"],
+        cfg=run_settings["preset_config"],
+    )
 
-    if st.button("Run scene"):
-        with st.spinner("Running scene..."):
-            scene_run = execute_scene_run(
+    if is_human_actor:
+        with st.expander("Prompt Messages", expanded=True):
+            _render_prompt_messages(scene_context["messages"])
+        human_tool_call = _render_human_tool_panel(
+            gamedata=gamedata,
+            run_settings=run_settings,
+            scene_context=scene_context,
+            submit_label="Submit tool choice",
+            form_key=f"scene_{scene_id}_{run_settings['preset_name']}",
+        )
+        if human_tool_call:
+            scene_run = execute_scene_tool_call(
                 gamedata=gamedata,
                 character_id=character_id,
                 scene_id=scene_id,
                 prompt_format=run_settings["prompt_format"],
                 cfg=run_settings["preset_config"],
-                model_key="",
-                max_tokens=128,
-                temperature=0.0,
-                model_path_override=model_path,
-                handler=handler,
+                raw_tool_call=human_tool_call,
+                messages=scene_context["messages"],
+                visible_tool_ids=scene_context["visible_tool_ids"],
+                visible_tools=scene_context["visible_tools"],
+                scene_title=scene_context["scene"].get("title", scene_id),
+                actor_type="human",
             )
             st.session_state[SINGLE_SCENE_KEY] = scene_run
             runlog = build_run_log_payload(
@@ -725,6 +954,35 @@ def _render_single_scene_mode(
                 run_result=normalize_single_scene_run(scene_run),
             )
             st.session_state[SINGLE_LOG_KEY] = save_streamlit_run_log("scene", runlog)
+    else:
+        model_path = _model_path_from_filename(actor_selection)
+        handler = _get_cached_handler(model_path)
+
+        if st.button("Run scene"):
+            with st.spinner("Running scene..."):
+                scene_run = execute_scene_run(
+                    gamedata=gamedata,
+                    character_id=character_id,
+                    scene_id=scene_id,
+                    prompt_format=run_settings["prompt_format"],
+                    cfg=run_settings["preset_config"],
+                    model_key="",
+                    max_tokens=128,
+                    temperature=0.0,
+                    model_path_override=model_path,
+                    handler=handler,
+                )
+                st.session_state[SINGLE_SCENE_KEY] = scene_run
+                runlog = build_run_log_payload(
+                    run_mode="scene",
+                    data_dir=get_data_dir(),
+                    preset_name=run_settings["preset_name"],
+                    prompt_format=run_settings["prompt_format"],
+                    character_id=character_id,
+                    scene_id=scene_id,
+                    run_result=normalize_single_scene_run(scene_run),
+                )
+                st.session_state[SINGLE_LOG_KEY] = save_streamlit_run_log("scene", runlog)
 
     _render_scene_detail(
         gamedata=gamedata,
@@ -753,9 +1011,6 @@ def main() -> None:
         return
 
     model_options = discover_local_models(models_dir)
-    if not model_options:
-        st.error(f"No GGUF models were found under {models_dir}.")
-        return
 
     try:
         run_settings = load_streamlit_run_settings()
@@ -782,7 +1037,12 @@ def main() -> None:
         return
 
     current_model_name = os.path.basename(run_settings.get("model_path", ""))
-    model_index = model_options.index(current_model_name) if current_model_name in model_options else 0
+    actor_options = [HUMAN_ACTOR_VALUE] + model_options
+    actor_labels = {
+        HUMAN_ACTOR_VALUE: "Human Player",
+        **{model_name: f"Model: {model_name}" for model_name in model_options},
+    }
+    actor_index = actor_options.index(current_model_name) if current_model_name in actor_options else 0
     preset_index = preset_options.index(run_settings["preset_name"]) if run_settings["preset_name"] in preset_options else 0
 
     character_options = {f"{item['name']} ({item['character_id']})": item["character_id"] for item in characters}
@@ -791,7 +1051,12 @@ def main() -> None:
 
     select_cols = st.columns(4)
     with select_cols[0]:
-        selected_model = st.selectbox("Model", model_options, index=model_index)
+        selected_actor = st.selectbox(
+            "Actor",
+            actor_options,
+            index=actor_index,
+            format_func=lambda item: actor_labels[item],
+        )
     with select_cols[1]:
         selected_preset = st.selectbox("Preset", preset_options, index=preset_index)
     with select_cols[2]:
@@ -802,7 +1067,7 @@ def main() -> None:
 
     st.caption(
         f"Config model: `{current_model_name or 'unknown'}`. "
-        f"Selected model override: `{selected_model}`. "
+        f"Selected actor: `{actor_labels[selected_actor]}`. "
         f"Preset: `{selected_preset}`."
     )
 
@@ -821,6 +1086,9 @@ def main() -> None:
             selected_campaign_label = st.selectbox("Campaign", list(campaign_options.keys()), index=0)
             selected_campaign_id = campaign_options[selected_campaign_label]
             self_learning_enabled = st.checkbox("Self-learning agent", value=False)
+            if selected_actor == HUMAN_ACTOR_VALUE and self_learning_enabled:
+                st.warning("Self-learning is unavailable in Human Player mode for now.")
+                self_learning_enabled = False
             learning_cols = st.columns(2)
             with learning_cols[0]:
                 per_scene_retry_limit = st.number_input("Per-scene retry limit", min_value=0, max_value=10, value=3, step=1)
@@ -837,7 +1105,7 @@ def main() -> None:
             _render_campaign_mode(
                 gamedata=gamedata,
                 run_settings=run_settings,
-                model_filename=selected_model,
+                actor_selection=selected_actor,
                 character_id=selected_character_id,
                 campaign_id=selected_campaign_id,
                 self_learning_enabled=self_learning_enabled,
@@ -852,7 +1120,7 @@ def main() -> None:
             _render_single_scene_mode(
                 gamedata=gamedata,
                 run_settings=run_settings,
-                model_filename=selected_model,
+                actor_selection=selected_actor,
                 character_id=selected_character_id,
                 scene_id=selected_scene_id,
             )

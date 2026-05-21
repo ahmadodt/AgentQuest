@@ -160,6 +160,7 @@ def build_scene_result_rows(scene_runs: list[dict], gamedata: dict) -> list[dict
                 "character_class": character.get("class", ""),
                 "character_inventory": character.get("inventory", []),
                 "character_traits": character.get("traits", []),
+                "actor_type": scene_run.get("actor_type", "model"),
                 "visible_tool_ids": scene_run.get("visible_tool_ids", []),
                 "visible_tools": scene_run.get("visible_tools", []),
                 "raw_model_output": scene_run.get("raw_model_output", ""),

@@ -1,5 +1,11 @@
 from src.models.base import GenerationResult
-from src.runner.runner_utils import execute_campaign_run, execute_learning_campaign, execute_learning_scene, execute_scene_run
+from src.runner.runner_utils import (
+    execute_campaign_run,
+    execute_learning_campaign,
+    execute_learning_scene,
+    execute_scene_run,
+    execute_scene_tool_call,
+)
 
 
 class StubHandler:
@@ -41,7 +47,47 @@ def test_execute_scene_run_uses_character_tool_ids_and_returns_scene_record(game
     assert scene_run["status"] == "PASS"
     assert scene_run["parsed_tool_call"]["tool_id"] == "wizard.arcane_bolt"
     assert scene_run["metadata"] == {"stub": True}
+    assert scene_run["actor_type"] == "model"
     assert "prompt_messages" not in scene_run
+
+
+def test_execute_scene_tool_call_validates_human_submission_and_returns_scene_record(gamedata, make_tool_call):
+    scene_run = execute_scene_tool_call(
+        gamedata=gamedata,
+        character_id="wizard.ember",
+        scene_id="scene.tutorial.001_goblin_alley",
+        prompt_format="json_only",
+        cfg=None,
+        raw_tool_call=make_tool_call("wizard.arcane_bolt", {"target": "goblin"}),
+    )
+
+    assert scene_run["scene_id"] == "scene.tutorial.001_goblin_alley"
+    assert scene_run["character_id"] == "wizard.ember"
+    assert scene_run["status"] == "PASS"
+    assert scene_run["actor_type"] == "human"
+    assert scene_run["parsed_tool_call"]["tool_id"] == "wizard.arcane_bolt"
+    assert len(scene_run["messages"]) == 2
+
+
+def test_execute_scene_tool_call_reuses_provided_scene_context(gamedata, make_tool_call):
+    raw_tool_call = make_tool_call("wizard.arcane_bolt", {"target": "goblin"})
+    scene_run = execute_scene_tool_call(
+        gamedata=gamedata,
+        character_id="wizard.ember",
+        scene_id="scene.tutorial.001_goblin_alley",
+        prompt_format="json_only",
+        cfg=None,
+        raw_tool_call=raw_tool_call,
+        messages=[{"role": "system", "content": "cached"}],
+        visible_tool_ids=gamedata["characters_by_id"]["wizard.ember"]["tool_ids"],
+        visible_tools=[gamedata["tools_by_id"][tid] for tid in gamedata["characters_by_id"]["wizard.ember"]["tool_ids"]],
+        scene_title="Cached Title",
+        actor_type="human",
+    )
+
+    assert scene_run["messages"] == [{"role": "system", "content": "cached"}]
+    assert scene_run["scene_title"] == "Cached Title"
+    assert scene_run["raw_model_output"] == raw_tool_call
 
 
 def test_execute_campaign_run_stops_on_first_non_success(gamedata, make_tool_call):

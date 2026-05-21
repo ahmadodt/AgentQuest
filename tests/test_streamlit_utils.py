@@ -161,6 +161,7 @@ def test_build_scene_result_rows_maps_scene_monster_character_and_status(make_to
             "scene_id": "scene.tutorial.001_goblin_alley",
             "scene_index": 0,
             "character_id": "wizard.ember",
+            "actor_type": "human",
             "messages": [{"role": "system", "content": "sys"}],
             "raw_model_output": make_tool_call("common.run", {"direction": "backtrack"}),
             "parsed_tool_call": {"tool_id": "common.run", "args": {"direction": "backtrack"}},
@@ -212,6 +213,7 @@ def test_build_scene_result_rows_maps_scene_monster_character_and_status(make_to
     assert rows[0]["monster_id"] == "goblin.street_cutpurse"
     assert rows[0]["monster_name"] == "Street Cutpurse Goblin"
     assert rows[0]["character_name"] == "Ember"
+    assert rows[0]["actor_type"] == "human"
     assert rows[0]["status"] == "PASS"
     assert rows[0]["status_label"] == "PASS"
     assert rows[0]["messages"] == [{"role": "system", "content": "sys"}]
@@ -277,6 +279,7 @@ def test_build_run_log_payload_compacts_scene_prompt_and_tool_payloads():
         "scene_id": "scene.alpha",
         "scene_index": 0,
         "scene_title": "Alpha",
+        "actor_type": "human",
         "status": "FAIL",
         "reason": "wrong tool",
         "raw_model_output": '{"tool_id":"tool.alpha","arguments":{}}',
@@ -299,6 +302,7 @@ def test_build_run_log_payload_compacts_scene_prompt_and_tool_payloads():
     )
 
     assert payload["scene_id"] == "scene.alpha"
+    assert payload["actor_type"] == "human"
     assert payload["visible_tool_ids"] == ["tool.alpha"]
     assert "messages" not in payload
     assert "visible_tools" not in payload
@@ -312,6 +316,7 @@ def test_build_run_log_payload_compacts_campaign_attempt_payloads():
             {
                 "scene_id": "scene.alpha",
                 "scene_index": 0,
+                "actor_type": "human",
                 "status": "FAIL",
                 "reason": "wrong tool",
                 "raw_model_output": '{"tool_id":"tool.alpha","arguments":{}}',
@@ -378,6 +383,7 @@ def test_build_run_log_payload_compacts_campaign_attempt_payloads():
 
     assert "messages" not in scene
     assert "visible_tools" not in scene
+    assert scene["actor_type"] == "human"
     assert scene["visible_tool_ids"] == ["tool.alpha"]
     assert scene["attempt_count"] == 2
     assert scene["retry_count"] == 1

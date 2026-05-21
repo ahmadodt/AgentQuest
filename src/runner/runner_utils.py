@@ -107,6 +107,37 @@ def get_visible_tools(gamedata: dict, character_id: str) -> tuple[dict, list[str
     return character, visible_tool_ids, visible_tools
 
 
+def build_scene_prompt_context(
+    *,
+    gamedata: dict,
+    character_id: str,
+    scene_id: str,
+    prompt_format: str,
+    cfg: PromptConfig | None,
+    learning_notes: str = "",
+) -> dict[str, Any]:
+    cfg = cfg or DEFAULT_PROMPT_CONFIG
+    character, visible_tool_ids, visible_tools = get_visible_tools(gamedata, character_id)
+    scene = resolve_scene(gamedata, scene_id)
+    messages = build_messages(
+        scene=scene,
+        character=character,
+        visible_tools=visible_tools,
+        gamedata=gamedata,
+        prompt_format=prompt_format,
+        cfg=cfg,
+        learning_notes=learning_notes,
+    )
+    return {
+        "cfg": cfg,
+        "character": character,
+        "scene": scene,
+        "visible_tool_ids": visible_tool_ids,
+        "visible_tools": visible_tools,
+        "messages": messages,
+    }
+
+
 def get_model_label(*, metadata: dict[str, Any] | None, model_path_override: str | None = None) -> str:
     if metadata and metadata.get("model_path"):
         return str(metadata["model_path"])
@@ -183,6 +214,7 @@ def compact_scene_run_for_log(scene_run: dict[str, Any]) -> dict[str, Any]:
         "scene_id": scene_run.get("scene_id"),
         "scene_index": scene_run.get("scene_index"),
         "scene_title": scene_run.get("scene_title"),
+        "actor_type": scene_run.get("actor_type"),
         "status": scene_run.get("status"),
         "reason": scene_run.get("reason", ""),
         "raw_model_output": scene_run.get("raw_model_output", ""),
@@ -391,23 +423,75 @@ def execute_scene_run(
     attempt_index: int = 1,
     handler=None,
 ) -> dict:
-    cfg = cfg or DEFAULT_PROMPT_CONFIG
-    character, visible_tool_ids, visible_tools = get_visible_tools(gamedata, character_id)
-    scene = resolve_scene(gamedata, scene_id)
-
-    messages = build_messages(
-        scene=scene,
-        character=character,
-        visible_tools=visible_tools,
+    scene_context = build_scene_prompt_context(
         gamedata=gamedata,
+        character_id=character_id,
+        scene_id=scene_id,
         prompt_format=prompt_format,
         cfg=cfg,
         learning_notes=learning_notes,
     )
-
+    messages = scene_context["messages"]
     handler = handler or build_handler(model_key, model_path_override=model_path_override)
     gen = handler.generate(messages, max_tokens=max_tokens, temperature=temperature)
-    raw = (gen.raw_text or "").strip()
+    return execute_scene_tool_call(
+        gamedata=gamedata,
+        character_id=character_id,
+        scene_id=scene_id,
+        prompt_format=prompt_format,
+        cfg=scene_context["cfg"],
+        raw_tool_call=(gen.raw_text or "").strip(),
+        campaign_id=campaign_id,
+        scene_index=scene_index,
+        learning_notes=learning_notes,
+        attempt_index=attempt_index,
+        model_path_override=model_path_override,
+        metadata=gen.metadata or {},
+        messages=messages,
+        visible_tool_ids=scene_context["visible_tool_ids"],
+        visible_tools=scene_context["visible_tools"],
+        scene_title=scene_context["scene"].get("title", scene_id),
+        actor_type="model",
+    )
+
+
+def execute_scene_tool_call(
+    *,
+    gamedata: dict,
+    character_id: str,
+    scene_id: str,
+    prompt_format: str,
+    cfg: PromptConfig | None,
+    raw_tool_call: str,
+    campaign_id: str | None = None,
+    scene_index: int | None = None,
+    learning_notes: str = "",
+    attempt_index: int = 1,
+    model_path_override: str | None = None,
+    metadata: dict[str, Any] | None = None,
+    messages: list[dict[str, str]] | None = None,
+    visible_tool_ids: list[str] | None = None,
+    visible_tools: list[dict[str, Any]] | None = None,
+    scene_title: str | None = None,
+    actor_type: str = "human",
+) -> dict[str, Any]:
+    scene_context = None
+    if messages is None or visible_tool_ids is None or visible_tools is None or scene_title is None:
+        scene_context = build_scene_prompt_context(
+            gamedata=gamedata,
+            character_id=character_id,
+            scene_id=scene_id,
+            prompt_format=prompt_format,
+            cfg=cfg,
+            learning_notes=learning_notes,
+        )
+        messages = scene_context["messages"]
+        visible_tool_ids = scene_context["visible_tool_ids"]
+        visible_tools = scene_context["visible_tools"]
+        scene_title = scene_context["scene"].get("title", scene_id)
+        cfg = scene_context["cfg"]
+    else:
+        cfg = cfg or DEFAULT_PROMPT_CONFIG
 
     validator = ToolCallValidator(
         gamedata=gamedata,
@@ -416,10 +500,10 @@ def execute_scene_run(
         visible_tool_ids=visible_tool_ids,
         prompt_cfg=cfg,
     )
-    verdict = validator.validate(raw)
+    verdict = validator.validate(raw_tool_call)
     status = scene_status_from_verdict(verdict)
     parsed_tool_call = verdict.get("parsed_tool_call")
-    metadata = gen.metadata or {}
+    metadata = metadata or {}
     model_label = get_model_label(metadata=metadata, model_path_override=model_path_override)
 
     return {
@@ -428,10 +512,11 @@ def execute_scene_run(
         "scene_index": scene_index,
         "character_id": character_id,
         "model": model_label,
+        "actor_type": actor_type,
         "visible_tool_ids": visible_tool_ids,
         "visible_tools": visible_tools,
         "messages": messages,
-        "raw_model_output": raw,
+        "raw_model_output": raw_tool_call,
         "parsed_tool_call": parsed_tool_call,
         "validation": verdict,
         "status": status,
@@ -440,7 +525,7 @@ def execute_scene_run(
         "attempt_index": attempt_index,
         "metadata": metadata,
         "verdict": verdict,
-        "scene_title": scene.get("title", scene_id),
+        "scene_title": scene_title,
     }
 
 
