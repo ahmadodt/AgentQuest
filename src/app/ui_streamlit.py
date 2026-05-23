@@ -1049,6 +1049,26 @@ def main() -> None:
     character_options = {f"{item['name']} ({item['character_id']})": item["character_id"] for item in characters}
     campaign_options = {f"{item['name']} ({item['campaign_id']})": item["campaign_id"] for item in campaigns}
     scene_options = {f"{item['title']} ({item['scene_id']})": item["scene_id"] for item in scenes}
+    character_labels = list(character_options.keys())
+    campaign_labels = list(campaign_options.keys())
+    default_character_id = "knight.bram"
+    default_campaign_id = "campaign.goblin_den_v1"
+    default_character_index = next(
+        (
+            index
+            for index, label in enumerate(character_labels)
+            if character_options[label] == default_character_id
+        ),
+        0,
+    )
+    default_campaign_index = next(
+        (
+            index
+            for index, label in enumerate(campaign_labels)
+            if campaign_options[label] == default_campaign_id
+        ),
+        0,
+    )
 
     select_cols = st.columns(4)
     with select_cols[0]:
@@ -1061,7 +1081,7 @@ def main() -> None:
     with select_cols[1]:
         selected_preset = st.selectbox("Preset", preset_options, index=preset_index)
     with select_cols[2]:
-        selected_character_label = st.selectbox("Character", list(character_options.keys()), index=0)
+        selected_character_label = st.selectbox("Character", character_labels, index=default_character_index)
         selected_character_id = character_options[selected_character_label]
     with select_cols[3]:
         run_mode = st.selectbox("Mode", ["campaign", "scene"], index=0)
@@ -1084,7 +1104,7 @@ def main() -> None:
 
     try:
         if run_mode == "campaign":
-            selected_campaign_label = st.selectbox("Campaign", list(campaign_options.keys()), index=0)
+            selected_campaign_label = st.selectbox("Campaign", campaign_labels, index=default_campaign_index)
             selected_campaign_id = campaign_options[selected_campaign_label]
             self_learning_enabled = st.checkbox("Self-learning agent", value=False)
             if selected_actor == HUMAN_ACTOR_VALUE and self_learning_enabled:
