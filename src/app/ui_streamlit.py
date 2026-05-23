@@ -460,19 +460,14 @@ def _render_human_tool_panel(
 ) -> str | None:
     cfg = run_settings["preset_config"]
     visible_tools = scene_context["visible_tools"]
-
-    st.subheader("Choose a Tool")
     tool_labels = {
         tool["tool_id"]: f"{tool.get('label') or tool['tool_id']} ({tool['tool_id']})"
         for tool in visible_tools
     }
-    selected_tool_id = st.selectbox(
-        "Selected tool",
-        list(tool_labels.keys()),
-        format_func=lambda item: tool_labels[item],
-        key=f"{form_key}_selected_tool",
-    )
+    selected_tool_key = f"{form_key}_selected_tool"
+    selected_tool_id = st.session_state.get(selected_tool_key) or next(iter(tool_labels))
 
+    st.subheader("Choose a Tool")
     tool_cols = st.columns(min(3, len(visible_tools)) or 1)
     for index, visible_tool in enumerate(visible_tools):
         display_tool = _resolve_tool_for_display(gamedata, visible_tool)
@@ -483,6 +478,12 @@ def _render_human_tool_panel(
                 with st.expander("Tool details", expanded=visible_tool["tool_id"] == selected_tool_id):
                     st.code(render_tools_compact([display_tool], cfg), language="text")
 
+    selected_tool_id = st.selectbox(
+        "Selected tool",
+        list(tool_labels.keys()),
+        format_func=lambda item: tool_labels[item],
+        key=selected_tool_key,
+    )
     selected_tool = next(tool for tool in visible_tools if tool["tool_id"] == selected_tool_id)
     with st.form(key=f"{form_key}_tool_form"):
         st.caption("Required fields are marked with *.")
@@ -851,7 +852,7 @@ def _render_campaign_mode(
     _render_progress_view(progress_rows)
 
     if is_human_actor:
-        with st.expander("Prompt Messages", expanded=True):
+        with st.expander("Prompt Messages", expanded=False):
             _render_prompt_messages(scene_context["messages"])
         human_tool_call = _render_human_tool_panel(
             gamedata=gamedata,
@@ -920,7 +921,7 @@ def _render_single_scene_mode(
     )
 
     if is_human_actor:
-        with st.expander("Prompt Messages", expanded=True):
+        with st.expander("Prompt Messages", expanded=False):
             _render_prompt_messages(scene_context["messages"])
         human_tool_call = _render_human_tool_panel(
             gamedata=gamedata,
