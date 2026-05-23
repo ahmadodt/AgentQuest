@@ -1,6 +1,8 @@
 # AgentQuest
 
-AgentQuest is a playable AI-agent RPG for structured tool-use evaluation.
+AgentQuest is a playable AI-agent RPG for structured tool-use evaluation, built to study how small quantized local models reason under structured constraints.
+
+The game wrapper is intentional, but the main engineering goal is narrower: evaluate whether a model can choose valid tool calls, act under different information presets, and recover after failure in a deterministic environment.
 
 A model receives a fantasy scene plus a constrained set of visible tools, then must answer with strict JSON:
 
@@ -16,6 +18,32 @@ The engine validates that output in stages:
 
 The project is built to make model behavior inspectable. You can preview prompts, run a single scene, run full campaigns, benchmark presets and characters, inspect validation output, and use a Streamlit UI as a thin viewer over the same runner logic.
 
+## Why This Repo Exists
+
+AgentQuest is aimed at questions like:
+
+- How much structured reasoning survives in smaller `.gguf` models?
+- Does more visible context help, or overload the model?
+- Are failures mostly formatting errors, illegal actions, or bad scene reasoning?
+- Can the model write useful notes after failure and improve on retry?
+
+Local quantized models are part of the point, not a workaround. They make the benchmark cheap, reproducible, and realistic for constrained deployments.
+
+## Portfolio Path
+
+If you are reviewing this as a portfolio project, start here:
+
+- Case study: [`docs/case_study.md`](docs/case_study.md)
+- LinkedIn post sequence: [`docs/linkedin_series.md`](docs/linkedin_series.md)
+- Portfolio artifacts: [`docs/portfolio_assets/README.md`](docs/portfolio_assets/README.md)
+
+Recommended reviewer flow:
+
+1. Read the case study for the benchmark framing.
+2. Run `python -m src.runner.preview_prompt` to inspect a prompt without calling a model.
+3. Run `python scripts/generate_validation_report.py` to inspect deterministic solvability.
+4. Run model-backed benchmarks and combine them with `python scripts/render_benchmark_report.py`.
+
 ## What The Repo Can Do
 
 - Load and validate custom AgentQuest runtime data.
@@ -29,6 +57,7 @@ The project is built to make model behavior inspectable. You can preview prompts
 - Save prompt previews and run logs as JSON.
 - Generate deterministic validation coverage reports for scene/character pairs.
 - Run benchmark sweeps across campaigns, characters, presets, and prompt formats.
+- Render portfolio-ready markdown reports from one or more saved benchmark runs.
 - Convert Open5e source data into AgentQuest-ready generated content.
 
 ## Current Runtime Scope
@@ -40,6 +69,15 @@ The project is built to make model behavior inspectable. You can preview prompts
 - Default runs output directory: `runs/`
 
 The runtime is driven by `configs/run_config.json`, with environment variable overrides for data, model, models directory, and run-log paths.
+
+## Current Portfolio Story
+
+The strongest current use of the repo is a small-model reasoning case study:
+
+- run the same campaign slice across at least 3 quantized local models
+- compare `BLIND_ADVENTURER`, `BATTLE_PLAN`, and `FULL_INFO`
+- inspect where each model fails in the AST, hard-validation, or soft-validation stages
+- test whether self-learning notes improve retries in a measurable way
 
 ## Install
 
@@ -290,6 +328,20 @@ Benchmark outputs:
 - `summary.json`
 
 The default output directory is timestamped under `runs/benchmarks/`.
+
+### Render A Portfolio Benchmark Report
+
+Combine one or more saved benchmark directories into a markdown summary suitable for documentation or a LinkedIn case study:
+
+```bash
+python scripts/render_benchmark_report.py --benchmark-dir runs/benchmarks/model_a --label "Model A" --benchmark-dir runs/benchmarks/model_b --label "Model B" --output docs/portfolio_assets/benchmark_report.md
+```
+
+Optional output:
+
+- `--summary-json docs/portfolio_assets/benchmark_report.json`
+
+This is intended for cross-model comparison after you run the same benchmark slice with multiple local models.
 
 ## Runtime Data
 
