@@ -28,7 +28,8 @@ def get_character_or_error(gamedata: dict, character_id: str):
     characters_by_id = gamedata["characters_by_id"]
     if character_id not in characters_by_id:
         return None, build_invalid_verdict(
-            f"Unknown character_id '{character_id}'",
+            f"unknown_character: unknown character_id '{character_id}'",
+            reason_code="unknown_character",
             hard_valid=False,
         )
     return characters_by_id[character_id], None
@@ -50,7 +51,8 @@ def get_scene_or_error(gamedata: dict, scene_id: str):
     scenes_by_id = gamedata["scenes_by_id"]
     if scene_id not in scenes_by_id:
         return None, build_invalid_verdict(
-            f"Unknown scene_id '{scene_id}'",
+            f"unknown_scene: unknown scene_id '{scene_id}'",
+            reason_code="unknown_scene",
             soft_valid=False,
         )
     return scenes_by_id[scene_id], None
@@ -61,7 +63,8 @@ def get_monster_for_scene_or_error(gamedata: dict, scene: dict):
     monster_id = scene.get("monster_id")
     if monster_id not in monsters_by_id:
         return None, build_invalid_verdict(
-            f"Scene references unknown monster_id '{monster_id}'",
+            f"unknown_monster: scene references unknown monster_id '{monster_id}'",
+            reason_code="unknown_monster",
             soft_valid=False,
         )
     return monsters_by_id[monster_id], None

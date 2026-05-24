@@ -40,6 +40,28 @@ def _format_insufficient_power_reason(
     )
 
 
+def _build_missing_effect_verdict(reason_code: str, reason: str) -> dict:
+    return build_invalid_verdict(
+        reason,
+        reason_code=reason_code,
+        soft_valid=False,
+        outcome="failure",
+    )
+
+
+def _validate_required_effect_tags(effect_tags: set[str], validation_rules: dict) -> dict | None:
+    required_effect_tags = set(validation_rules.get("required_effect_tags", []) or [])
+    missing_required_tags = sorted(required_effect_tags.difference(effect_tags))
+    if missing_required_tags:
+        return build_invalid_verdict(
+            f"missing_required_effect_tag: missing required effect tag(s) {missing_required_tags}",
+            reason_code="missing_required_effect_tag",
+            soft_valid=False,
+            outcome="failure",
+        )
+    return None
+
+
 def soft_validate_tool_call(
     gamedata: dict,
     scene_id: str,
@@ -73,6 +95,7 @@ def soft_validate_tool_call(
     success_condition = scene.get("success_condition", {}) or {}
     constraints = scene.get("constraints", {}) or {}
     validation_rules = scene.get("validation_rules", {}) or {}
+    mode = validation_rules.get("mode", "standard")
     tool_effects = get_tool_effects(tool)
     interactions = monster.get("interactions", {}) or {}
     high_information = _uses_high_information_feedback(prompt_cfg)
@@ -107,7 +130,11 @@ def soft_validate_tool_call(
             return {
                 "soft_valid": True,
                 "outcome": "success",
-                "reason": "Escape attempt succeeded",
+                "reason": (
+                    "Escape attempt satisfied the encounter objective"
+                    if mode == "escape_check"
+                    else "Escape attempt succeeded"
+                ),
             }
         return build_invalid_verdict(
             "escape_not_success: escape is allowed but does not satisfy this scene's success condition",
@@ -119,15 +146,46 @@ def soft_validate_tool_call(
     success_type = success_condition.get("type")
 
     if success_type == "solve_encounter":
-        required_effect_tags = set(validation_rules.get("required_effect_tags", []) or [])
-        missing_required_tags = sorted(required_effect_tags.difference(effect_tags))
-        if missing_required_tags:
-            return build_invalid_verdict(
-                f"missing_required_effect_tag: missing required effect tag(s) {missing_required_tags}",
-                reason_code="missing_required_effect_tag",
-                soft_valid=False,
-                outcome="failure",
+        if mode == "knowledge_check":
+            if not tool_effects.get("knowledge_gain") and "knowledge" not in effect_tags:
+                return _build_missing_effect_verdict(
+                    "missing_knowledge_effect",
+                    "missing_knowledge_effect: selected tool does not provide knowledge needed for this encounter",
+                )
+            missing_tags_verdict = _validate_required_effect_tags(effect_tags, validation_rules)
+            if missing_tags_verdict:
+                return missing_tags_verdict
+            return {
+                "soft_valid": True,
+                "outcome": "success",
+                "reason": "Encounter solved through knowledge/inspection",
+            }
+
+        if mode == "survival_check":
+            mitigation = tool_effects.get("mitigation")
+            if "defense" not in effect_tags or not isinstance(mitigation, (int, float)) or mitigation <= 0:
+                return _build_missing_effect_verdict(
+                    "missing_defense_effect",
+                    "missing_defense_effect: selected tool does not provide a valid defensive response",
+                )
+            missing_tags_verdict = _validate_required_effect_tags(effect_tags, validation_rules)
+            if missing_tags_verdict:
+                return missing_tags_verdict
+            return {
+                "soft_valid": True,
+                "outcome": "success",
+                "reason": "Encounter survived with a valid defensive action",
+            }
+
+        if mode == "escape_check":
+            return _build_missing_effect_verdict(
+                "missing_escape_effect",
+                "missing_escape_effect: selected tool is not an escape action",
             )
+
+        missing_tags_verdict = _validate_required_effect_tags(effect_tags, validation_rules)
+        if missing_tags_verdict:
+            return missing_tags_verdict
 
         return {
             "soft_valid": True,
@@ -153,8 +211,8 @@ def soft_validate_tool_call(
             )
         if tool_effects.get("base_power") is None:
             return build_invalid_verdict(
-                "missing_damage_type: selected combat tool has no base_power",
-                reason_code="missing_damage_type",
+                "missing_base_power: selected combat tool has no base_power",
+                reason_code="missing_base_power",
                 soft_valid=False,
                 outcome="failure",
             )
@@ -204,8 +262,9 @@ def soft_validate_tool_call(
             damage_modifier=power["modifier"],
         )
 
-    return {
-        "soft_valid": True,
-        "outcome": "success",
-        "reason": "No soft validation rule blocked this action",
-    }
+    return build_invalid_verdict(
+        f"unknown_success_condition: unsupported success condition type '{success_type}'",
+        reason_code="unknown_success_condition",
+        soft_valid=False,
+        outcome="failure",
+    )
