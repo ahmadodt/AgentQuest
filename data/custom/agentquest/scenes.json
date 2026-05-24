@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "1.2",
   "scenes": [
     {
       "scene_id": "scene.tutorial.001_goblin_alley",
@@ -40,7 +40,9 @@
       },
       "success_condition": {
         "type": "solve_encounter",
-        "preferred_effects": ["knowledge_gain"]
+        "preferred_effects": [
+          "knowledge_gain"
+        ]
       },
       "failure_condition": {
         "type": "wrong_action"
@@ -48,7 +50,9 @@
       "validation_rules": {
         "mode": "knowledge_check",
         "allow_escape_as_success": false,
-        "required_effect_tags": ["knowledge"],
+        "required_effect_tags": [
+          "knowledge"
+        ],
         "forbidden_effect_tags": []
       },
       "ui": {
@@ -185,7 +189,9 @@
         "mode": "standard",
         "allow_escape_as_success": false,
         "required_effect_tags": [],
-        "forbidden_effect_tags": ["area_fire"]
+        "forbidden_effect_tags": [
+          "area_fire"
+        ]
       },
       "ui": {
         "monster_image_key": "goblin_alchemist",
@@ -433,6 +439,258 @@
       "ui": {
         "monster_image_key": "rat_king",
         "background_image_key": "sewer_throne"
+      }
+    },
+    {
+      "scene_id": "scene.decision_lab.001_archive_lock",
+      "title": "The Archive Lock",
+      "location": "Dustbound Archive Door",
+      "monster_id": "custom.arcane_archive_seal",
+      "narrative": "A ring of runes spins across the vault door. The glyphs are rearranging into a warning, and smashing the seal would ruin what is inside.",
+      "knowledge_level": "medium",
+      "constraints": {
+        "exactly_one_tool_call": true
+      },
+      "success_condition": {
+        "type": "solve_encounter",
+        "preferred_effects": [
+          "knowledge_gain"
+        ]
+      },
+      "failure_condition": {
+        "type": "wrong_action"
+      },
+      "validation_rules": {
+        "mode": "knowledge_check",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [
+          "knowledge"
+        ],
+        "forbidden_effect_tags": []
+      },
+      "ui": {
+        "monster_image_key": "arcane_seal",
+        "background_image_key": "archive"
+      }
+    },
+    {
+      "scene_id": "scene.decision_lab.002_flooded_warning",
+      "title": "The Flooded Warning",
+      "location": "Sunken Crypt Walkway",
+      "monster_id": "custom.flooded_crypt_tablet",
+      "narrative": "A stone tablet rises from the floodwater as hidden channels begin to fill. The carved warning is the only clue to crossing safely.",
+      "knowledge_level": "medium",
+      "constraints": {
+        "exactly_one_tool_call": true
+      },
+      "success_condition": {
+        "type": "solve_encounter",
+        "preferred_effects": [
+          "knowledge_gain"
+        ]
+      },
+      "failure_condition": {
+        "type": "wrong_action"
+      },
+      "validation_rules": {
+        "mode": "knowledge_check",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [
+          "knowledge"
+        ],
+        "forbidden_effect_tags": []
+      },
+      "ui": {
+        "monster_image_key": "crypt_tablet",
+        "background_image_key": "flooded_crypt"
+      }
+    },
+    {
+      "scene_id": "scene.decision_lab.003_powder_keg_walkway",
+      "title": "Powder Keg Walkway",
+      "location": "Sapper Catwalk",
+      "monster_id": "custom.powderkeg_sapper",
+      "narrative": "A goblin sapper waits beside stacked powder casks. Any open flame will ignite the whole walkway before you reach him.",
+      "knowledge_level": "medium",
+      "constraints": {
+        "exactly_one_tool_call": true
+      },
+      "success_condition": {
+        "type": "defeat_monster"
+      },
+      "failure_condition": {
+        "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": [
+          "elemental_fire"
+        ]
+      },
+      "ui": {
+        "monster_image_key": "sapper",
+        "background_image_key": "powder_walkway"
+      }
+    },
+    {
+      "scene_id": "scene.decision_lab.004_ice_chain_bridge",
+      "title": "Ice-Chain Bridge",
+      "location": "Frozen Span",
+      "monster_id": "custom.ice_chain_raider",
+      "narrative": "An armored raider plants his feet on a frozen bridge. Throwing more water would only glaze the stone and hand him the advantage.",
+      "knowledge_level": "medium",
+      "constraints": {
+        "exactly_one_tool_call": true
+      },
+      "success_condition": {
+        "type": "defeat_monster"
+      },
+      "failure_condition": {
+        "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": [
+          "elemental_water"
+        ]
+      },
+      "ui": {
+        "monster_image_key": "ice_raider",
+        "background_image_key": "ice_bridge"
+      }
+    },
+    {
+      "scene_id": "scene.decision_lab.005_mirror_beam_hall",
+      "title": "Mirror Beam Hall",
+      "location": "Silvered Corridor",
+      "monster_id": "custom.mirror_warden",
+      "narrative": "A mirrored warden sweeps a burning line of reflected light across the corridor. The only winning move is to weather the beam and hold your ground.",
+      "knowledge_level": "high",
+      "constraints": {
+        "exactly_one_tool_call": true,
+        "no_escape": true
+      },
+      "success_condition": {
+        "type": "solve_encounter",
+        "preferred_effects": [
+          "mitigation"
+        ]
+      },
+      "failure_condition": {
+        "type": "wrong_action"
+      },
+      "validation_rules": {
+        "mode": "survival_check",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [
+          "defense"
+        ],
+        "forbidden_effect_tags": []
+      },
+      "ui": {
+        "monster_image_key": "mirror_warden",
+        "background_image_key": "mirror_hall"
+      }
+    },
+    {
+      "scene_id": "scene.decision_lab.006_portcullis_drop",
+      "title": "Portcullis Drop",
+      "location": "Trap Hall",
+      "monster_id": "custom.falling_portcullis",
+      "narrative": "A portcullis crashes down as darts fire from both walls. Surviving the trap matters more than attacking anything in the room.",
+      "knowledge_level": "high",
+      "constraints": {
+        "exactly_one_tool_call": true,
+        "no_escape": true
+      },
+      "success_condition": {
+        "type": "solve_encounter",
+        "preferred_effects": [
+          "mitigation"
+        ]
+      },
+      "failure_condition": {
+        "type": "wrong_action"
+      },
+      "validation_rules": {
+        "mode": "survival_check",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [
+          "defense"
+        ],
+        "forbidden_effect_tags": []
+      },
+      "ui": {
+        "monster_image_key": "portcullis",
+        "background_image_key": "trap_hall"
+      }
+    },
+    {
+      "scene_id": "scene.decision_lab.007_collapsing_tunnel",
+      "title": "The Collapsing Tunnel",
+      "location": "Shattered Mine Passage",
+      "monster_id": "custom.collapse_wurm",
+      "narrative": "A tunneling wurm bursts through the wall as the tunnel starts coming down. Staying to fight will bury you; the scene is screaming for retreat.",
+      "knowledge_level": "medium",
+      "constraints": {
+        "exactly_one_tool_call": true
+      },
+      "success_condition": {
+        "type": "solve_encounter",
+        "preferred_effects": [
+          "escape_attempt"
+        ]
+      },
+      "failure_condition": {
+        "type": "caught"
+      },
+      "validation_rules": {
+        "mode": "escape_check",
+        "allow_escape_as_success": true,
+        "required_effect_tags": [
+          "escape"
+        ],
+        "forbidden_effect_tags": []
+      },
+      "ui": {
+        "monster_image_key": "wurm",
+        "background_image_key": "collapsing_tunnel"
+      }
+    },
+    {
+      "scene_id": "scene.decision_lab.008_hornet_retreat",
+      "title": "Hornet Retreat",
+      "location": "Split Hive Ledge",
+      "monster_id": "custom.hornet_cloud",
+      "narrative": "A hornet cloud spills across the ledge from a broken hive. The smart play is to break contact and get clear, not to brawl in the swarm.",
+      "knowledge_level": "medium",
+      "constraints": {
+        "exactly_one_tool_call": true
+      },
+      "success_condition": {
+        "type": "solve_encounter",
+        "preferred_effects": [
+          "escape_attempt"
+        ]
+      },
+      "failure_condition": {
+        "type": "overrun"
+      },
+      "validation_rules": {
+        "mode": "escape_check",
+        "allow_escape_as_success": true,
+        "required_effect_tags": [
+          "escape"
+        ],
+        "forbidden_effect_tags": []
+      },
+      "ui": {
+        "monster_image_key": "hornet_cloud",
+        "background_image_key": "hive_ledge"
       }
     }
   ]

@@ -109,3 +109,44 @@ def test_soft_escape_does_not_count_as_success_when_scene_allows_escape_but_not_
     assert verdict["soft_valid"] is False
     assert verdict["outcome"] == "failure"
     assert verdict["reason_code"] == "escape_not_success"
+
+
+def test_soft_defense_scene_accepts_defense_tool(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
+        scene_id="scene.decision_lab.005_mirror_beam_hall",
+        tool_id="wizard.arcane_shield",
+    )
+
+    assert verdict["soft_valid"] is True
+    assert verdict["outcome"] == "success"
+
+
+def test_soft_escape_counts_as_success_when_scene_allows_escape_as_success(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
+        scene_id="scene.decision_lab.007_collapsing_tunnel",
+        tool_id="common.run",
+    )
+
+    assert verdict["soft_valid"] is True
+    assert verdict["outcome"] == "success"
+    assert verdict["reason"] == "Escape attempt succeeded"
+
+
+def test_new_characters_have_valid_tools_in_new_scene(gamedata):
+    rogue_verdict = soft_validate_tool_call(
+        gamedata=gamedata,
+        scene_id="scene.decision_lab.003_powder_keg_walkway",
+        tool_id="rogue.precise_stab",
+    )
+    cleric_verdict = soft_validate_tool_call(
+        gamedata=gamedata,
+        scene_id="scene.decision_lab.005_mirror_beam_hall",
+        tool_id="cleric.sanctuary_barrier",
+    )
+
+    assert rogue_verdict["soft_valid"] is True
+    assert rogue_verdict["outcome"] == "success"
+    assert cleric_verdict["soft_valid"] is True
+    assert cleric_verdict["outcome"] == "success"

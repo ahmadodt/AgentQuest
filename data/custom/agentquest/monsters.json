@@ -1,16 +1,28 @@
 {
-  "version": "1.3",
+  "version": "1.4",
   "monsters": [
     {
       "monster_id": "goblin.street_cutpurse",
       "name": "Street Cutpurse Goblin",
       "type": "goblin",
       "description": "A quick alley goblin with a rusty dagger and no armor worth mentioning.",
-      "tags": ["goblin", "tutorial", "melee", "light_enemy"],
-      "weaknesses": ["slashing", "piercing"],
-      "resistances": ["fire"],
+      "tags": [
+        "goblin",
+        "tutorial",
+        "melee",
+        "light_enemy"
+      ],
+      "weaknesses": [
+        "slashing",
+        "piercing"
+      ],
+      "resistances": [
+        "fire"
+      ],
       "immunities": [],
-      "special_rules": ["basic_enemy"],
+      "special_rules": [
+        "basic_enemy"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "fire": 0.5
@@ -26,11 +38,28 @@
       "name": "Whispering Statue",
       "type": "construct",
       "description": "A cursed stone figure that taunts intruders and yields only to understanding, not force.",
-      "tags": ["tutorial", "knowledge", "construct", "puzzle_enemy"],
-      "weaknesses": ["knowledge"],
-      "resistances": ["slashing", "bludgeoning", "piercing", "fire", "cold", "water", "magic"],
+      "tags": [
+        "tutorial",
+        "knowledge",
+        "construct",
+        "puzzle_enemy"
+      ],
+      "weaknesses": [
+        "knowledge"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "piercing",
+        "fire",
+        "cold",
+        "water",
+        "magic"
+      ],
       "immunities": [],
-      "special_rules": ["knowledge_encounter"],
+      "special_rules": [
+        "knowledge_encounter"
+      ],
       "damage_profile": "knowledge_puzzle",
       "damage_modifier_overrides": {},
       "interactions": {
@@ -44,11 +73,27 @@
       "name": "Flame Sentinel",
       "type": "elemental",
       "description": "A towering fire guardian that seals the gate and punishes hesitation.",
-      "tags": ["tutorial", "elemental", "fire", "guardian"],
-      "weaknesses": ["cold", "water"],
-      "resistances": ["slashing", "bludgeoning", "piercing"],
-      "immunities": ["fire"],
-      "special_rules": ["no_escape_guardian"],
+      "tags": [
+        "tutorial",
+        "elemental",
+        "fire",
+        "guardian"
+      ],
+      "weaknesses": [
+        "cold",
+        "water"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "piercing"
+      ],
+      "immunities": [
+        "fire"
+      ],
+      "special_rules": [
+        "no_escape_guardian"
+      ],
       "damage_profile": "fire_elemental",
       "damage_modifier_overrides": {},
       "interactions": {
@@ -62,11 +107,24 @@
       "name": "Goblin",
       "type": "goblin",
       "description": "A nervous cave guard with quick hands, weak armor, and very little courage.",
-      "tags": ["goblin", "humanoid", "melee", "low_tier", "starter_enemy"],
-      "weaknesses": ["slashing", "piercing"],
-      "resistances": ["fire"],
+      "tags": [
+        "goblin",
+        "humanoid",
+        "melee",
+        "low_tier",
+        "starter_enemy"
+      ],
+      "weaknesses": [
+        "slashing",
+        "piercing"
+      ],
+      "resistances": [
+        "fire"
+      ],
       "immunities": [],
-      "special_rules": ["basic_enemy"],
+      "special_rules": [
+        "basic_enemy"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "fire": 0.5
@@ -77,7 +135,7 @@
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🗡️"
+        "icon": "\ud83d\udde1\ufe0f"
       }
     },
     {
@@ -85,11 +143,27 @@
       "name": "Water Elemental",
       "type": "elemental",
       "description": "A rolling mass of dark water that absorbs ordinary weapon strikes and reforms after every blow.",
-      "tags": ["elemental", "water", "large", "resilient", "magic_sensitive"],
-      "weaknesses": ["magic"],
-      "resistances": ["slashing", "bludgeoning", "piercing", "fire"],
+      "tags": [
+        "elemental",
+        "water",
+        "large",
+        "resilient",
+        "magic_sensitive"
+      ],
+      "weaknesses": [
+        "magic"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "piercing",
+        "fire"
+      ],
       "immunities": [],
-      "special_rules": ["weapon_resistant", "fluid_body"],
+      "special_rules": [
+        "weapon_resistant",
+        "fluid_body"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "slashing": 0.5,
@@ -104,7 +178,7 @@
         "escape_allowed": false
       },
       "ui": {
-        "icon": "🌊"
+        "icon": "\ud83c\udf0a"
       }
     },
     {
@@ -112,11 +186,30 @@
       "name": "Fire Elemental",
       "type": "elemental",
       "description": "A living blaze with a burning core. Fire only feeds it, and ordinary weapons barely hold its shape back.",
-      "tags": ["elemental", "fire", "large", "guardian", "fire_immune"],
-      "weaknesses": ["cold", "water", "magic"],
-      "resistances": ["slashing", "bludgeoning", "piercing"],
-      "immunities": ["fire"],
-      "special_rules": ["fire_immune", "weapon_resistant"],
+      "tags": [
+        "elemental",
+        "fire",
+        "large",
+        "guardian",
+        "fire_immune"
+      ],
+      "weaknesses": [
+        "cold",
+        "water",
+        "magic"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "piercing"
+      ],
+      "immunities": [
+        "fire"
+      ],
+      "special_rules": [
+        "fire_immune",
+        "weapon_resistant"
+      ],
       "damage_profile": "fire_elemental",
       "damage_modifier_overrides": {
         "magic": 1.4
@@ -127,7 +220,7 @@
         "escape_allowed": false
       },
       "ui": {
-        "icon": "🔥"
+        "icon": "\ud83d\udd25"
       }
     },
     {
@@ -135,11 +228,26 @@
       "name": "Shadow Goblin",
       "type": "goblin",
       "description": "A thin goblin wrapped in living shadow. Steel passes through it unless bright flame forces it into shape.",
-      "tags": ["goblin", "shadow", "skirmisher", "low_light", "trick_enemy"],
-      "weaknesses": ["fire"],
-      "resistances": ["slashing", "bludgeoning", "piercing"],
+      "tags": [
+        "goblin",
+        "shadow",
+        "skirmisher",
+        "low_light",
+        "trick_enemy"
+      ],
+      "weaknesses": [
+        "fire"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "piercing"
+      ],
       "immunities": [],
-      "special_rules": ["shadow_body", "light_sensitive"],
+      "special_rules": [
+        "shadow_body",
+        "light_sensitive"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "slashing": 0.6,
@@ -153,7 +261,7 @@
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🌑"
+        "icon": "\ud83c\udf11"
       }
     },
     {
@@ -161,11 +269,25 @@
       "name": "Dust Goblin Chieftain",
       "type": "goblin",
       "description": "A calm, ash-covered chieftain wearing layered bone plates. Quick cuts slide off, but crushing force can break his guard.",
-      "tags": ["goblin", "chieftain", "boss", "armored", "finale_enemy"],
-      "weaknesses": ["bludgeoning"],
-      "resistances": ["slashing", "fire"],
+      "tags": [
+        "goblin",
+        "chieftain",
+        "boss",
+        "armored",
+        "finale_enemy"
+      ],
+      "weaknesses": [
+        "bludgeoning"
+      ],
+      "resistances": [
+        "slashing",
+        "fire"
+      ],
       "immunities": [],
-      "special_rules": ["armored_boss", "resists_basic_attacks"],
+      "special_rules": [
+        "armored_boss",
+        "resists_basic_attacks"
+      ],
       "damage_profile": "armored",
       "damage_modifier_overrides": {
         "piercing": 0.9,
@@ -177,7 +299,7 @@
         "escape_allowed": false
       },
       "ui": {
-        "icon": "👑"
+        "icon": "\ud83d\udc51"
       }
     },
     {
@@ -185,11 +307,25 @@
       "name": "Goblin Alchemist",
       "type": "goblin",
       "description": "A twitchy potion-maker surrounded by unstable bottles. Fire is dangerous here; a careful reach attack is safer.",
-      "tags": ["goblin", "alchemist", "hazard", "ranged", "explosive_room"],
-      "weaknesses": ["piercing"],
-      "resistances": ["slashing", "bludgeoning"],
+      "tags": [
+        "goblin",
+        "alchemist",
+        "hazard",
+        "ranged",
+        "explosive_room"
+      ],
+      "weaknesses": [
+        "piercing"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning"
+      ],
       "immunities": [],
-      "special_rules": ["fire_causes_explosion", "careful_attack_required"],
+      "special_rules": [
+        "fire_causes_explosion",
+        "careful_attack_required"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "slashing": 0.8,
@@ -203,7 +339,7 @@
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🧪"
+        "icon": "\ud83e\uddea"
       }
     },
     {
@@ -211,11 +347,24 @@
       "name": "Goblin Boss",
       "type": "goblin",
       "description": "A loud goblin boss in stolen armor. He expects swordplay, but his armor buckles under blunt force.",
-      "tags": ["goblin", "boss", "armored", "commander"],
-      "weaknesses": ["bludgeoning"],
-      "resistances": ["slashing", "piercing", "fire"],
+      "tags": [
+        "goblin",
+        "boss",
+        "armored",
+        "commander"
+      ],
+      "weaknesses": [
+        "bludgeoning"
+      ],
+      "resistances": [
+        "slashing",
+        "piercing",
+        "fire"
+      ],
       "immunities": [],
-      "special_rules": ["armor_resists_blades"],
+      "special_rules": [
+        "armor_resists_blades"
+      ],
       "damage_profile": "armored",
       "damage_modifier_overrides": {
         "slashing": 0.8,
@@ -228,7 +377,7 @@
         "escape_allowed": false
       },
       "ui": {
-        "icon": "🪖"
+        "icon": "\ud83e\ude96"
       }
     },
     {
@@ -236,11 +385,26 @@
       "name": "Goblin Shieldbearer",
       "type": "goblin",
       "description": "A goblin crouched behind a heavy shield and wooden barricade. Cutting attacks glance off; a mace can smash the defense.",
-      "tags": ["goblin", "shield", "defender", "barricade", "armor_check"],
-      "weaknesses": ["bludgeoning"],
-      "resistances": ["slashing", "piercing", "fire"],
+      "tags": [
+        "goblin",
+        "shield",
+        "defender",
+        "barricade",
+        "armor_check"
+      ],
+      "weaknesses": [
+        "bludgeoning"
+      ],
+      "resistances": [
+        "slashing",
+        "piercing",
+        "fire"
+      ],
       "immunities": [],
-      "special_rules": ["shielded", "break_guard_with_blunt_force"],
+      "special_rules": [
+        "shielded",
+        "break_guard_with_blunt_force"
+      ],
       "damage_profile": "shielded",
       "damage_modifier_overrides": {},
       "interactions": {
@@ -249,7 +413,7 @@
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🛡️"
+        "icon": "\ud83d\udee1\ufe0f"
       }
     },
     {
@@ -257,11 +421,25 @@
       "name": "Goblin Warlock",
       "type": "goblin",
       "description": "A goblin caster drawing power from a cracked idol. It must be interrupted from a distance before the spell completes.",
-      "tags": ["goblin", "warlock", "caster", "ritual", "interrupt_enemy"],
-      "weaknesses": ["piercing"],
-      "resistances": ["fire", "bludgeoning"],
+      "tags": [
+        "goblin",
+        "warlock",
+        "caster",
+        "ritual",
+        "interrupt_enemy"
+      ],
+      "weaknesses": [
+        "piercing"
+      ],
+      "resistances": [
+        "fire",
+        "bludgeoning"
+      ],
       "immunities": [],
-      "special_rules": ["must_interrupt_casting", "reach_attack_preferred"],
+      "special_rules": [
+        "must_interrupt_casting",
+        "reach_attack_preferred"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "slashing": 0.9,
@@ -276,7 +454,7 @@
         "escape_allowed": false
       },
       "ui": {
-        "icon": "🔮"
+        "icon": "\ud83d\udd2e"
       }
     },
     {
@@ -284,11 +462,23 @@
       "name": "Hobgoblin",
       "type": "hobgoblin",
       "description": "A disciplined soldier with better armor than a common goblin. Simple sword strikes are less reliable.",
-      "tags": ["hobgoblin", "humanoid", "soldier", "armored"],
-      "weaknesses": ["piercing", "bludgeoning"],
-      "resistances": ["slashing"],
+      "tags": [
+        "hobgoblin",
+        "humanoid",
+        "soldier",
+        "armored"
+      ],
+      "weaknesses": [
+        "piercing",
+        "bludgeoning"
+      ],
+      "resistances": [
+        "slashing"
+      ],
       "immunities": [],
-      "special_rules": ["trained_guard"],
+      "special_rules": [
+        "trained_guard"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "slashing": 0.8,
@@ -302,7 +492,7 @@
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🪖"
+        "icon": "\ud83e\ude96"
       }
     },
     {
@@ -310,11 +500,26 @@
       "name": "Hobgoblin Captain",
       "type": "hobgoblin",
       "description": "A veteran captain in reinforced armor. He punishes careless attacks and must be hit with enough force to break formation.",
-      "tags": ["hobgoblin", "captain", "commander", "armored", "elite"],
-      "weaknesses": ["bludgeoning"],
-      "resistances": ["slashing", "piercing", "fire"],
+      "tags": [
+        "hobgoblin",
+        "captain",
+        "commander",
+        "armored",
+        "elite"
+      ],
+      "weaknesses": [
+        "bludgeoning"
+      ],
+      "resistances": [
+        "slashing",
+        "piercing",
+        "fire"
+      ],
       "immunities": [],
-      "special_rules": ["elite_armor", "formation_leader"],
+      "special_rules": [
+        "elite_armor",
+        "formation_leader"
+      ],
       "damage_profile": "armored",
       "damage_modifier_overrides": {
         "piercing": 0.9,
@@ -326,7 +531,7 @@
         "escape_allowed": false
       },
       "ui": {
-        "icon": "🎖️"
+        "icon": "\ud83c\udf96\ufe0f"
       }
     },
     {
@@ -334,11 +539,27 @@
       "name": "Hobgoblin Warlord",
       "type": "hobgoblin",
       "description": "A battlefield commander with layered armor and brutal discipline. Weak attacks only make him advance faster.",
-      "tags": ["hobgoblin", "warlord", "boss", "elite", "armored"],
-      "weaknesses": ["bludgeoning", "magic"],
-      "resistances": ["slashing", "piercing", "fire"],
+      "tags": [
+        "hobgoblin",
+        "warlord",
+        "boss",
+        "elite",
+        "armored"
+      ],
+      "weaknesses": [
+        "bludgeoning",
+        "magic"
+      ],
+      "resistances": [
+        "slashing",
+        "piercing",
+        "fire"
+      ],
       "immunities": [],
-      "special_rules": ["boss_enemy", "requires_high_power"],
+      "special_rules": [
+        "boss_enemy",
+        "requires_high_power"
+      ],
       "damage_profile": "armored",
       "damage_modifier_overrides": {
         "slashing": 0.6,
@@ -352,7 +573,7 @@
         "escape_allowed": false
       },
       "ui": {
-        "icon": "⚔️"
+        "icon": "\u2694\ufe0f"
       }
     },
     {
@@ -360,11 +581,27 @@
       "name": "Miremuck Goblin King",
       "type": "goblin",
       "description": "A swamp-crowned goblin ruler covered in wet mud, reeds, and stolen charms. Fire sputters out against him.",
-      "tags": ["goblin", "king", "swamp", "boss", "mud_armor"],
-      "weaknesses": ["piercing", "magic"],
-      "resistances": ["slashing", "bludgeoning", "fire"],
+      "tags": [
+        "goblin",
+        "king",
+        "swamp",
+        "boss",
+        "mud_armor"
+      ],
+      "weaknesses": [
+        "piercing",
+        "magic"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "fire"
+      ],
       "immunities": [],
-      "special_rules": ["mud_armor", "fire_resistant"],
+      "special_rules": [
+        "mud_armor",
+        "fire_resistant"
+      ],
       "damage_profile": "armored",
       "damage_modifier_overrides": {
         "bludgeoning": 0.8,
@@ -378,7 +615,7 @@
         "escape_allowed": false
       },
       "ui": {
-        "icon": "👑"
+        "icon": "\ud83d\udc51"
       }
     },
     {
@@ -386,11 +623,23 @@
       "name": "Rat",
       "type": "beast",
       "description": "A small cave rat. It is not dangerous, but it is fast enough to waste a careless heavy attack.",
-      "tags": ["beast", "tiny", "low_tier", "fast"],
-      "weaknesses": ["piercing", "slashing"],
-      "resistances": ["bludgeoning"],
+      "tags": [
+        "beast",
+        "tiny",
+        "low_tier",
+        "fast"
+      ],
+      "weaknesses": [
+        "piercing",
+        "slashing"
+      ],
+      "resistances": [
+        "bludgeoning"
+      ],
       "immunities": [],
-      "special_rules": ["tiny_target"],
+      "special_rules": [
+        "tiny_target"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "bludgeoning": 0.5,
@@ -402,7 +651,7 @@
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🐀"
+        "icon": "\ud83d\udc00"
       }
     },
     {
@@ -410,11 +659,27 @@
       "name": "Rat King",
       "type": "monstrosity",
       "description": "A tangled mass of rats moving as one body. Cutting one rat does little; fire or magic can scatter the swarm.",
-      "tags": ["rat", "swarm", "monstrosity", "boss", "many_bodies"],
-      "weaknesses": ["fire", "magic"],
-      "resistances": ["slashing", "piercing", "bludgeoning"],
+      "tags": [
+        "rat",
+        "swarm",
+        "monstrosity",
+        "boss",
+        "many_bodies"
+      ],
+      "weaknesses": [
+        "fire",
+        "magic"
+      ],
+      "resistances": [
+        "slashing",
+        "piercing",
+        "bludgeoning"
+      ],
       "immunities": [],
-      "special_rules": ["swarm_body", "weapon_resistant"],
+      "special_rules": [
+        "swarm_body",
+        "weapon_resistant"
+      ],
       "damage_profile": "swarm",
       "damage_modifier_overrides": {
         "bludgeoning": 0.6,
@@ -427,7 +692,7 @@
         "escape_allowed": false
       },
       "ui": {
-        "icon": "🐀"
+        "icon": "\ud83d\udc00"
       }
     },
     {
@@ -435,11 +700,22 @@
       "name": "Rat, Giant",
       "type": "beast",
       "description": "A dog-sized rat with thick hide and snapping teeth. A spear keeps it away better than a close sword swing.",
-      "tags": ["rat", "beast", "large_vermin", "charging_enemy"],
-      "weaknesses": ["piercing"],
-      "resistances": ["bludgeoning"],
+      "tags": [
+        "rat",
+        "beast",
+        "large_vermin",
+        "charging_enemy"
+      ],
+      "weaknesses": [
+        "piercing"
+      ],
+      "resistances": [
+        "bludgeoning"
+      ],
       "immunities": [],
-      "special_rules": ["keep_distance"],
+      "special_rules": [
+        "keep_distance"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "slashing": 0.9,
@@ -452,7 +728,7 @@
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🐁"
+        "icon": "\ud83d\udc01"
       }
     },
     {
@@ -460,11 +736,25 @@
       "name": "Rat, Swarm of Rats",
       "type": "swarm",
       "description": "A carpet of rats pouring across the floor. Single-target weapon strikes are inefficient; fire clears space quickly.",
-      "tags": ["rat", "swarm", "many_bodies", "fire_weak"],
-      "weaknesses": ["fire"],
-      "resistances": ["slashing", "piercing", "bludgeoning"],
+      "tags": [
+        "rat",
+        "swarm",
+        "many_bodies",
+        "fire_weak"
+      ],
+      "weaknesses": [
+        "fire"
+      ],
+      "resistances": [
+        "slashing",
+        "piercing",
+        "bludgeoning"
+      ],
       "immunities": [],
-      "special_rules": ["swarm_body", "single_target_resistant"],
+      "special_rules": [
+        "swarm_body",
+        "single_target_resistant"
+      ],
       "damage_profile": "swarm",
       "damage_modifier_overrides": {},
       "interactions": {
@@ -473,7 +763,7 @@
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🐀"
+        "icon": "\ud83d\udc00"
       }
     },
     {
@@ -481,11 +771,27 @@
       "name": "Wererat",
       "type": "lycanthrope",
       "description": "A rat-like shapeshifter with unnatural resilience. Ordinary cuts do little unless the attack is precise or empowered.",
-      "tags": ["rat", "lycanthrope", "humanoid", "resilient", "trick_enemy"],
-      "weaknesses": ["piercing", "magic"],
-      "resistances": ["slashing", "bludgeoning", "fire"],
+      "tags": [
+        "rat",
+        "lycanthrope",
+        "humanoid",
+        "resilient",
+        "trick_enemy"
+      ],
+      "weaknesses": [
+        "piercing",
+        "magic"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "fire"
+      ],
       "immunities": [],
-      "special_rules": ["resists_common_weapons", "precision_attack_preferred"],
+      "special_rules": [
+        "resists_common_weapons",
+        "precision_attack_preferred"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "slashing": 0.6,
@@ -500,7 +806,7 @@
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🐭"
+        "icon": "\ud83d\udc2d"
       }
     },
     {
@@ -508,11 +814,25 @@
       "name": "Diseased Giant Rat",
       "type": "beast",
       "description": "A swollen rat with infected wounds and frantic movement. Getting too close is risky, so reach or fire is safer.",
-      "tags": ["rat", "beast", "diseased", "hazard", "low_tier"],
-      "weaknesses": ["piercing", "fire"],
-      "resistances": ["bludgeoning"],
+      "tags": [
+        "rat",
+        "beast",
+        "diseased",
+        "hazard",
+        "low_tier"
+      ],
+      "weaknesses": [
+        "piercing",
+        "fire"
+      ],
+      "resistances": [
+        "bludgeoning"
+      ],
       "immunities": [],
-      "special_rules": ["disease_risk", "avoid_close_contact"],
+      "special_rules": [
+        "disease_risk",
+        "avoid_close_contact"
+      ],
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "slashing": 0.8,
@@ -526,7 +846,283 @@
         "escape_allowed": true
       },
       "ui": {
-        "icon": "🦠"
+        "icon": "\ud83e\udda0"
+      }
+    },
+    {
+      "monster_id": "custom.arcane_archive_seal",
+      "name": "Arcane Archive Seal",
+      "type": "construct",
+      "description": "A rotating ring of runes locks the archive door. It yields only to correct interpretation, not violence.",
+      "tags": [
+        "construct",
+        "knowledge",
+        "seal",
+        "puzzle_enemy"
+      ],
+      "weaknesses": [
+        "knowledge"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "piercing",
+        "fire",
+        "cold",
+        "water",
+        "magic"
+      ],
+      "immunities": [],
+      "special_rules": [
+        "knowledge_encounter"
+      ],
+      "damage_profile": "knowledge_puzzle",
+      "damage_modifier_overrides": {},
+      "interactions": {
+        "min_power_to_defeat": 1,
+        "knowledge_tools_help": true,
+        "escape_allowed": true
+      }
+    },
+    {
+      "monster_id": "custom.flooded_crypt_tablet",
+      "name": "Flooded Crypt Tablet",
+      "type": "construct",
+      "description": "An old warning tablet rises through black water. The trap is resolved by reading the warning, not by striking it.",
+      "tags": [
+        "knowledge",
+        "crypt",
+        "puzzle_enemy",
+        "ritual"
+      ],
+      "weaknesses": [
+        "knowledge"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "piercing",
+        "fire",
+        "cold",
+        "water",
+        "magic"
+      ],
+      "immunities": [],
+      "special_rules": [
+        "knowledge_encounter"
+      ],
+      "damage_profile": "knowledge_puzzle",
+      "damage_modifier_overrides": {},
+      "interactions": {
+        "min_power_to_defeat": 1,
+        "knowledge_tools_help": true,
+        "escape_allowed": true
+      }
+    },
+    {
+      "monster_id": "custom.powderkeg_sapper",
+      "name": "Powderkeg Sapper",
+      "type": "goblin",
+      "description": "A goblin sapper crouches beside loose powder casks with a short blade and a fuse-cord in hand.",
+      "tags": [
+        "goblin",
+        "hazard",
+        "volatile_room",
+        "sapper"
+      ],
+      "weaknesses": [
+        "piercing",
+        "magic"
+      ],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "fire"
+      ],
+      "immunities": [],
+      "special_rules": [
+        "fire_causes_explosion"
+      ],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "slashing": 0.8,
+        "bludgeoning": 0.8,
+        "piercing": 1.2,
+        "fire": 0.0,
+        "magic": 1.2
+      },
+      "interactions": {
+        "min_power_to_defeat": 5,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      }
+    },
+    {
+      "monster_id": "custom.ice_chain_raider",
+      "name": "Ice-Chain Raider",
+      "type": "humanoid",
+      "description": "A raider in frozen chain armor fights on a slick bridge. More water makes the footing worse; force or careful blows work better.",
+      "tags": [
+        "humanoid",
+        "hazard",
+        "ice",
+        "armored"
+      ],
+      "weaknesses": [
+        "bludgeoning",
+        "magic"
+      ],
+      "resistances": [
+        "slashing",
+        "piercing",
+        "water"
+      ],
+      "immunities": [],
+      "special_rules": [
+        "slick_floor",
+        "water_makes_it_worse"
+      ],
+      "damage_profile": "armored",
+      "damage_modifier_overrides": {
+        "slashing": 0.8,
+        "piercing": 0.9,
+        "bludgeoning": 1.2,
+        "water": 0.0,
+        "magic": 1.2
+      },
+      "interactions": {
+        "min_power_to_defeat": 5,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      }
+    },
+    {
+      "monster_id": "custom.mirror_warden",
+      "name": "Mirror Warden",
+      "type": "construct",
+      "description": "A mirrored guardian throws reflected beams down a narrow hall. The challenge is to survive the line of fire.",
+      "tags": [
+        "construct",
+        "defense",
+        "beam",
+        "hazard"
+      ],
+      "weaknesses": [],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "piercing",
+        "fire",
+        "cold",
+        "water",
+        "magic"
+      ],
+      "immunities": [],
+      "special_rules": [
+        "defense_encounter"
+      ],
+      "damage_profile": "knowledge_puzzle",
+      "damage_modifier_overrides": {},
+      "interactions": {
+        "min_power_to_defeat": 1,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      }
+    },
+    {
+      "monster_id": "custom.falling_portcullis",
+      "name": "Falling Portcullis",
+      "type": "trap",
+      "description": "A portcullis drops while darts whip across the chamber. Enduring the impact path is the only safe response.",
+      "tags": [
+        "trap",
+        "defense",
+        "survival",
+        "hazard"
+      ],
+      "weaknesses": [],
+      "resistances": [
+        "slashing",
+        "bludgeoning",
+        "piercing",
+        "fire",
+        "cold",
+        "water",
+        "magic"
+      ],
+      "immunities": [],
+      "special_rules": [
+        "defense_encounter"
+      ],
+      "damage_profile": "knowledge_puzzle",
+      "damage_modifier_overrides": {},
+      "interactions": {
+        "min_power_to_defeat": 1,
+        "knowledge_tools_help": false,
+        "escape_allowed": false
+      }
+    },
+    {
+      "monster_id": "custom.collapse_wurm",
+      "name": "Collapse Wurm",
+      "type": "beast",
+      "description": "A tunneling wurm tears through cracked stone behind you. Holding ground is worse than getting out fast.",
+      "tags": [
+        "beast",
+        "escape_scene",
+        "tunnel",
+        "pursuit"
+      ],
+      "weaknesses": [
+        "piercing"
+      ],
+      "resistances": [
+        "bludgeoning"
+      ],
+      "immunities": [],
+      "special_rules": [
+        "retreat_preferred"
+      ],
+      "damage_profile": "basic_flesh",
+      "damage_modifier_overrides": {
+        "piercing": 1.2,
+        "bludgeoning": 0.7
+      },
+      "interactions": {
+        "min_power_to_defeat": 6,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      }
+    },
+    {
+      "monster_id": "custom.hornet_cloud",
+      "name": "Hornet Cloud",
+      "type": "swarm",
+      "description": "A black cloud of cave hornets pours from a split hive. The passage out matters more than fighting them in place.",
+      "tags": [
+        "swarm",
+        "escape_scene",
+        "flying",
+        "hazard"
+      ],
+      "weaknesses": [
+        "fire"
+      ],
+      "resistances": [
+        "slashing",
+        "piercing",
+        "bludgeoning"
+      ],
+      "immunities": [],
+      "special_rules": [
+        "retreat_preferred"
+      ],
+      "damage_profile": "swarm",
+      "damage_modifier_overrides": {},
+      "interactions": {
+        "min_power_to_defeat": 6,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
       }
     }
   ]

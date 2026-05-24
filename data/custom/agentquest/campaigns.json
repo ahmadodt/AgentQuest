@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "campaigns": [
     {
       "campaign_id": "campaign.tutorial_v1",
@@ -63,6 +63,49 @@
         "scene.sewers.004_giant_rat",
         "scene.sewers.005_wererat",
         "scene.sewers.006_rat_king"
+      ]
+    },
+    {
+      "campaign_id": "campaign.decision_lab_v1",
+      "name": "Decision Lab",
+      "description": "Benchmark-focused scenes covering knowledge, hazard management, defense, and escape success.",
+      "type": "benchmark",
+      "scene_ids": [
+        "scene.decision_lab.001_archive_lock",
+        "scene.decision_lab.002_flooded_warning",
+        "scene.decision_lab.003_powder_keg_walkway",
+        "scene.decision_lab.004_ice_chain_bridge",
+        "scene.decision_lab.005_mirror_beam_hall",
+        "scene.decision_lab.006_portcullis_drop",
+        "scene.decision_lab.007_collapsing_tunnel",
+        "scene.decision_lab.008_hornet_retreat"
+      ]
+    },
+    {
+      "campaign_id": "campaign.class_identity_v1",
+      "name": "Class Identity Trials",
+      "description": "A mixed slice intended to compare how each character solves the same scenes with different tool profiles.",
+      "type": "benchmark",
+      "scene_ids": [
+        "scene.decision_lab.001_archive_lock",
+        "scene.decision_lab.003_powder_keg_walkway",
+        "scene.decision_lab.004_ice_chain_bridge",
+        "scene.decision_lab.005_mirror_beam_hall",
+        "scene.decision_lab.007_collapsing_tunnel",
+        "scene.decision_lab.008_hornet_retreat"
+      ]
+    },
+    {
+      "campaign_id": "campaign.noncombat_trials_v1",
+      "name": "Non-Combat Trials",
+      "description": "Knowledge, defense, and escape scenes that stress non-damage decision quality.",
+      "type": "benchmark",
+      "scene_ids": [
+        "scene.decision_lab.001_archive_lock",
+        "scene.decision_lab.002_flooded_warning",
+        "scene.decision_lab.005_mirror_beam_hall",
+        "scene.decision_lab.006_portcullis_drop",
+        "scene.decision_lab.007_collapsing_tunnel"
       ]
     }
   ]
