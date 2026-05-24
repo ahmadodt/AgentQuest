@@ -73,6 +73,7 @@ def test_soft_knowledge_scene_accepts_knight_knowledge_tool(gamedata):
 
     assert verdict["soft_valid"] is True
     assert verdict["outcome"] == "success"
+    assert verdict["reason"] == "Encounter solved through knowledge/inspection"
 
 
 def test_soft_knowledge_scene_rejects_non_knowledge_tool(gamedata):
@@ -84,7 +85,7 @@ def test_soft_knowledge_scene_rejects_non_knowledge_tool(gamedata):
 
     assert verdict["soft_valid"] is False
     assert verdict["outcome"] == "failure"
-    assert verdict["reason_code"] == "missing_required_effect_tag"
+    assert verdict["reason_code"] == "missing_knowledge_effect"
 
 
 def test_soft_escape_fails_when_scene_forbids_escape(gamedata):
@@ -120,6 +121,7 @@ def test_soft_defense_scene_accepts_defense_tool(gamedata):
 
     assert verdict["soft_valid"] is True
     assert verdict["outcome"] == "success"
+    assert verdict["reason"] == "Encounter survived with a valid defensive action"
 
 
 def test_soft_escape_counts_as_success_when_scene_allows_escape_as_success(gamedata):
@@ -131,7 +133,31 @@ def test_soft_escape_counts_as_success_when_scene_allows_escape_as_success(gamed
 
     assert verdict["soft_valid"] is True
     assert verdict["outcome"] == "success"
-    assert verdict["reason"] == "Escape attempt succeeded"
+    assert verdict["reason"] == "Escape attempt satisfied the encounter objective"
+
+
+def test_soft_defense_scene_rejects_non_defense_tool(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
+        scene_id="scene.decision_lab.005_mirror_beam_hall",
+        tool_id="wizard.arcane_bolt",
+    )
+
+    assert verdict["soft_valid"] is False
+    assert verdict["outcome"] == "failure"
+    assert verdict["reason_code"] == "missing_defense_effect"
+
+
+def test_soft_escape_scene_rejects_non_escape_tool(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
+        scene_id="scene.decision_lab.007_collapsing_tunnel",
+        tool_id="wizard.arcane_bolt",
+    )
+
+    assert verdict["soft_valid"] is False
+    assert verdict["outcome"] == "failure"
+    assert verdict["reason_code"] == "missing_escape_effect"
 
 
 def test_new_characters_have_valid_tools_in_new_scene(gamedata):

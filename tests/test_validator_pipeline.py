@@ -113,3 +113,23 @@ def test_validator_pipeline_uses_natural_language_soft_failure_for_low_informati
     assert verdict["reason_code"] == "insufficient_effective_power"
     assert "effective_power=" not in verdict["reason"]
     assert "min_power_to_defeat=" not in verdict["reason"]
+
+
+def test_validator_pipeline_returns_scene_specific_soft_reason_for_survival_scene(
+    validator_factory,
+    gamedata,
+    make_tool_call,
+):
+    validator = validator_factory(
+        gamedata=gamedata,
+        character_id="wizard.ember",
+        scene_id="scene.decision_lab.005_mirror_beam_hall",
+    )
+
+    verdict = validator.validate(make_tool_call("wizard.arcane_bolt", {"target": "warden"}))
+
+    assert verdict["ast_valid"] is True
+    assert verdict["hard_valid"] is True
+    assert verdict["soft_valid"] is False
+    assert verdict["outcome"] == "failure"
+    assert verdict["reason_code"] == "missing_defense_effect"

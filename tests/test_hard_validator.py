@@ -87,3 +87,11 @@ def test_hard_rejects_missing_required_inventory(gamedata_copy, make_tool_call):
     assert verdict["hard_valid"] is False
     assert verdict["reason_code"] == "missing_required_inventory"
     assert "missing required inventory" in verdict["reason"].lower()
+
+
+def test_hard_rejects_unknown_character_with_reason_code(gamedata):
+    verdict = hard_validate_tool_call(gamedata, "wizard.unknown", "wizard.cast_fireball")
+
+    assert verdict["hard_valid"] is False
+    assert verdict["reason_code"] == "unknown_character"
+    assert "unknown character_id" in verdict["reason"].lower()
