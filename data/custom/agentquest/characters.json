@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "1.2",
   "characters": [
     {
       "character_id": "wizard.ember",
@@ -32,6 +32,37 @@
         "knight.inspect_runes",
         "knight.shield_block",
         "common.run"
+      ]
+    },
+    {
+      "character_id": "rogue.lark",
+      "name": "Lark",
+      "class": "Rogue",
+      "inventory": ["dagger", "sap", "oil_flask", "brine_flask", "smoke_bomb", "mirror_shard", "grappling_hook"],
+      "traits": [],
+      "tool_ids": [
+        "rogue.precise_stab",
+        "rogue.sap_strike",
+        "rogue.throw_oil_flask",
+        "rogue.throw_brine_flask",
+        "rogue.read_marks",
+        "rogue.smoke_veil",
+        "rogue.quick_climb"
+      ]
+    },
+    {
+      "character_id": "cleric.mira",
+      "name": "Mira",
+      "class": "Cleric",
+      "inventory": ["mace", "holy_symbol", "sun_lantern", "blessed_water", "ward_charm", "prayer_book"],
+      "traits": [],
+      "tool_ids": [
+        "cleric.sanctified_mace",
+        "cleric.radiant_bolt",
+        "cleric.cast_blessed_water",
+        "cleric.read_omens",
+        "cleric.sanctuary_barrier",
+        "cleric.guided_withdrawal"
       ]
     }
   ]
