@@ -148,7 +148,7 @@ def main() -> None:
                 self_learning_enabled = False
             learning_cols = st.columns(2)
             with learning_cols[0]:
-                per_scene_retry_limit = st.number_input("Per-scene retry limit", min_value=0, max_value=10, value=3, step=1)
+                per_scene_retry_limit = st.number_input("Per-scene retry limit", min_value=0, max_value=10, value=0, step=1)
             with learning_cols[1]:
                 total_retry_limit = st.number_input("Total retry limit", min_value=0, max_value=100, value=20, step=1)
             initial_notes = ""
