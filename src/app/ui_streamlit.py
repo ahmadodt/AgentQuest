@@ -50,6 +50,186 @@ SINGLE_SCENE_KEY = "aq_single_scene_result"
 SINGLE_LOG_KEY = "aq_single_scene_log_path"
 
 
+def _inject_app_chrome() -> None:
+    st.markdown(
+        """
+        <style>
+        :root {
+            --aq-bg: #10151d;
+            --aq-panel: rgba(22, 29, 39, 0.92);
+            --aq-panel-strong: rgba(27, 36, 48, 0.98);
+            --aq-ink: #edf2f7;
+            --aq-muted: #a8b3c2;
+            --aq-line: rgba(140, 167, 196, 0.18);
+            --aq-accent: #c68b3c;
+            --aq-accent-deep: #8d5a1f;
+            --aq-success: #74c69d;
+            --aq-danger: #f28482;
+            --aq-info: #89c2d9;
+        }
+        .stApp {
+            background:
+                radial-gradient(circle at top, rgba(198, 139, 60, 0.16), transparent 30%),
+                linear-gradient(180deg, #0d1218 0%, #111823 42%, #151f2d 100%);
+            color: var(--aq-ink);
+        }
+        .aq-hero, .aq-panel, .aq-summary {
+            background: var(--aq-panel);
+            border: 1px solid var(--aq-line);
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(61, 39, 24, 0.08);
+        }
+        .aq-hero {
+            padding: 1.4rem 1.6rem;
+            margin-bottom: 1rem;
+            background:
+                linear-gradient(135deg, rgba(24, 32, 44, 0.98), rgba(55, 38, 24, 0.94)),
+                var(--aq-panel);
+            color: #f7fafc;
+        }
+        .aq-hero h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.04em;
+        }
+        .aq-hero p {
+            margin: 0.35rem 0 0;
+            color: rgba(237, 242, 247, 0.86);
+        }
+        .aq-panel, .aq-summary {
+            padding: 1rem 1.1rem;
+            margin-bottom: 0.85rem;
+        }
+        .aq-kicker {
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            font-size: 0.72rem;
+            color: #f6c177;
+            margin-bottom: 0.35rem;
+        }
+        .aq-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--aq-muted);
+            margin-bottom: 0.2rem;
+        }
+        .aq-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--aq-ink);
+        }
+        .aq-scene-card {
+            background: var(--aq-panel-strong);
+            border: 1px solid var(--aq-line);
+            border-radius: 16px;
+            padding: 0.9rem 1rem;
+            margin-bottom: 0.65rem;
+        }
+        .aq-progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .aq-scene-card.current {
+            border-color: rgba(159, 91, 45, 0.65);
+            box-shadow: 0 0 0 1px rgba(159, 91, 45, 0.12);
+        }
+        .aq-scene-title {
+            font-weight: 700;
+            color: var(--aq-ink);
+        }
+        .aq-scene-meta {
+            color: var(--aq-muted);
+            font-size: 0.92rem;
+        }
+        .aq-status-pill {
+            display: inline-block;
+            margin-top: 0.35rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            background: rgba(53, 92, 125, 0.12);
+            color: var(--aq-info);
+        }
+        .aq-status-pass { background: rgba(116, 198, 157, 0.14); color: var(--aq-success); }
+        .aq-status-fail { background: rgba(242, 132, 130, 0.14); color: var(--aq-danger); }
+        .aq-status-not_run { background: rgba(137, 194, 217, 0.12); color: var(--aq-info); }
+        .aq-status-running { background: rgba(198, 139, 60, 0.14); color: #f6c177; }
+        [data-testid="stSidebar"] {
+            background: linear-gradient(180deg, rgba(14, 20, 28, 0.98), rgba(20, 29, 40, 0.98));
+            border-right: 1px solid var(--aq-line);
+        }
+        [data-testid="stSidebar"] * {
+            color: var(--aq-ink);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _format_status_label(status: str) -> str:
+    return status.replace("_", " ").strip().upper()
+
+
+def _render_page_hero(*, run_mode: str, selected_preset: str, actor_label: str) -> None:
+    mission = "Campaign operations" if run_mode == "campaign" else "Single scene skirmish"
+    st.markdown(
+        (
+            "<section class='aq-hero'>"
+            "<div class='aq-kicker'>AgentQuest Tactical Console</div>"
+            "<h1>Run Viewer</h1>"
+            f"<p>{mission} with <strong>{actor_label}</strong> under the "
+            f"<strong>{selected_preset}</strong> preset.</p>"
+            "</section>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def _render_info_panel(title: str, items: list[tuple[str, str]]) -> None:
+    body = "".join(
+        f"<div class='aq-label'>{label}</div><div class='aq-value'>{value}</div>"
+        for label, value in items
+    )
+    st.markdown(
+        f"<section class='aq-panel'><div class='aq-scene-title'>{title}</div>{body}</section>",
+        unsafe_allow_html=True,
+    )
+
+
+def _status_css_class(status: str) -> str:
+    normalized = status.lower()
+    if normalized == "pass":
+        return "aq-status-pass"
+    if normalized in {"fail", "hard_fail", "soft_fail", "ast_fail"}:
+        return "aq-status-fail"
+    if normalized == "running":
+        return "aq-status-running"
+    return "aq-status-not_run"
+
+
+def _count_campaign_states(scene_ids: list[str]) -> dict[str, int]:
+    results = st.session_state.get(CAMPAIGN_RESULTS_KEY, {})
+    counts = {"PASS": 0, "FAIL": 0, "NOT_RUN": 0}
+    for scene_id in scene_ids:
+        result = results.get(scene_id)
+        if not result:
+            counts["NOT_RUN"] += 1
+            continue
+        status = result.get("status", "FAIL")
+        if status == "PASS":
+            counts["PASS"] += 1
+        else:
+            counts["FAIL"] += 1
+    return counts
+
+
 @st.cache_resource(show_spinner=False)
 def _get_cached_handler(model_path: str):
     return build_handler(model_path_override=model_path)
@@ -328,22 +508,31 @@ def _render_status_banner(status: str, reason: str) -> None:
 
 
 def _render_progress_view(progress_rows: list[dict[str, Any]]) -> None:
-    st.subheader("Campaign Progress")
+    st.markdown("### Campaign Progress")
+    st.markdown("<div class='aq-progress-grid'>", unsafe_allow_html=True)
     for row in progress_rows:
-        marker = "->" if row["is_current"] else "  "
+        marker = "Current Scene" if row["is_current"] else "Queued"
+        status_class = _status_css_class(row["status"])
         st.markdown(
-            f"`{marker}` Scene {row['scene_index'] + 1}: "
-            f"`{row['status']}`  "
-            f"{row['scene_id']}  "
-            f"({row['scene_title']})"
+            (
+                f"<section class='aq-scene-card{' current' if row['is_current'] else ''}'>"
+                f"<div class='aq-scene-title'>Scene {row['scene_index'] + 1}: {row['scene_title']}</div>"
+                f"<div class='aq-scene-meta'>{row['scene_id']} · {marker}</div>"
+                f"<div class='aq-status-pill {status_class}'>{_format_status_label(row['status'])}</div>"
+                "</section>"
+            ),
+            unsafe_allow_html=True,
         )
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def _render_prompt_messages(messages: list[dict[str, str]]) -> None:
-    st.markdown("**Prompt Messages**")
+    st.markdown("### Prompt Messages")
     for index, message in enumerate(messages, start=1):
-        st.markdown(f"**Message {index} ({message.get('role', '?')})**")
-        st.code(message.get("content", ""), language="text")
+        role = message.get("role", "?").upper()
+        with st.container(border=True):
+            st.caption(f"Message {index} · {role}")
+            st.code(message.get("content", ""), language="text")
 
 
 def _resolve_tool_for_display(gamedata: dict, tool: dict[str, Any]) -> dict[str, Any]:
@@ -467,7 +656,8 @@ def _render_human_tool_panel(
     selected_tool_key = f"{form_key}_selected_tool"
     selected_tool_id = st.session_state.get(selected_tool_key) or next(iter(tool_labels))
 
-    st.subheader("Choose a Tool")
+    st.markdown("### Choose a Tool")
+    st.caption("Pick a visible tool, review its schema, then submit the exact arguments to validate.")
     tool_cols = st.columns(min(3, len(visible_tools)) or 1)
     for index, visible_tool in enumerate(visible_tools):
         display_tool = _resolve_tool_for_display(gamedata, visible_tool)
@@ -523,66 +713,97 @@ def _render_scene_detail(
 
     left_col, right_col = st.columns(2)
     with left_col:
-        st.markdown(f"### Scene {scene_index + 1}: {scene_id}")
-        st.caption(scene.get("title", scene_id))
-        st.markdown(f"**Location:** {scene.get('location', '')}")
-        st.markdown(f"**Monster:** {monster.get('name', scene['monster_id'])}")
-        st.code(scene["monster_id"])
-        if monster:
-            st.caption(monster.get("description", ""))
-            st.json(monster.get("interactions", {}))
+        _render_info_panel(
+            f"Scene {scene_index + 1}: {scene.get('title', scene_id)}",
+            [
+                ("Scene ID", scene_id),
+                ("Location", scene.get("location", "Unknown")),
+                ("Monster", monster.get("name", scene["monster_id"])),
+            ],
+        )
 
     with right_col:
-        st.markdown(f"### {character.get('name', character_id)}")
-        st.code(character_id)
-        st.markdown(f"**Class:** {character.get('class', '')}")
-        st.markdown(f"**Inventory:** {', '.join(character.get('inventory', [])) or 'None'}")
-        st.markdown(f"**Traits:** {', '.join(character.get('traits', [])) or 'None'}")
-
-    st.markdown("**Scene Context**")
-    st.write(scene.get("narrative", ""))
-    if scene.get("constraints"):
-        st.caption(f"Constraints: {scene['constraints']}")
-
-    with st.expander("Visible Tools"):
-        for tool in visible_tools:
-            st.markdown(f"**{tool['tool_id']}**")
-            st.write(tool.get("description", ""))
-            st.json(tool.get("args", {}))
+        _render_info_panel(
+            character.get("name", character_id),
+            [
+                ("Character ID", character_id),
+                ("Class", character.get("class", "Unknown")),
+                ("Inventory", ", ".join(character.get("inventory", [])) or "None"),
+                ("Traits", ", ".join(character.get("traits", [])) or "None"),
+            ],
+        )
 
     status = row["status"] if row else "NOT_RUN"
     reason = row["reason"] if row else ""
     _render_status_banner(status, reason)
-
-    st.markdown("**Submitted Tool Call**")
-    st.code((row or {}).get("raw_model_output") or "No run output for this scene yet.", language="json")
-
-    with st.expander("Parsed Tool Call JSON", expanded=bool(row and row.get("parsed_tool_call"))):
+    overview_tab, tool_tab, validation_tab, prompt_tab, attempts_tab = st.tabs(
+        ["Briefing", "Tool Call", "Validation", "Prompt", "Attempts"]
+    )
+    with overview_tab:
+        st.markdown("### Scene Context")
+        st.write(scene.get("narrative", ""))
+        if scene.get("constraints"):
+            st.caption(f"Constraints: {scene['constraints']}")
+        if monster:
+            st.markdown("### Monster Notes")
+            st.write(monster.get("description", ""))
+            st.json(monster.get("interactions", {}))
+        with st.expander("Visible Tools", expanded=False):
+            for tool in visible_tools:
+                with st.container(border=True):
+                    st.markdown(f"**{tool['tool_id']}**")
+                    st.write(tool.get("description", ""))
+                    st.json(tool.get("args", {}))
+    with tool_tab:
+        st.markdown("### Submitted Tool Call")
+        st.code((row or {}).get("raw_model_output") or "No run output for this scene yet.", language="json")
+        st.markdown("### Parsed Tool Call")
         st.json((row or {}).get("parsed_tool_call") or {})
-
-    with st.expander("Validation Stages / Result", expanded=bool(row)):
+    with validation_tab:
+        st.markdown("### Validation Stages / Result")
         st.json((row or {}).get("validation") or {})
-
-    with st.expander("Prompt Messages"):
+    with prompt_tab:
         _render_prompt_messages((row or {}).get("messages") or [])
-
-    if row and row.get("attempts"):
-        with st.expander("Learning Attempts"):
+    with attempts_tab:
+        if row and row.get("attempts"):
             for attempt in row["attempts"]:
-                st.markdown(
-                    f"**Attempt {attempt.get('attempt_index', '?')}** "
-                    f"- `{attempt.get('status', 'UNKNOWN')}`"
-                )
-                st.code(attempt.get("raw_model_output") or "", language="json")
-                if attempt.get("reason"):
-                    st.caption(attempt["reason"])
-                if attempt.get("note_update"):
-                    st.markdown("**Updated Notes**")
-                    st.code(attempt["note_update"].get("updated_notes", ""), language="text")
+                with st.container(border=True):
+                    st.markdown(
+                        f"**Attempt {attempt.get('attempt_index', '?')}** "
+                        f"· `{attempt.get('status', 'UNKNOWN')}`"
+                    )
+                    st.code(attempt.get("raw_model_output") or "", language="json")
+                    if attempt.get("reason"):
+                        st.caption(attempt["reason"])
+                    if attempt.get("note_update"):
+                        st.markdown("**Updated Notes**")
+                        st.code(attempt["note_update"].get("updated_notes", ""), language="text")
+        else:
+            st.caption("No learning attempts recorded for this scene.")
+
+
+def _render_human_scene_briefing(
+    *,
+    gamedata: dict,
+    scene_id: str,
+    character_id: str,
+    scene_context: dict[str, Any],
+    scene_result: dict[str, Any] | None,
+    scene_index: int,
+) -> None:
+    st.markdown("### Briefing")
+    st.caption("Review the encounter first. Prompt messages and tool choice come after the scenario context.")
+    _render_scene_detail(
+        gamedata=gamedata,
+        scene_id=scene_id,
+        character_id=character_id,
+        scene_result=scene_result,
+        scene_index=scene_index,
+    )
 
 
 def _render_campaign_history(history_rows: list[dict[str, Any]]) -> None:
-    st.subheader("Campaign History")
+    st.markdown("### Campaign History")
     if not history_rows:
         st.caption("No scene runs in this UI session yet.")
         return
@@ -622,13 +843,12 @@ def _render_campaign_summary(
         total_scenes=len(scene_ids),
     )
 
-    st.subheader("Campaign Completed")
-    st.markdown(
-        f"Total scenes: {summary['total_scenes']}  \n"
-        f"Passed: {summary['passed_scenes']}  \n"
-        f"Failed: {summary['failed_scenes']}  \n"
-        f"Success rate: {summary['success_rate']:.1f}%"
-    )
+    st.markdown("### Campaign Completed")
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("Total Scenes", summary["total_scenes"])
+    metric_cols[1].metric("Passed", summary["passed_scenes"])
+    metric_cols[2].metric("Failed", summary["failed_scenes"])
+    metric_cols[3].metric("Success Rate", f"{summary['success_rate']:.1f}%")
 
     before_col, after_col = st.columns(2)
     with before_col:
@@ -686,6 +906,13 @@ def _render_campaign_mode(
     current_scene_index = min(st.session_state.get(CAMPAIGN_INDEX_KEY, 0), len(scene_ids) - 1)
     st.session_state[CAMPAIGN_INDEX_KEY] = current_scene_index
 
+    counts = _count_campaign_states(scene_ids)
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("Scenes", len(scene_ids))
+    metric_cols[1].metric("Passed", counts["PASS"])
+    metric_cols[2].metric("Failed", counts["FAIL"])
+    metric_cols[3].metric("Unplayed", counts["NOT_RUN"])
+
     control_cols = st.columns(6)
     run_current = control_cols[0].button("Run current scene", disabled=is_human_actor)
     prev_scene = control_cols[1].button("Previous scene")
@@ -703,7 +930,7 @@ def _render_campaign_mode(
         st.caption("Human mode is step-driven. Submit one tool choice at a time for the current scene.")
 
     if self_learning_enabled:
-        st.subheader("Learning Notes")
+        st.markdown("### Learning Notes")
         st.caption(
             f"Total retries used: {st.session_state.get(CAMPAIGN_TOTAL_RETRIES_KEY, 0)} / {total_retry_limit}"
         )
@@ -849,45 +1076,55 @@ def _render_campaign_mode(
         scene_results_by_id=st.session_state.get(CAMPAIGN_RESULTS_KEY, {}),
         current_scene_index=current_scene_index,
     )
-    _render_progress_view(progress_rows)
+    progress_col, detail_col = st.columns([1, 1.5])
+    with progress_col:
+        _render_progress_view(progress_rows)
 
-    if is_human_actor:
-        with st.expander("Prompt Messages", expanded=False):
-            _render_prompt_messages(scene_context["messages"])
-        human_tool_call = _render_human_tool_panel(
-            gamedata=gamedata,
-            run_settings=run_settings,
-            scene_context=scene_context,
-            submit_label="Submit tool choice",
-            form_key=f"campaign_{campaign_id}_{current_scene_id}_{run_settings['preset_name']}",
-        )
-        if human_tool_call:
-            scene_result = execute_scene_tool_call(
+    with detail_col:
+        if is_human_actor:
+            current_scene_result = st.session_state.get(CAMPAIGN_RESULTS_KEY, {}).get(current_scene_id)
+            _render_human_scene_briefing(
                 gamedata=gamedata,
-                character_id=character_id,
                 scene_id=current_scene_id,
-                prompt_format=run_settings["prompt_format"],
-                cfg=run_settings["preset_config"],
-                raw_tool_call=human_tool_call,
-                campaign_id=campaign_id,
+                character_id=character_id,
+                scene_context=scene_context,
+                scene_result=current_scene_result,
                 scene_index=current_scene_index,
-                messages=scene_context["messages"],
-                visible_tool_ids=scene_context["visible_tool_ids"],
-                visible_tools=scene_context["visible_tools"],
-                scene_title=scene_context["scene"].get("title", current_scene_id),
-                actor_type="human",
             )
-            _record_campaign_scene_result(scene_result)
-            st.rerun()
-
-    current_scene_result = st.session_state.get(CAMPAIGN_RESULTS_KEY, {}).get(current_scene_id)
-    _render_scene_detail(
-        gamedata=gamedata,
-        scene_id=current_scene_id,
-        character_id=character_id,
-        scene_result=current_scene_result,
-        scene_index=current_scene_index,
-    )
+            human_tool_call = _render_human_tool_panel(
+                gamedata=gamedata,
+                run_settings=run_settings,
+                scene_context=scene_context,
+                submit_label="Submit tool choice",
+                form_key=f"campaign_{campaign_id}_{current_scene_id}_{run_settings['preset_name']}",
+            )
+            if human_tool_call:
+                scene_result = execute_scene_tool_call(
+                    gamedata=gamedata,
+                    character_id=character_id,
+                    scene_id=current_scene_id,
+                    prompt_format=run_settings["prompt_format"],
+                    cfg=run_settings["preset_config"],
+                    raw_tool_call=human_tool_call,
+                    campaign_id=campaign_id,
+                    scene_index=current_scene_index,
+                    messages=scene_context["messages"],
+                    visible_tool_ids=scene_context["visible_tool_ids"],
+                    visible_tools=scene_context["visible_tools"],
+                    scene_title=scene_context["scene"].get("title", current_scene_id),
+                    actor_type="human",
+                )
+                _record_campaign_scene_result(scene_result)
+                st.rerun()
+        else:
+            current_scene_result = st.session_state.get(CAMPAIGN_RESULTS_KEY, {}).get(current_scene_id)
+            _render_scene_detail(
+                gamedata=gamedata,
+                scene_id=current_scene_id,
+                character_id=character_id,
+                scene_result=current_scene_result,
+                scene_index=current_scene_index,
+            )
 
     history_rows = build_scene_result_rows(st.session_state.get(CAMPAIGN_HISTORY_KEY, []), gamedata)
     _render_campaign_history(history_rows)
@@ -921,8 +1158,15 @@ def _render_single_scene_mode(
     )
 
     if is_human_actor:
-        with st.expander("Prompt Messages", expanded=False):
-            _render_prompt_messages(scene_context["messages"])
+        st.markdown("### Human Trial")
+        _render_human_scene_briefing(
+            gamedata=gamedata,
+            scene_id=scene_id,
+            character_id=character_id,
+            scene_context=scene_context,
+            scene_result=st.session_state.get(SINGLE_SCENE_KEY),
+            scene_index=0,
+        )
         human_tool_call = _render_human_tool_panel(
             gamedata=gamedata,
             run_settings=run_settings,
@@ -959,7 +1203,7 @@ def _render_single_scene_mode(
         model_path = _model_path_from_filename(actor_selection)
         handler = _get_cached_handler(model_path)
 
-        if st.button("Run scene"):
+        if st.button("Run scene", type="primary"):
             with st.spinner("Running scene..."):
                 scene_run = execute_scene_run(
                     gamedata=gamedata,
@@ -984,21 +1228,19 @@ def _render_single_scene_mode(
                     run_result=normalize_single_scene_run(scene_run),
                 )
                 st.session_state[SINGLE_LOG_KEY] = save_streamlit_run_log("scene", runlog)
-
-    _render_scene_detail(
-        gamedata=gamedata,
-        scene_id=scene_id,
-        character_id=character_id,
-        scene_result=st.session_state.get(SINGLE_SCENE_KEY),
-        scene_index=0,
-    )
+        _render_scene_detail(
+            gamedata=gamedata,
+            scene_id=scene_id,
+            character_id=character_id,
+            scene_result=st.session_state.get(SINGLE_SCENE_KEY),
+            scene_index=0,
+        )
     if st.session_state.get(SINGLE_LOG_KEY):
         st.caption(f"Saved run log: {st.session_state[SINGLE_LOG_KEY]}")
 
 
 def main() -> None:
-    st.title("AgentQuest Run Viewer")
-    st.caption("Campaign mode is the primary flow. Single-scene runs remain available.")
+    _inject_app_chrome()
     data_dir = get_data_dir()
     models_dir = get_local_models_dir()
 
@@ -1070,27 +1312,36 @@ def main() -> None:
         0,
     )
 
-    select_cols = st.columns(4)
-    with select_cols[0]:
+    with st.sidebar:
+        st.markdown("## Mission Setup")
         selected_actor = st.selectbox(
             "Actor",
             actor_options,
             index=actor_index,
             format_func=lambda item: actor_labels[item],
         )
-    with select_cols[1]:
         selected_preset = st.selectbox("Preset", preset_options, index=preset_index)
-    with select_cols[2]:
         selected_character_label = st.selectbox("Character", character_labels, index=default_character_index)
         selected_character_id = character_options[selected_character_label]
-    with select_cols[3]:
         run_mode = st.selectbox("Mode", ["campaign", "scene"], index=0)
+        st.markdown("---")
+        st.caption(
+            f"Config model: `{current_model_name or 'unknown'}`\n\n"
+            f"Selected actor: `{actor_labels[selected_actor]}`"
+        )
 
-    st.caption(
-        f"Config model: `{current_model_name or 'unknown'}`. "
-        f"Selected actor: `{actor_labels[selected_actor]}`. "
-        f"Preset: `{selected_preset}`."
+    _render_page_hero(
+        run_mode=run_mode,
+        selected_preset=selected_preset,
+        actor_label=actor_labels[selected_actor],
     )
+    summary_cols = st.columns(3)
+    with summary_cols[0]:
+        _render_info_panel("Preset", [("Current", selected_preset)])
+    with summary_cols[1]:
+        _render_info_panel("Character", [("Selected", selected_character_label)])
+    with summary_cols[2]:
+        _render_info_panel("Mode", [("Active", run_mode)])
 
     run_settings = dict(run_settings)
     run_settings["preset_name"] = selected_preset
