@@ -63,7 +63,7 @@ Recommended reviewer flow:
 ## Current Runtime Scope
 
 - Supported model backend: `llama_cpp`
-- Expected model file type: `.gguf`
+- Model selection source: `configs/model_catalog.json`
 - Default runtime data root: `data/`
 - Primary hand-authored dataset: `data/custom/agentquest/`
 - Default runs output directory: `runs/`
@@ -103,7 +103,7 @@ The runtime config lives in `configs/run_config.json`:
 ```json
 {
   "backend": "llama_cpp",
-  "model": "../local_models/Qwen_Qwen3-4B-Q4_K_L.gguf",
+  "model": "qwen3_4b_q4_k_m",
   "preset": "TOOL_MANUAL",
   "prompt_format": "json_only"
 }
@@ -112,18 +112,18 @@ The runtime config lives in `configs/run_config.json`:
 Notes:
 
 - `backend` must currently be `llama_cpp`.
-- `model` must resolve to an existing `.gguf` file.
+- `model` must match a configured alias in `configs/model_catalog.json`.
 - `preset` selects a prompt visibility preset.
 - `prompt_format` is passed into the prompt builder and runners.
 
 ## Environment Variables
 
 - `AGENTQUEST_DATA_DIR`: runtime data root. Defaults to `data/`
-- `AGENTQUEST_MODEL_PATH`: GGUF model path override
+- `AGENTQUEST_MODEL`: model alias override
 - `AGENTQUEST_RUNS_DIR`: directory for saved run logs. Defaults to `runs/`
-- `AGENTQUEST_MODELS_DIR`: model discovery directory for the Streamlit UI when `AGENTQUEST_MODEL_PATH` is not set
+- `AGENTQUEST_MODELS_DIR`: legacy local-model directory helper
 
-`AGENTQUEST_MODEL_PATH` also controls which directory the Streamlit UI scans by default, because the UI derives the local models directory from the configured model path when it is present.
+Model selection now resolves through `configs/model_catalog.json` and `docs/models.md`.
 
 ## CLI Entry Points
 
@@ -252,7 +252,7 @@ streamlit run streamlit_app.py
 
 The UI supports:
 
-- selecting a discovered local GGUF model
+- selecting a configured catalog model alias
 - selecting a prompt preset
 - selecting a character
 - campaign mode and single-scene mode
@@ -421,10 +421,10 @@ The compose file mounts:
 - `./local_models` to `/app/local_models` as read-only
 - `./runs` to `/app/runs`
 
-Example `.env` model path:
+Example `.env` model alias:
 
 ```bash
-AGENTQUEST_MODEL_PATH=/app/local_models/Qwen_Qwen3-4B-Q4_K_L.gguf
+AGENTQUEST_MODEL=qwen3_4b_q4_k_m
 ```
 
 Notes:

@@ -4,7 +4,14 @@ from src.models.base import ChatMessage, GenerationResult
 
 
 class LlamaCppHandler:
-    def __init__(self, model_path: str):
+    def __init__(
+        self,
+        *,
+        model_name: str,
+        model_display_name: str,
+        repo_id: str,
+        filename: str,
+    ):
         try:
             from llama_cpp import Llama
         except ImportError as e:
@@ -13,9 +20,13 @@ class LlamaCppHandler:
                 "Install it with `pip install llama-cpp-python`."
             ) from e
 
-        self._model_path = model_path
-        self._client = Llama(
-            model_path=model_path,
+        self._model_name = model_name
+        self._model_display_name = model_display_name
+        self._repo_id = repo_id
+        self._filename = filename
+        self._client = Llama.from_pretrained(
+            repo_id=repo_id,
+            filename=filename,
             n_ctx=4096,          # total context window: prompt + output
             n_gpu_layers=-1,     # offload as many layers as possible to GPU
             verbose=False,
@@ -41,7 +52,10 @@ class LlamaCppHandler:
 
         metadata = {
             "backend": "llama_cpp",
-            "model_path": self._model_path,
+            "model": self._model_name,
+            "model_display_name": self._model_display_name,
+            "repo_id": self._repo_id,
+            "filename": self._filename,
             "finish_reason": choice.get("finish_reason"),
             "usage": response.get("usage"),
         }

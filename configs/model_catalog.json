@@ -1,0 +1,28 @@
+{
+  "models": [
+    {
+      "name": "qwen3_4b_q4_k_m",
+      "display_name": "Qwen3 4B Q4_K_M",
+      "backend": "llama_cpp",
+      "repo_id": "Qwen/Qwen3-4B-GGUF",
+      "filename": "Qwen3-4B-Q4_K_M.gguf",
+      "description": "Default balanced baseline for AgentQuest runs."
+    },
+    {
+      "name": "qwen2_5_3b_instruct_q5_k_m",
+      "display_name": "Qwen2.5 3B Instruct Q5_K_M",
+      "backend": "llama_cpp",
+      "repo_id": "Qwen/Qwen2.5-3B-Instruct-GGUF",
+      "filename": "qwen2.5-3b-instruct-q5_k_m.gguf",
+      "description": "Smaller instruction model with strong JSON adherence."
+    },
+    {
+      "name": "llama_3_2_3b_instruct_q4_k_m",
+      "display_name": "Llama 3.2 3B Instruct Q4_K_M",
+      "backend": "llama_cpp",
+      "repo_id": "gpustack/Llama-3.2-3B-Instruct-GGUF",
+      "filename": "Llama-3.2-3B-Instruct-Q4_K_M.gguf",
+      "description": "Alternative 3B baseline for cross-family comparisons."
+    }
+  ]
+}

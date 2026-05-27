@@ -1,6 +1,6 @@
 {
   "backend": "llama_cpp",
-  "model": "../local_models/Qwen_Qwen3-4B-Q4_K_L.gguf",
+  "model": "qwen3_4b_q4_k_m",
   "preset": "TOOL_MANUAL",
   "prompt_format": "json_only"
 }

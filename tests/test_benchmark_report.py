@@ -29,7 +29,7 @@ def test_summarize_benchmark_bundles_groups_by_model_and_preset(tmp_path):
     benchmark_dir = _write_bundle(
         tmp_path,
         "model_a",
-        model="../local_models/model-a.gguf",
+        model="model-a",
         records=[
             {
                 "preset": "BLIND_ADVENTURER",
@@ -88,7 +88,7 @@ def test_render_markdown_report_lists_models_and_failure_codes(tmp_path):
     dir_a = _write_bundle(
         tmp_path,
         "model_a",
-        model="../local_models/model-a.gguf",
+        model="model-a",
         records=[
             {
                 "preset": "BATTLE_PLAN",
@@ -102,7 +102,7 @@ def test_render_markdown_report_lists_models_and_failure_codes(tmp_path):
     dir_b = _write_bundle(
         tmp_path,
         "model_b",
-        model="../local_models/model-b.gguf",
+        model="model-b",
         records=[
             {
                 "preset": "BATTLE_PLAN",

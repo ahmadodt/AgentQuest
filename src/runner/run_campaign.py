@@ -103,7 +103,7 @@ def main():
 
         print(f"Campaign: {campaign_run['campaign_id']}")
         print(f"Character: {campaign_run['character_id']}")
-        print(f"Model: {campaign_run.get('model') or runtime_model_cfg.model_path}")
+        print(f"Model: {campaign_run.get('model') or runtime_model_cfg.model_name}")
         print(f"Continue on failure: {str(args.continue_on_failure).lower()}")
         print(f"Self learning: {str(args.self_learning).lower()}")
         if args.self_learning:

@@ -190,10 +190,10 @@ def _read_json(path: str) -> Any:
 
 
 def _default_model_label(manifest: dict[str, Any]) -> str:
-    model_path = str(manifest.get("model") or "").strip()
-    if not model_path:
+    model_name = str(manifest.get("model") or "").strip()
+    if not model_name:
         return "unknown-model"
-    return os.path.splitext(os.path.basename(model_path))[0]
+    return model_name
 
 
 def _format_top_reason_codes(reason_codes: Counter) -> str:

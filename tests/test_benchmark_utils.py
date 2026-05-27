@@ -20,7 +20,7 @@ def test_build_benchmark_record_captures_parse_failure_and_effective_power():
         character_id="wizard.ember",
         preset="BATTLE_PLAN",
         prompt_format="json_only",
-        model="C:/models/test.gguf",
+        model="test-model",
         valid_tools=["wizard.arcane_bolt"],
         latency_seconds=0.25,
     )

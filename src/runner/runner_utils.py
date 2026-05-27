@@ -138,11 +138,11 @@ def build_scene_prompt_context(
     }
 
 
-def get_model_label(*, metadata: dict[str, Any] | None, model_path_override: str | None = None) -> str:
-    if metadata and metadata.get("model_path"):
-        return str(metadata["model_path"])
-    if model_path_override:
-        return os.path.abspath(model_path_override)
+def get_model_label(*, metadata: dict[str, Any] | None, model_name_override: str | None = None) -> str:
+    if metadata and metadata.get("model"):
+        return str(metadata["model"])
+    if model_name_override:
+        return model_name_override
     return ""
 
 
@@ -357,7 +357,7 @@ def execute_note_update(
     model_key: str,
     max_tokens: int,
     temperature: float,
-    model_path_override: str | None = None,
+    model_name_override: str | None = None,
     handler=None,
 ) -> dict[str, Any]:
     character = resolve_character(gamedata, character_id)
@@ -373,7 +373,7 @@ def execute_note_update(
         scene_run=scene_run,
         existing_notes=existing_notes,
     )
-    handler = handler or build_handler(model_key, model_path_override=model_path_override)
+    handler = handler or build_handler(model_key, model_name_override=model_name_override)
     gen = handler.generate(messages, max_tokens=max_tokens, temperature=temperature)
     raw = (gen.raw_text or "").strip()
     updated_notes = _extract_updated_notes(raw, existing_notes)
@@ -418,7 +418,7 @@ def execute_scene_run(
     temperature: float,
     campaign_id: str | None = None,
     scene_index: int | None = None,
-    model_path_override: str | None = None,
+    model_name_override: str | None = None,
     learning_notes: str = "",
     attempt_index: int = 1,
     handler=None,
@@ -432,7 +432,7 @@ def execute_scene_run(
         learning_notes=learning_notes,
     )
     messages = scene_context["messages"]
-    handler = handler or build_handler(model_key, model_path_override=model_path_override)
+    handler = handler or build_handler(model_key, model_name_override=model_name_override)
     gen = handler.generate(messages, max_tokens=max_tokens, temperature=temperature)
     return execute_scene_tool_call(
         gamedata=gamedata,
@@ -445,7 +445,7 @@ def execute_scene_run(
         scene_index=scene_index,
         learning_notes=learning_notes,
         attempt_index=attempt_index,
-        model_path_override=model_path_override,
+        model_name_override=model_name_override,
         metadata=gen.metadata or {},
         messages=messages,
         visible_tool_ids=scene_context["visible_tool_ids"],
@@ -467,7 +467,7 @@ def execute_scene_tool_call(
     scene_index: int | None = None,
     learning_notes: str = "",
     attempt_index: int = 1,
-    model_path_override: str | None = None,
+    model_name_override: str | None = None,
     metadata: dict[str, Any] | None = None,
     messages: list[dict[str, str]] | None = None,
     visible_tool_ids: list[str] | None = None,
@@ -504,7 +504,7 @@ def execute_scene_tool_call(
     status = scene_status_from_verdict(verdict)
     parsed_tool_call = verdict.get("parsed_tool_call")
     metadata = metadata or {}
-    model_label = get_model_label(metadata=metadata, model_path_override=model_path_override)
+    model_label = get_model_label(metadata=metadata, model_name_override=model_name_override)
 
     return {
         "campaign_id": campaign_id,
@@ -544,7 +544,7 @@ def execute_learning_scene(
     current_notes: str = "",
     per_scene_retry_limit: int = 3,
     total_retry_limit_remaining: int = 20,
-    model_path_override: str | None = None,
+    model_name_override: str | None = None,
     handler=None,
 ) -> dict[str, Any]:
     cfg = cfg or DEFAULT_PROMPT_CONFIG
@@ -552,7 +552,7 @@ def execute_learning_scene(
     notes = _normalize_learning_notes(current_notes)
     notes_before_scene = notes
     retries_used = 0
-    handler = handler or build_handler(model_key, model_path_override=model_path_override)
+    handler = handler or build_handler(model_key, model_name_override=model_name_override)
 
     for attempt_index in range(1, per_scene_retry_limit + 2):
         notes_before_attempt = notes
@@ -567,7 +567,7 @@ def execute_learning_scene(
             model_key=model_key,
             max_tokens=max_tokens,
             temperature=temperature,
-            model_path_override=model_path_override,
+            model_name_override=model_name_override,
             learning_notes=notes_before_attempt,
             attempt_index=attempt_index,
             handler=handler,
@@ -601,7 +601,7 @@ def execute_learning_scene(
             model_key=model_key,
             max_tokens=max(max_tokens, 256),
             temperature=temperature,
-            model_path_override=model_path_override,
+            model_name_override=model_name_override,
             handler=handler,
         )
         notes = note_update["updated_notes"]
@@ -652,7 +652,7 @@ def execute_campaign_run(
     max_tokens: int,
     temperature: float,
     continue_on_failure: bool = False,
-    model_path_override: str | None = None,
+    model_name_override: str | None = None,
     handler=None,
 ) -> dict:
     campaign = resolve_campaign(gamedata, campaign_id)
@@ -662,7 +662,7 @@ def execute_campaign_run(
     final_reason = "Campaign completed successfully"
     stop_scene_id = None
 
-    handler = handler or build_handler(model_key, model_path_override=model_path_override)
+    handler = handler or build_handler(model_key, model_name_override=model_name_override)
 
     for scene_index, scene_id in enumerate(scene_ids):
         scene_run = execute_scene_run(
@@ -676,7 +676,7 @@ def execute_campaign_run(
             temperature=temperature,
             campaign_id=campaign_id,
             scene_index=scene_index,
-            model_path_override=model_path_override,
+            model_name_override=model_name_override,
             handler=handler,
         )
         scene_runs.append(scene_run)
@@ -740,12 +740,12 @@ def execute_learning_campaign(
     per_scene_retry_limit: int = 3,
     total_retry_limit: int = 20,
     initial_notes: str = "",
-    model_path_override: str | None = None,
+    model_name_override: str | None = None,
     handler=None,
 ) -> dict[str, Any]:
     campaign = resolve_campaign(gamedata, campaign_id)
     scene_ids = get_campaign_scene_ids(gamedata, campaign_id)
-    handler = handler or build_handler(model_key, model_path_override=model_path_override)
+    handler = handler or build_handler(model_key, model_name_override=model_name_override)
     scene_runs: list[dict[str, Any]] = []
     total_retries_used = 0
     notes = _normalize_learning_notes(initial_notes)
@@ -765,7 +765,7 @@ def execute_learning_campaign(
             current_notes=notes,
             per_scene_retry_limit=per_scene_retry_limit,
             total_retry_limit_remaining=max(total_retry_limit - total_retries_used, 0),
-            model_path_override=model_path_override,
+            model_name_override=model_name_override,
             handler=handler,
         )
         scene_result = scene_learning["scene_result"]
