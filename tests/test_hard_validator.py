@@ -1,46 +1,30 @@
-from src.engine.validation.validator_ast import ast_validate_tool_call
 from src.engine.validation.validator_hard import hard_validate_tool_call
 
-def test_hard_passes_for_wizard_fireball(gamedata_copy, make_tool_call):
+def test_hard_passes_for_wizard_fireball(gamedata_copy):
     gd = gamedata_copy
 
     character_id = "wizard.ember"
-    visible_tool_ids = gd["characters_by_id"][character_id]["tool_ids"]
 
-    raw = make_tool_call("wizard.cast_fireball", {"target": "goblin"})
-    parsed = ast_validate_tool_call(raw, gd["tools_by_id"], visible_tool_ids)
-
-    verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])
+    verdict = hard_validate_tool_call(gd, character_id, "wizard.cast_fireball")
     assert verdict["hard_valid"] is True
     assert verdict["outcome"] == "proceed"
 
 
-def test_hard_rejects_tool_not_in_character_tool_ids_even_if_visible(gamedata_copy, make_tool_call):
+def test_hard_rejects_tool_not_in_character_tool_ids(gamedata_copy):
     """
-    Demonstrates separation:
-    - AST checks 'visible_tool_ids'
-    - Hard checks character permissions (character.tool_ids)
-
-    We intentionally allow the tool to be visible but not actually owned/allowed by the character.
+    Hard validation checks character permissions independently of AST visibility.
     """
     gd = gamedata_copy
 
     character_id = "wizard.ember"
-    character = gd["characters_by_id"][character_id]
 
-    # Make knight tool visible to pass AST, but do NOT add it to character.tool_ids
-    visible_tool_ids = character["tool_ids"] + ["knight.sword_slash"]
-
-    raw = make_tool_call("knight.sword_slash", {"target": "goblin"})
-    parsed = ast_validate_tool_call(raw, gd["tools_by_id"], visible_tool_ids)
-
-    verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])
+    verdict = hard_validate_tool_call(gd, character_id, "knight.sword_slash")
     assert verdict["hard_valid"] is False
     assert verdict["reason_code"] == "tool_not_available_to_character"
     assert "not available" in verdict["reason"].lower()
 
 
-def test_hard_rejects_forbidden_trait(gamedata_copy, make_tool_call):
+def test_hard_rejects_forbidden_trait(gamedata_copy):
     gd = gamedata_copy
 
     character_id = "wizard.ember"
@@ -49,18 +33,13 @@ def test_hard_rejects_forbidden_trait(gamedata_copy, make_tool_call):
     # Add forbidden trait for fireball
     character["traits"] = character.get("traits", []) + ["low_mana"]
 
-    visible_tool_ids = character["tool_ids"]
-
-    raw = make_tool_call("wizard.cast_fireball", {"target": "goblin"})
-    parsed = ast_validate_tool_call(raw, gd["tools_by_id"], visible_tool_ids)
-
-    verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])
+    verdict = hard_validate_tool_call(gd, character_id, "wizard.cast_fireball")
     assert verdict["hard_valid"] is False
     assert verdict["reason_code"] == "forbidden_trait"
     assert "forbidden trait" in verdict["reason"].lower()
 
 
-def test_hard_rejects_missing_required_inventory(gamedata_copy, make_tool_call):
+def test_hard_rejects_missing_required_inventory(gamedata_copy):
     """
     Force an inventory failure by:
     - temporarily requiring wand for wizard.cast_fireball
@@ -78,12 +57,7 @@ def test_hard_rejects_missing_required_inventory(gamedata_copy, make_tool_call):
     tool = gd["tools_by_id"]["wizard.cast_fireball"]
     tool["constraints"]["required_inventory"] = ["wand"]
 
-    visible_tool_ids = character["tool_ids"]
-
-    raw = make_tool_call("wizard.cast_fireball", {"target": "goblin"})
-    parsed = ast_validate_tool_call(raw, gd["tools_by_id"], visible_tool_ids)
-
-    verdict = hard_validate_tool_call(gd, character_id, parsed["tool_id"])
+    verdict = hard_validate_tool_call(gd, character_id, "wizard.cast_fireball")
     assert verdict["hard_valid"] is False
     assert verdict["reason_code"] == "missing_required_inventory"
     assert "missing required inventory" in verdict["reason"].lower()
