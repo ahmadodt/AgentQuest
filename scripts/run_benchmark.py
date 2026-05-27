@@ -8,9 +8,18 @@ from src.engine.loader import DataValidationError, load_gamedata
 from src.engine.validation.report_utils import collect_scene_character_tool_results
 from src.models.config import load_runtime_model_config, load_runtime_prompt_config
 from src.models.registry import build_handler
-from src.runtime_paths import get_data_dir, get_runs_dir
+from src.runtime_paths import get_data_dir
 from src.runner.benchmark_utils import aggregate_benchmark_records, build_benchmark_record
-from src.runner.runner_utils import ensure_dir, execute_scene_run, get_campaign_scene_ids, load_preset, write_json_file
+from src.runner.runner_utils import (
+    ensure_dir,
+    execute_scene_run,
+    get_campaign_scene_ids,
+    get_results_dir,
+    load_preset,
+    safe_path_segment,
+    timestamp_for_filename,
+    write_json_file,
+)
 
 
 def _parse_multi_option(values: list[str] | None) -> list[str]:
@@ -53,9 +62,18 @@ def _resolve_prompt_formats(runtime_prompt_cfg, args) -> list[str]:
     return [runtime_prompt_cfg.prompt_format]
 
 
-def _benchmark_output_dir() -> str:
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    return os.path.join(get_runs_dir(), "benchmarks", timestamp)
+def _benchmark_output_dirs(campaign_ids: list[str], model_name: str) -> tuple[str, str]:
+    campaign_segment = campaign_ids[0] if len(campaign_ids) == 1 else "all_campaigns"
+    benchmark_dir = os.path.join(
+        get_results_dir(),
+        "campaigns",
+        safe_path_segment(campaign_segment),
+        safe_path_segment(model_name),
+    )
+    return (
+        os.path.join(benchmark_dir, timestamp_for_filename()),
+        os.path.join(benchmark_dir, "latest"),
+    )
 
 
 def _write_json(path: str, payload: object) -> None:
@@ -90,8 +108,14 @@ def main() -> int:
         presets = _resolve_presets(runtime_prompt_cfg, args)
         prompt_formats = _resolve_prompt_formats(runtime_prompt_cfg, args)
 
-        output_dir = os.path.abspath(args.output_dir) if args.output_dir else _benchmark_output_dir()
+        output_dir, latest_dir = (
+            (os.path.abspath(args.output_dir), "")
+            if args.output_dir
+            else _benchmark_output_dirs(campaign_ids, runtime_model_cfg.model_name)
+        )
         ensure_dir(output_dir)
+        if latest_dir:
+            ensure_dir(latest_dir)
 
         manifest = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -144,7 +168,7 @@ def main() -> int:
                                 model_key=args.model_key,
                                 max_tokens=args.max_tokens,
                                 temperature=args.temperature,
-                                model_path_override=runtime_model_cfg.model_path,
+                                model_name_override=runtime_model_cfg.model_name,
                                 handler=handler,
                             )
                             latency_seconds = time.perf_counter() - start_time
@@ -165,6 +189,10 @@ def main() -> int:
         summary = aggregate_benchmark_records(records)
         _write_json(os.path.join(output_dir, "records.json"), records)
         _write_json(os.path.join(output_dir, "summary.json"), summary)
+        if latest_dir:
+            _write_json(os.path.join(latest_dir, "manifest.json"), manifest)
+            _write_json(os.path.join(latest_dir, "records.json"), records)
+            _write_json(os.path.join(latest_dir, "summary.json"), summary)
 
         print("Benchmark complete")
         print(f"Output: {output_dir}")

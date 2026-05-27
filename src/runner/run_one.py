@@ -2,14 +2,15 @@ import argparse
 import json
 
 from src.engine.loader import load_gamedata, DataValidationError
+from src.models.config import load_runtime_model_config
 from src.runtime_paths import get_data_dir
 from src.runner.runner_utils import (
     DEFAULT_CHARACTER_ID,
     DEFAULT_SCENE_ID,
     build_run_log_payload,
-    default_run_path,
     execute_scene_run,
     resolve_prompt_settings,
+    save_result_run_log,
     write_json_file,
 )
 
@@ -35,13 +36,14 @@ def main():
     parser.add_argument(
     "--save-run",
     type=str,
-    default=default_run_path("run_one"),
-    help="Path to save full run log as JSON. Defaults to runs/run_one_<timestamp>.json",
+    default=None,
+    help="Optional explicit path to save the run log as JSON. Defaults to results/scenes/<scene_id>/<model>/<timestamp>.json",
     )
     args = parser.parse_args()
 
     try:
         gamedata = load_gamedata(args.data_dir)
+        runtime_model_cfg = load_runtime_model_config()
         prompt_format, preset_name, cfg = resolve_prompt_settings(
             prompt_format=args.prompt_format,
             preset_name=args.preset,
@@ -70,18 +72,21 @@ def main():
         print("\n=== METADATA ===")
         print(json.dumps(metadata, indent=2, ensure_ascii=False))
         
-        if args.save_run:
-            runlog = build_run_log_payload(
-                run_mode="scene",
-                data_dir=args.data_dir,
-                preset_name=preset_name,
-                prompt_format=prompt_format,
-                character_id=args.character_id,
-                scene_id=args.scene_id,
-                run_result=scene_run,
-            )
+        runlog = build_run_log_payload(
+            run_mode="scene",
+            data_dir=args.data_dir,
+            preset_name=preset_name,
+            prompt_format=prompt_format,
+            character_id=args.character_id,
+            scene_id=args.scene_id,
+            run_result=scene_run,
+        )
+        if args.save_run is not None:
             write_json_file(args.save_run, runlog)
             print(f"\nSaved run log to: {args.save_run}")
+        else:
+            save_path = save_result_run_log("scene", runlog, runtime_model_cfg.model_name)
+            print(f"\nSaved run log to: {save_path}")
 
     except DataValidationError as e:
         print("✖ Data validation error:")

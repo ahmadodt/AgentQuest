@@ -1,5 +1,6 @@
 import json
 import os
+from types import SimpleNamespace
 
 from src.runner.streamlit_utils import (
     build_scene_result_rows,
@@ -13,7 +14,7 @@ from src.runner.streamlit_utils import (
     rewrite_run_config_for_streamlit_selection,
     save_streamlit_run_log,
 )
-from src.runner.runner_utils import default_run_path
+from src.runner.runner_utils import build_result_run_paths, default_run_path, safe_path_segment, save_result_run_log
 
 
 def _write_model_catalog(tmp_path):
@@ -438,13 +439,60 @@ def test_build_run_log_payload_compacts_campaign_attempt_payloads():
     assert "attempts" not in payload
 
 
-def test_save_streamlit_run_log_writes_json_file(monkeypatch, tmp_path):
-    monkeypatch.setattr("src.runner.runner_utils.default_run_path", lambda prefix: str(tmp_path / f"{prefix}_test.json"))
+def test_safe_path_segment_replaces_unsafe_characters():
+    assert safe_path_segment("Model Name/One:Q4") == "Model_Name_One_Q4"
+    assert safe_path_segment("...") == "unknown"
 
-    path = save_streamlit_run_log("scene", {"ok": True})
 
-    assert path.endswith("run_one_test.json")
-    assert json.loads((tmp_path / "run_one_test.json").read_text(encoding="utf-8")) == {"ok": True}
+def test_build_result_run_paths_groups_scene_by_id_and_model(monkeypatch, tmp_path):
+    monkeypatch.setattr("src.runner.runner_utils.get_results_dir", lambda: str(tmp_path / "results"))
+
+    save_path, latest_path = build_result_run_paths(
+        run_mode="scene",
+        runlog={"scene_id": "scene.alpha"},
+        model_name="test/model",
+        timestamp="20260527_120000",
+    )
+
+    expected_dir = tmp_path / "results" / "scenes" / "scene.alpha" / "test_model"
+    assert save_path == str(expected_dir / "20260527_120000.json")
+    assert latest_path == str(expected_dir / "latest.json")
+
+
+def test_save_result_run_log_writes_timestamped_and_latest_files(monkeypatch, tmp_path):
+    monkeypatch.setattr("src.runner.runner_utils.get_results_dir", lambda: str(tmp_path / "results"))
+    monkeypatch.setattr("src.runner.runner_utils.timestamp_for_filename", lambda: "20260527_120000")
+
+    path = save_result_run_log("campaign", {"campaign_id": "campaign.alpha", "ok": True}, "alpha_model")
+
+    expected_dir = tmp_path / "results" / "campaigns" / "campaign.alpha" / "alpha_model"
+    assert path == str(expected_dir / "20260527_120000.json")
+    assert json.loads((expected_dir / "20260527_120000.json").read_text(encoding="utf-8")) == {
+        "campaign_id": "campaign.alpha",
+        "ok": True,
+    }
+    assert json.loads((expected_dir / "latest.json").read_text(encoding="utf-8")) == {
+        "campaign_id": "campaign.alpha",
+        "ok": True,
+    }
+
+
+def test_save_streamlit_run_log_writes_results_file(monkeypatch, tmp_path):
+    monkeypatch.setattr("src.runner.runner_utils.get_results_dir", lambda: str(tmp_path / "results"))
+    monkeypatch.setattr("src.runner.runner_utils.timestamp_for_filename", lambda: "20260527_120000")
+    monkeypatch.setattr(
+        "src.runner.streamlit_utils.load_runtime_model_config",
+        lambda: SimpleNamespace(model_name="alpha_model"),
+    )
+
+    path = save_streamlit_run_log("scene", {"scene_id": "scene.alpha", "ok": True})
+
+    expected_dir = tmp_path / "results" / "scenes" / "scene.alpha" / "alpha_model"
+    assert path == str(expected_dir / "20260527_120000.json")
+    assert json.loads((expected_dir / "latest.json").read_text(encoding="utf-8")) == {
+        "scene_id": "scene.alpha",
+        "ok": True,
+    }
 
 
 def test_default_run_path_uses_agentquest_runs_dir_env(monkeypatch, tmp_path):

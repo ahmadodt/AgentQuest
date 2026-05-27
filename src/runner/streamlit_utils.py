@@ -15,7 +15,7 @@ from src.runner.runner_utils import (
     get_campaign_scene_ids,
     load_preset,
     normalize_single_scene_run,
-    save_run_log,
+    save_result_run_log,
     scene_status_from_verdict,
 )
 
@@ -221,4 +221,5 @@ def build_campaign_progress_rows(
 
 
 def save_streamlit_run_log(run_mode: str, runlog: dict[str, Any]) -> str:
-    return save_run_log(run_mode, runlog)
+    model_name = load_runtime_model_config().model_name or runlog.get("model", "")
+    return save_result_run_log(run_mode, runlog, model_name)

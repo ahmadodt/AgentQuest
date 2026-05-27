@@ -7,10 +7,10 @@ from src.runner.runner_utils import (
     DEFAULT_CAMPAIGN_ID,
     DEFAULT_CHARACTER_ID,
     build_run_log_payload,
-    default_run_path,
     execute_campaign_run,
     execute_learning_campaign,
     resolve_prompt_settings,
+    save_result_run_log,
     write_json_file,
 )
 
@@ -61,8 +61,11 @@ def main():
     parser.add_argument(
         "--save-run",
         type=str,
-        default=default_run_path("run_campaign"),
-        help="Path to save full campaign run log as JSON. Defaults to runs/run_campaign_<timestamp>.json",
+        default=None,
+        help=(
+            "Optional explicit path to save the campaign run log as JSON. "
+            "Defaults to results/campaigns/<campaign_id>/<model>/<timestamp>.json"
+        ),
     )
     args = parser.parse_args()
 
@@ -130,18 +133,21 @@ def main():
             print("\nFinal notes:")
             print(campaign_run.get("final_notes", ""))
 
-        if args.save_run:
-            runlog = build_run_log_payload(
-                run_mode="campaign",
-                data_dir=args.data_dir,
-                preset_name=preset_name,
-                prompt_format=prompt_format,
-                character_id=args.character_id,
-                campaign_id=args.campaign_id,
-                run_result=campaign_run,
-            )
+        runlog = build_run_log_payload(
+            run_mode="campaign",
+            data_dir=args.data_dir,
+            preset_name=preset_name,
+            prompt_format=prompt_format,
+            character_id=args.character_id,
+            campaign_id=args.campaign_id,
+            run_result=campaign_run,
+        )
+        if args.save_run is not None:
             write_json_file(args.save_run, runlog)
             print(f"\nSaved campaign run log to: {args.save_run}")
+        else:
+            save_path = save_result_run_log("campaign", runlog, runtime_model_cfg.model_name)
+            print(f"\nSaved campaign run log to: {save_path}")
 
     except DataValidationError as e:
         print("Data validation error:")

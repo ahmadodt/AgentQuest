@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from datetime import datetime
 from typing import Any
 
@@ -15,6 +16,8 @@ from src.runtime_paths import get_runs_dir
 DEFAULT_CHARACTER_ID = "knight.bram"
 DEFAULT_SCENE_ID = "scene.goblin_den.001_outer_watch"
 DEFAULT_CAMPAIGN_ID = "campaign.goblin_den_v1"
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_SAFE_PATH_SEGMENT_RE = re.compile(r"[^A-Za-z0-9._-]+")
 
 
 def load_preset(preset_name: str) -> PromptConfig:
@@ -51,6 +54,49 @@ def ensure_dir(dirpath: str) -> None:
 def default_run_path(prefix: str) -> str:
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     return os.path.join(get_runs_dir(), f"{prefix}_{timestamp}.json")
+
+
+def safe_path_segment(value: str | None, *, fallback: str = "unknown") -> str:
+    normalized = (value or "").strip()
+    if not normalized:
+        normalized = fallback
+    safe_value = _SAFE_PATH_SEGMENT_RE.sub("_", normalized).strip("._-")
+    return safe_value or fallback
+
+
+def get_results_dir() -> str:
+    return os.path.join(_PROJECT_ROOT, "results")
+
+
+def timestamp_for_filename() -> str:
+    return datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+
+
+def build_result_run_paths(
+    *,
+    run_mode: str,
+    runlog: dict[str, Any],
+    model_name: str | None,
+    timestamp: str | None = None,
+) -> tuple[str, str]:
+    timestamp = timestamp or timestamp_for_filename()
+    if run_mode == "campaign":
+        run_group = "campaigns"
+        run_id = runlog.get("campaign_id")
+    else:
+        run_group = "scenes"
+        run_id = runlog.get("scene_id")
+
+    result_dir = os.path.join(
+        get_results_dir(),
+        run_group,
+        safe_path_segment(str(run_id or "")),
+        safe_path_segment(model_name),
+    )
+    return (
+        os.path.join(result_dir, f"{timestamp}.json"),
+        os.path.join(result_dir, "latest.json"),
+    )
 
 
 def write_json_file(path: str, payload: object) -> None:
@@ -320,6 +366,17 @@ def save_run_log(run_mode: str, runlog: dict[str, Any]) -> str:
     prefix = "run_campaign" if run_mode == "campaign" else "run_one"
     save_path = default_run_path(prefix)
     write_json_file(save_path, runlog)
+    return save_path
+
+
+def save_result_run_log(run_mode: str, runlog: dict[str, Any], model_name: str | None) -> str:
+    save_path, latest_path = build_result_run_paths(
+        run_mode=run_mode,
+        runlog=runlog,
+        model_name=model_name,
+    )
+    write_json_file(save_path, runlog)
+    write_json_file(latest_path, runlog)
     return save_path
 
 
