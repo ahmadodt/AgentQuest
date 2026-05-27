@@ -2,6 +2,7 @@ import json
 import os
 from typing import Any
 
+from src.models.catalog import DEFAULT_MODEL_CATALOG_PATH, load_model_catalog
 from src.models.config import (
     DEFAULT_RUN_CONFIG_PATH,
     DEFAULT_RUNTIME_PRESET_NAME,
@@ -9,7 +10,6 @@ from src.models.config import (
     load_runtime_prompt_config,
 )
 from src.prompts.prompt_config import PromptConfig
-from src.runtime_paths import get_local_models_dir
 from src.runner.runner_utils import (
     build_run_log_payload,
     get_campaign_scene_ids,
@@ -20,7 +20,6 @@ from src.runner.runner_utils import (
 )
 
 
-DEFAULT_LOCAL_MODELS_DIR = get_local_models_dir()
 DEFAULT_STREAMLIT_PRESET = DEFAULT_RUNTIME_PRESET_NAME
 DEFAULT_STREAMLIT_PRESET_ORDER = [
     "BLIND_ADVENTURER",
@@ -31,16 +30,21 @@ DEFAULT_STREAMLIT_PRESET_ORDER = [
 ]
 
 
-def discover_local_models(models_dir: str = DEFAULT_LOCAL_MODELS_DIR) -> list[str]:
-    if not os.path.isdir(models_dir):
-        return []
-
-    model_names = [
-        entry.name
-        for entry in os.scandir(models_dir)
-        if entry.is_file() and entry.name.lower().endswith(".gguf")
+def discover_catalog_models(
+    catalog_path: str = DEFAULT_MODEL_CATALOG_PATH,
+) -> list[dict[str, str]]:
+    catalog = load_model_catalog(catalog_path)
+    return [
+        {
+            "name": entry.name,
+            "display_name": entry.display_name,
+            "backend": entry.backend,
+            "repo_id": entry.repo_id,
+            "filename": entry.filename,
+            "description": entry.description,
+        }
+        for entry in sorted(catalog.values(), key=lambda item: item.display_name.lower())
     ]
-    return sorted(model_names)
 
 
 def discover_streamlit_presets() -> list[str]:
@@ -64,47 +68,51 @@ def normalize_streamlit_preset_name(preset_name: str) -> str:
     return normalized
 
 
-def load_streamlit_run_settings(config_path: str = DEFAULT_RUN_CONFIG_PATH) -> dict[str, Any]:
+def load_streamlit_run_settings(
+    config_path: str = DEFAULT_RUN_CONFIG_PATH,
+    *,
+    catalog_path: str = DEFAULT_MODEL_CATALOG_PATH,
+) -> dict[str, Any]:
     prompt_cfg = load_runtime_prompt_config(config_path)
     preset_name = normalize_streamlit_preset_name(prompt_cfg.preset_name)
-    model_cfg = load_runtime_model_config(config_path)
+    model_cfg = load_runtime_model_config(config_path, catalog_path=catalog_path)
 
     return {
         "preset_name": preset_name,
         "prompt_format": prompt_cfg.prompt_format,
         "preset_config": load_preset(preset_name),
-        "model_path": model_cfg.model_path,
+        "model_name": model_cfg.model_name,
+        "model_display_name": model_cfg.model_display_name,
+        "repo_id": model_cfg.repo_id,
+        "filename": model_cfg.filename,
         "backend": model_cfg.backend,
     }
 
 
 def rewrite_run_config_for_streamlit_selection(
     *,
-    model_filename: str,
+    model_name: str,
     preset_name: str,
     config_path: str = DEFAULT_RUN_CONFIG_PATH,
-    models_dir: str = DEFAULT_LOCAL_MODELS_DIR,
     backend: str = "llama_cpp",
+    catalog_path: str = DEFAULT_MODEL_CATALOG_PATH,
 ) -> dict[str, Any]:
-    if not model_filename or not model_filename.lower().endswith(".gguf"):
-        raise ValueError("Selected model must be a non-empty .gguf filename.")
+    selected_model_name = (model_name or "").strip()
+    if not selected_model_name:
+        raise ValueError("Selected model must be a non-empty catalog name.")
+
+    catalog = load_model_catalog(catalog_path)
+    if selected_model_name not in catalog:
+        raise ValueError(f"Selected model is not present in the catalog: {selected_model_name}")
 
     resolved_config_path = os.path.abspath(config_path)
-    resolved_models_dir = os.path.abspath(models_dir)
-    model_path = os.path.abspath(os.path.join(resolved_models_dir, model_filename))
-
-    if not os.path.isfile(model_path):
-        raise FileNotFoundError(f"Selected GGUF model does not exist: {model_path}")
 
     with open(resolved_config_path, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
-    config_dir = os.path.dirname(resolved_config_path)
-    relative_model_path = os.path.relpath(model_path, config_dir).replace("\\", "/")
-
     updated = dict(raw)
     updated["backend"] = backend
-    updated["model"] = relative_model_path
+    updated["model"] = selected_model_name
     updated["preset"] = normalize_streamlit_preset_name(preset_name)
 
     with open(resolved_config_path, "w", encoding="utf-8") as f:
@@ -115,19 +123,19 @@ def rewrite_run_config_for_streamlit_selection(
 
 
 def rewrite_run_config_for_model(
-    model_filename: str,
+    model_name: str,
     *,
     config_path: str = DEFAULT_RUN_CONFIG_PATH,
-    models_dir: str = DEFAULT_LOCAL_MODELS_DIR,
     backend: str = "llama_cpp",
+    catalog_path: str = DEFAULT_MODEL_CATALOG_PATH,
 ) -> dict[str, Any]:
     current_prompt_cfg = load_runtime_prompt_config(config_path)
     return rewrite_run_config_for_streamlit_selection(
-        model_filename=model_filename,
+        model_name=model_name,
         preset_name=current_prompt_cfg.preset_name,
         config_path=config_path,
-        models_dir=models_dir,
         backend=backend,
+        catalog_path=catalog_path,
     )
 
 

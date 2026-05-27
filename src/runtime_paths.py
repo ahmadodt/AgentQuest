@@ -19,9 +19,6 @@ def get_data_dir() -> str:
 
 
 def get_local_models_dir() -> str:
-    model_path = (os.getenv("AGENTQUEST_MODEL_PATH") or "").strip()
-    if model_path:
-        return os.path.dirname(os.path.abspath(model_path))
     return _resolve_env_path("AGENTQUEST_MODELS_DIR", _DEFAULT_LOCAL_MODELS_DIR)
 
 

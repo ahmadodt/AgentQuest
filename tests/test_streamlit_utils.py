@@ -4,7 +4,7 @@ import os
 from src.runner.streamlit_utils import (
     build_scene_result_rows,
     build_run_log_payload,
-    discover_local_models,
+    discover_catalog_models,
     discover_streamlit_presets,
     load_streamlit_run_settings,
     normalize_streamlit_preset_name,
@@ -16,12 +16,55 @@ from src.runner.streamlit_utils import (
 from src.runner.runner_utils import default_run_path
 
 
-def test_discover_local_models_returns_sorted_gguf_only(tmp_path):
-    (tmp_path / "b-model.gguf").write_text("stub", encoding="utf-8")
-    (tmp_path / "a-model.gguf").write_text("stub", encoding="utf-8")
-    (tmp_path / "notes.txt").write_text("ignore", encoding="utf-8")
+def _write_model_catalog(tmp_path):
+    catalog_path = tmp_path / "model_catalog.json"
+    catalog_path.write_text(
+        json.dumps(
+            {
+                "models": [
+                    {
+                        "name": "beta_model",
+                        "display_name": "Beta Model",
+                        "backend": "llama_cpp",
+                        "repo_id": "org/beta",
+                        "filename": "beta.gguf",
+                    },
+                    {
+                        "name": "alpha_model",
+                        "display_name": "Alpha Model",
+                        "backend": "llama_cpp",
+                        "repo_id": "org/alpha",
+                        "filename": "alpha.gguf",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    return catalog_path
 
-    assert discover_local_models(str(tmp_path)) == ["a-model.gguf", "b-model.gguf"]
+
+def test_discover_catalog_models_returns_sorted_entries(tmp_path):
+    catalog_path = _write_model_catalog(tmp_path)
+
+    assert discover_catalog_models(str(catalog_path)) == [
+        {
+            "name": "alpha_model",
+            "display_name": "Alpha Model",
+            "backend": "llama_cpp",
+            "repo_id": "org/alpha",
+            "filename": "alpha.gguf",
+            "description": "",
+        },
+        {
+            "name": "beta_model",
+            "display_name": "Beta Model",
+            "backend": "llama_cpp",
+            "repo_id": "org/beta",
+            "filename": "beta.gguf",
+            "description": "",
+        },
+    ]
 
 
 def test_discover_streamlit_presets_uses_expected_information_order_and_hides_default():
@@ -44,9 +87,7 @@ def test_normalize_streamlit_preset_name_uses_battle_plan_for_empty_only():
 
 
 def test_rewrite_run_config_for_streamlit_selection_updates_model_and_preset_and_preserves_other_keys(tmp_path):
-    models_dir = tmp_path / "local_models"
-    models_dir.mkdir()
-    (models_dir / "Qwen_Qwen3-4B-Q4_K_L.gguf").write_text("stub", encoding="utf-8")
+    catalog_path = _write_model_catalog(tmp_path)
 
     config_dir = tmp_path / "configs"
     config_dir.mkdir()
@@ -55,7 +96,7 @@ def test_rewrite_run_config_for_streamlit_selection_updates_model_and_preset_and
         json.dumps(
             {
                 "backend": "llama_cpp",
-                "model": "../local_models/old.gguf",
+                "model": "beta_model",
                 "preset": "BATTLE_PLAN",
                 "extra": "keep-me",
             }
@@ -64,15 +105,15 @@ def test_rewrite_run_config_for_streamlit_selection_updates_model_and_preset_and
     )
 
     updated = rewrite_run_config_for_streamlit_selection(
-        model_filename="Qwen_Qwen3-4B-Q4_K_L.gguf",
+        model_name="alpha_model",
         preset_name="FULL_INFO",
         config_path=str(config_path),
-        models_dir=str(models_dir),
+        catalog_path=str(catalog_path),
     )
 
     assert updated == {
         "backend": "llama_cpp",
-        "model": "../local_models/Qwen_Qwen3-4B-Q4_K_L.gguf",
+        "model": "alpha_model",
         "preset": "FULL_INFO",
         "extra": "keep-me",
     }
@@ -82,9 +123,7 @@ def test_rewrite_run_config_for_streamlit_selection_updates_model_and_preset_and
 
 
 def test_rewrite_run_config_for_model_preserves_current_preset(tmp_path):
-    models_dir = tmp_path / "local_models"
-    models_dir.mkdir()
-    (models_dir / "Qwen_Qwen3-4B-Q4_K_L.gguf").write_text("stub", encoding="utf-8")
+    catalog_path = _write_model_catalog(tmp_path)
 
     config_dir = tmp_path / "configs"
     config_dir.mkdir()
@@ -93,7 +132,7 @@ def test_rewrite_run_config_for_model_preserves_current_preset(tmp_path):
         json.dumps(
             {
                 "backend": "llama_cpp",
-                "model": "../local_models/old.gguf",
+                "model": "beta_model",
                 "preset": "FULL_INFO",
             }
         ),
@@ -101,25 +140,24 @@ def test_rewrite_run_config_for_model_preserves_current_preset(tmp_path):
     )
 
     updated = rewrite_run_config_for_model(
-        "Qwen_Qwen3-4B-Q4_K_L.gguf",
+        "alpha_model",
         config_path=str(config_path),
-        models_dir=str(models_dir),
+        catalog_path=str(catalog_path),
     )
 
     assert updated["preset"] == "FULL_INFO"
+    assert updated["model"] == "alpha_model"
 
 
 def test_load_streamlit_run_settings_uses_preset_and_prompt_format_from_config(tmp_path, monkeypatch):
-    model_dir = tmp_path / "local_models"
-    model_dir.mkdir()
-    (model_dir / "Qwen_Qwen3-4B-Q4_K_L.gguf").write_text("stub", encoding="utf-8")
+    catalog_path = _write_model_catalog(tmp_path)
 
     config_path = tmp_path / "run_config.json"
     config_path.write_text(
         json.dumps(
             {
                 "backend": "llama_cpp",
-                "model": "local_models/Qwen_Qwen3-4B-Q4_K_L.gguf",
+                "model": "alpha_model",
                 "preset": "FULL_INFO",
                 "prompt_format": "json_only",
             }
@@ -130,12 +168,13 @@ def test_load_streamlit_run_settings_uses_preset_and_prompt_format_from_config(t
     sentinel = object()
     monkeypatch.setattr("src.runner.streamlit_utils.load_preset", lambda preset_name: sentinel)
 
-    settings = load_streamlit_run_settings(str(config_path))
+    settings = load_streamlit_run_settings(str(config_path), catalog_path=str(catalog_path))
 
     assert settings["preset_name"] == "FULL_INFO"
     assert settings["prompt_format"] == "json_only"
     assert settings["preset_config"] is sentinel
-    assert settings["model_path"].endswith("Qwen_Qwen3-4B-Q4_K_L.gguf")
+    assert settings["model_name"] == "alpha_model"
+    assert settings["model_display_name"] == "Alpha Model"
 
 def test_normalize_single_scene_run_wraps_scene_and_derives_summary(make_tool_call):
     scene_run = {

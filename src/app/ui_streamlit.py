@@ -7,7 +7,7 @@ import streamlit as st
 from src.engine.loader import DataValidationError, load_gamedata
 from src.models.registry import build_handler
 from src.prompts.tool_renderers.compact_tools import render_tools_compact
-from src.runtime_paths import get_data_dir, get_local_models_dir
+from src.runtime_paths import get_data_dir
 from src.runner.runner_utils import (
     build_scene_prompt_context,
     execute_scene_run,
@@ -26,7 +26,7 @@ from src.runner.streamlit_utils import (
     build_campaign_progress_rows,
     build_run_log_payload,
     build_scene_result_rows,
-    discover_local_models,
+    discover_catalog_models,
     discover_streamlit_presets,
     load_streamlit_run_settings,
     normalize_single_scene_run,
@@ -51,15 +51,8 @@ SINGLE_LOG_KEY = "aq_single_scene_log_path"
 
 
 @st.cache_resource(show_spinner=False)
-def _get_cached_handler(model_path: str):
-    return build_handler(model_path_override=model_path)
-
-
-def _model_path_from_filename(model_filename: str) -> str:
-    model_path = os.path.abspath(os.path.join(get_local_models_dir(), model_filename))
-    if not os.path.isfile(model_path):
-        raise FileNotFoundError(f"Selected GGUF model does not exist: {model_path}")
-    return model_path
+def _get_cached_handler(model_name: str):
+    return build_handler(model_name_override=model_name)
 
 
 def _campaign_signature(
@@ -219,7 +212,7 @@ def _run_campaign_scene(
     scene_id: str,
     scene_index: int,
     run_settings: dict[str, Any],
-    model_path: str,
+    model_name: str,
 ) -> dict[str, Any]:
     return execute_scene_run(
         gamedata=gamedata,
@@ -232,7 +225,7 @@ def _run_campaign_scene(
         model_key="",
         max_tokens=128,
         temperature=0.0,
-        model_path_override=model_path,
+        model_name_override=model_name,
         handler=handler,
     )
 
@@ -246,7 +239,7 @@ def _run_campaign_range(
     scene_ids: list[str],
     start_index: int,
     run_settings: dict[str, Any],
-    model_path: str,
+    model_name: str,
 ) -> None:
     progress = st.progress(0.0, text="Running campaign scenes...")
     total = len(scene_ids) - start_index
@@ -259,7 +252,7 @@ def _run_campaign_range(
             scene_id=scene_ids[scene_index],
             scene_index=scene_index,
             run_settings=run_settings,
-            model_path=model_path,
+            model_name=model_name,
         )
         _record_campaign_scene_result(scene_result)
         st.session_state[CAMPAIGN_INDEX_KEY] = scene_index
@@ -277,7 +270,7 @@ def _run_learning_campaign_range(
     scene_ids: list[str],
     start_index: int,
     run_settings: dict[str, Any],
-    model_path: str,
+    model_name: str,
     per_scene_retry_limit: int,
     total_retry_limit: int,
 ) -> None:
@@ -301,7 +294,7 @@ def _run_learning_campaign_range(
                 total_retry_limit - st.session_state.get(CAMPAIGN_TOTAL_RETRIES_KEY, 0),
                 0,
             ),
-            model_path_override=model_path,
+            model_name_override=model_name,
             handler=handler,
         )
         _record_learning_scene_result(
@@ -678,11 +671,11 @@ def _render_campaign_mode(
         st.session_state[CAMPAIGN_NOTES_KEY] = initial_notes
     st.session_state[CAMPAIGN_LEARNING_KEY] = self_learning_enabled
 
-    model_path = ""
+    model_name = ""
     handler = None
     if not is_human_actor:
-        model_path = _model_path_from_filename(actor_selection)
-        handler = _get_cached_handler(model_path)
+        model_name = actor_selection
+        handler = _get_cached_handler(model_name)
     current_scene_index = min(st.session_state.get(CAMPAIGN_INDEX_KEY, 0), len(scene_ids) - 1)
     st.session_state[CAMPAIGN_INDEX_KEY] = current_scene_index
 
@@ -738,7 +731,7 @@ def _render_campaign_mode(
                     scene_ids=scene_ids,
                     start_index=0,
                     run_settings=run_settings,
-                    model_path=model_path,
+                    model_name=model_name,
                     per_scene_retry_limit=per_scene_retry_limit,
                     total_retry_limit=total_retry_limit,
                 )
@@ -751,7 +744,7 @@ def _render_campaign_mode(
                     scene_ids=scene_ids,
                     start_index=0,
                     run_settings=run_settings,
-                    model_path=model_path,
+                    model_name=model_name,
                 )
         st.rerun()
     elif run_remaining:
@@ -765,7 +758,7 @@ def _render_campaign_mode(
                     scene_ids=scene_ids,
                     start_index=st.session_state[CAMPAIGN_INDEX_KEY],
                     run_settings=run_settings,
-                    model_path=model_path,
+                    model_name=model_name,
                     per_scene_retry_limit=per_scene_retry_limit,
                     total_retry_limit=total_retry_limit,
                 )
@@ -778,7 +771,7 @@ def _render_campaign_mode(
                     scene_ids=scene_ids,
                     start_index=st.session_state[CAMPAIGN_INDEX_KEY],
                     run_settings=run_settings,
-                    model_path=model_path,
+                    model_name=model_name,
                 )
         st.rerun()
     elif run_current:
@@ -802,7 +795,7 @@ def _render_campaign_mode(
                         total_retry_limit - st.session_state.get(CAMPAIGN_TOTAL_RETRIES_KEY, 0),
                         0,
                     ),
-                    model_path_override=model_path,
+                    model_name_override=model_name,
                     handler=handler,
                 )
                 _record_learning_scene_result(
@@ -819,7 +812,7 @@ def _render_campaign_mode(
                     scene_id=scene_ids[scene_index],
                     scene_index=scene_index,
                     run_settings=run_settings,
-                    model_path=model_path,
+                    model_name=model_name,
                 )
                 _record_campaign_scene_result(scene_result)
         st.rerun()
@@ -956,8 +949,8 @@ def _render_single_scene_mode(
             )
             st.session_state[SINGLE_LOG_KEY] = save_streamlit_run_log("scene", runlog)
     else:
-        model_path = _model_path_from_filename(actor_selection)
-        handler = _get_cached_handler(model_path)
+        model_name = actor_selection
+        handler = _get_cached_handler(model_name)
 
         if st.button("Run scene"):
             with st.spinner("Running scene..."):
@@ -970,7 +963,7 @@ def _render_single_scene_mode(
                     model_key="",
                     max_tokens=128,
                     temperature=0.0,
-                    model_path_override=model_path,
+                    model_name_override=model_name,
                     handler=handler,
                 )
                 st.session_state[SINGLE_SCENE_KEY] = scene_run
@@ -1000,8 +993,6 @@ def main() -> None:
     st.title("AgentQuest Run Viewer")
     st.caption("Campaign mode is the primary flow. Single-scene runs remain available.")
     data_dir = get_data_dir()
-    models_dir = get_local_models_dir()
-
     try:
         gamedata = load_gamedata(data_dir)
     except DataValidationError as error:
@@ -1011,7 +1002,12 @@ def main() -> None:
         st.error(f"Unexpected error while loading game data: {error}")
         return
 
-    model_options = discover_local_models(models_dir)
+    catalog_models = discover_catalog_models()
+    model_options = [item["name"] for item in catalog_models]
+    model_labels = {
+        item["name"]: f"Model: {item['display_name']}"
+        for item in catalog_models
+    }
 
     try:
         run_settings = load_streamlit_run_settings()
@@ -1037,11 +1033,11 @@ def main() -> None:
         st.error(f"No characters were found in {os.path.join(data_dir, 'custom', 'agentquest', 'characters.json')}.")
         return
 
-    current_model_name = os.path.basename(run_settings.get("model_path", ""))
+    current_model_name = run_settings.get("model_name", "")
     actor_options = [HUMAN_ACTOR_VALUE] + model_options
     actor_labels = {
         HUMAN_ACTOR_VALUE: "Human Player",
-        **{model_name: f"Model: {model_name}" for model_name in model_options},
+        **model_labels,
     }
     actor_index = actor_options.index(current_model_name) if current_model_name in actor_options else 0
     preset_index = preset_options.index(run_settings["preset_name"]) if run_settings["preset_name"] in preset_options else 0
@@ -1087,7 +1083,7 @@ def main() -> None:
         run_mode = st.selectbox("Mode", ["campaign", "scene"], index=0)
 
     st.caption(
-        f"Config model: `{current_model_name or 'unknown'}`. "
+        f"Config model: `{run_settings.get('model_display_name') or current_model_name or 'unknown'}`. "
         f"Selected actor: `{actor_labels[selected_actor]}`. "
         f"Preset: `{selected_preset}`."
     )
