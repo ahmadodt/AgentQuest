@@ -1,3 +1,5 @@
+import pytest
+
 from src.engine.validation.validator_soft import soft_validate_tool_call
 from src.prompts.presets import BATTLE_PLAN, BLIND_ADVENTURER
 
@@ -14,18 +16,6 @@ def test_soft_attack_succeeds_when_effective_power_meets_threshold(gamedata):
     assert "Monster defeated" in verdict["reason"]
 
 
-def test_soft_attack_fails_when_effective_power_is_too_low(gamedata):
-    verdict = soft_validate_tool_call(
-        gamedata=gamedata,
-        scene_id="scene.tutorial.001_goblin_alley",
-        tool_id="wizard.cast_fireball",
-    )
-
-    assert verdict["soft_valid"] is False
-    assert verdict["outcome"] == "failure"
-    assert verdict["reason_code"] == "insufficient_effective_power"
-
-
 def test_soft_attack_failure_uses_numeric_reason_for_high_information_presets(gamedata):
     verdict = soft_validate_tool_call(
         gamedata=gamedata,
@@ -34,6 +24,8 @@ def test_soft_attack_failure_uses_numeric_reason_for_high_information_presets(ga
         prompt_cfg=BATTLE_PLAN,
     )
 
+    assert verdict["soft_valid"] is False
+    assert verdict["outcome"] == "failure"
     assert verdict["reason_code"] == "insufficient_effective_power"
     assert "effective_power=" in verdict["reason"]
     assert "min_power_to_defeat=" in verdict["reason"]
@@ -53,22 +45,12 @@ def test_soft_attack_failure_uses_natural_language_reason_for_low_information_pr
     assert "too weak" in verdict["reason"].lower()
 
 
-def test_soft_knowledge_scene_accepts_knowledge_tool(gamedata):
+@pytest.mark.parametrize("tool_id", ["wizard.read_runes", "knight.inspect_runes"])
+def test_soft_knowledge_scene_accepts_knowledge_tools(gamedata, tool_id):
     verdict = soft_validate_tool_call(
         gamedata=gamedata,
         scene_id="scene.tutorial.002_runes_on_wall",
-        tool_id="wizard.read_runes",
-    )
-
-    assert verdict["soft_valid"] is True
-    assert verdict["outcome"] == "success"
-
-
-def test_soft_knowledge_scene_accepts_knight_knowledge_tool(gamedata):
-    verdict = soft_validate_tool_call(
-        gamedata=gamedata,
-        scene_id="scene.tutorial.002_runes_on_wall",
-        tool_id="knight.inspect_runes",
+        tool_id=tool_id,
     )
 
     assert verdict["soft_valid"] is True
@@ -160,7 +142,7 @@ def test_soft_escape_scene_rejects_non_escape_tool(gamedata):
     assert verdict["reason_code"] == "missing_escape_effect"
 
 
-def test_new_characters_have_valid_tools_in_new_scene(gamedata):
+def test_soft_new_character_scene_pairings_succeed(gamedata):
     rogue_verdict = soft_validate_tool_call(
         gamedata=gamedata,
         scene_id="scene.decision_lab.003_powder_keg_walkway",

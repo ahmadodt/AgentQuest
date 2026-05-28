@@ -6,10 +6,6 @@ from src.engine.validation.validator_utils import (
 )
 
 
-class HardValidationError(Exception):
-    pass
-
-
 def hard_validate_tool_call(gamedata: dict, character_id: str, tool_id: str) -> dict:
     """
     Stage 2: Hard validator (feasibility / permissions).
