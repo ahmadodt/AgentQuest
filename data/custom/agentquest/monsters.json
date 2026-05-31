@@ -37,7 +37,7 @@
       "monster_id": "cursed.whispering_statue",
       "name": "Whispering Statue",
       "type": "construct",
-      "description": "A cursed stone figure that taunts intruders and yields only to understanding, not force.",
+      "description": "A cursed stone figure that taunts intruders from its cracked pedestal.",
       "tags": [
         "tutorial",
         "knowledge",
@@ -106,7 +106,7 @@
       "monster_id": "open5e.monster.goblin-a5e",
       "name": "Goblin",
       "type": "goblin",
-      "description": "A nervous cave guard with quick hands, weak armor, and very little courage.",
+      "description": "A nervous cave guard with quick hands, patchwork armor, and very little courage.",
       "tags": [
         "goblin",
         "humanoid",
@@ -142,7 +142,7 @@
       "monster_id": "open5e.monster.water-elemental",
       "name": "Water Elemental",
       "type": "elemental",
-      "description": "A rolling mass of dark water that absorbs ordinary weapon strikes and reforms after every blow.",
+      "description": "A rolling mass of dark water that reforms as it surges forward.",
       "tags": [
         "elemental",
         "water",
@@ -185,7 +185,7 @@
       "monster_id": "open5e.monster.fire-elemental",
       "name": "Fire Elemental",
       "type": "elemental",
-      "description": "A living blaze with a burning core. Fire only feeds it, and ordinary weapons barely hold its shape back.",
+      "description": "A living blaze with a burning core and a body that flickers around every strike.",
       "tags": [
         "elemental",
         "fire",
@@ -227,7 +227,7 @@
       "monster_id": "open5e.monster.shadow-goblin",
       "name": "Shadow Goblin",
       "type": "goblin",
-      "description": "A thin goblin wrapped in living shadow. Steel passes through it unless bright flame forces it into shape.",
+      "description": "A thin goblin wrapped in living shadow, slipping in and out of sight between heartbeats.",
       "tags": [
         "goblin",
         "shadow",
@@ -268,7 +268,7 @@
       "monster_id": "open5e.monster.dust-goblin-chieftain",
       "name": "Dust Goblin Chieftain",
       "type": "goblin",
-      "description": "A calm, ash-covered chieftain wearing layered bone plates. Quick cuts slide off, but crushing force can break his guard.",
+      "description": "A calm, ash-covered chieftain wearing layered bone plates and watching for careless openings.",
       "tags": [
         "goblin",
         "chieftain",
@@ -306,7 +306,7 @@
       "monster_id": "open5e.monster.goblin-alchemist-a5e",
       "name": "Goblin Alchemist",
       "type": "goblin",
-      "description": "A twitchy potion-maker surrounded by unstable bottles. Fire is dangerous here; a careful reach attack is safer.",
+      "description": "A twitchy potion-maker surrounded by unstable bottles and scattered fuse-cords.",
       "tags": [
         "goblin",
         "alchemist",
@@ -346,7 +346,7 @@
       "monster_id": "open5e.monster.goblin-boss-a5e",
       "name": "Goblin Boss",
       "type": "goblin",
-      "description": "A loud goblin boss in stolen armor. He expects swordplay, but his armor buckles under blunt force.",
+      "description": "A loud goblin boss in stolen armor, swaggering like the room already belongs to him.",
       "tags": [
         "goblin",
         "boss",
@@ -384,7 +384,7 @@
       "monster_id": "open5e.monster.goblin-shieldbearer-a5e",
       "name": "Goblin Shieldbearer",
       "type": "goblin",
-      "description": "A goblin crouched behind a heavy shield and wooden barricade. Cutting attacks glance off; a mace can smash the defense.",
+      "description": "A goblin crouched behind a heavy shield and wooden barricade, daring anyone to come closer.",
       "tags": [
         "goblin",
         "shield",
@@ -420,7 +420,7 @@
       "monster_id": "open5e.monster.goblin-warlock-a5e",
       "name": "Goblin Warlock",
       "type": "goblin",
-      "description": "A goblin caster drawing power from a cracked idol. It must be interrupted from a distance before the spell completes.",
+      "description": "A goblin caster drawing power from a cracked idol as dark sparks gather around its hands.",
       "tags": [
         "goblin",
         "warlock",
@@ -461,7 +461,7 @@
       "monster_id": "open5e.monster.hobgoblin-a5e",
       "name": "Hobgoblin",
       "type": "hobgoblin",
-      "description": "A disciplined soldier with better armor than a common goblin. Simple sword strikes are less reliable.",
+      "description": "A disciplined soldier in formal armor with a steady battlefield stance.",
       "tags": [
         "hobgoblin",
         "humanoid",
@@ -499,7 +499,7 @@
       "monster_id": "open5e.monster.hobgoblin-captain-a5e",
       "name": "Hobgoblin Captain",
       "type": "hobgoblin",
-      "description": "A veteran captain in reinforced armor. He punishes careless attacks and must be hit with enough force to break formation.",
+      "description": "A veteran captain in reinforced armor who punishes hesitation and keeps tight formation.",
       "tags": [
         "hobgoblin",
         "captain",
@@ -538,7 +538,7 @@
       "monster_id": "open5e.monster.hobgoblin-warlord-a5e",
       "name": "Hobgoblin Warlord",
       "type": "hobgoblin",
-      "description": "A battlefield commander with layered armor and brutal discipline. Weak attacks only make him advance faster.",
+      "description": "A battlefield commander with layered armor and brutal discipline, advancing without wasted motion.",
       "tags": [
         "hobgoblin",
         "warlord",
@@ -580,7 +580,7 @@
       "monster_id": "open5e.monster.miremuck-goblin-king-a5e",
       "name": "Miremuck Goblin King",
       "type": "goblin",
-      "description": "A swamp-crowned goblin ruler covered in wet mud, reeds, and stolen charms. Fire sputters out against him.",
+      "description": "A swamp-crowned goblin ruler covered in wet mud, reeds, and stolen charms.",
       "tags": [
         "goblin",
         "king",
@@ -622,7 +622,7 @@
       "monster_id": "open5e.monster.rat-a5e",
       "name": "Rat",
       "type": "beast",
-      "description": "A small cave rat. It is not dangerous, but it is fast enough to waste a careless heavy attack.",
+      "description": "A small cave rat that darts between loose stones and snaps at anything nearby.",
       "tags": [
         "beast",
         "tiny",
@@ -658,7 +658,7 @@
       "monster_id": "open5e.monster.rat-king",
       "name": "Rat King",
       "type": "monstrosity",
-      "description": "A tangled mass of rats moving as one body. Cutting one rat does little; fire or magic can scatter the swarm.",
+      "description": "A tangled mass of rats moving as one body, splitting and reforming across the floor.",
       "tags": [
         "rat",
         "swarm",
@@ -699,7 +699,7 @@
       "monster_id": "open5e.monster.rat_giant_bf",
       "name": "Rat, Giant",
       "type": "beast",
-      "description": "A dog-sized rat with thick hide and snapping teeth. A spear keeps it away better than a close sword swing.",
+      "description": "A dog-sized rat with thick hide, snapping teeth, and a habit of lunging without warning.",
       "tags": [
         "rat",
         "beast",
@@ -735,7 +735,7 @@
       "monster_id": "open5e.monster.rat_swarm_of_rats_bf",
       "name": "Rat, Swarm of Rats",
       "type": "swarm",
-      "description": "A carpet of rats pouring across the floor. Single-target weapon strikes are inefficient; fire clears space quickly.",
+      "description": "A carpet of rats pours across the floor, churning around boots and broken stones.",
       "tags": [
         "rat",
         "swarm",
@@ -770,7 +770,7 @@
       "monster_id": "open5e.monster.wererat-a5e",
       "name": "Wererat",
       "type": "lycanthrope",
-      "description": "A rat-like shapeshifter with unnatural resilience. Ordinary cuts do little unless the attack is precise or empowered.",
+      "description": "A rat-like shapeshifter with unnatural resilience and a cautious, predatory smile.",
       "tags": [
         "rat",
         "lycanthrope",
@@ -813,7 +813,7 @@
       "monster_id": "open5e.monster.diseased-giant-rat-a5e",
       "name": "Diseased Giant Rat",
       "type": "beast",
-      "description": "A swollen rat with infected wounds and frantic movement. Getting too close is risky, so reach or fire is safer.",
+      "description": "A swollen rat with infected wounds, frantic movement, and a foul green sheen on its teeth.",
       "tags": [
         "rat",
         "beast",
@@ -853,7 +853,7 @@
       "monster_id": "custom.arcane_archive_seal",
       "name": "Arcane Archive Seal",
       "type": "construct",
-      "description": "A rotating ring of runes locks the archive door. It yields only to correct interpretation, not violence.",
+      "description": "A rotating ring of runes locks the archive door, shifting whenever someone approaches.",
       "tags": [
         "construct",
         "knowledge",
@@ -888,7 +888,7 @@
       "monster_id": "custom.flooded_crypt_tablet",
       "name": "Flooded Crypt Tablet",
       "type": "construct",
-      "description": "An old warning tablet rises through black water. The trap is resolved by reading the warning, not by striking it.",
+      "description": "An old warning tablet rises through black water as hidden channels begin to churn.",
       "tags": [
         "knowledge",
         "crypt",
@@ -961,7 +961,7 @@
       "monster_id": "custom.ice_chain_raider",
       "name": "Ice-Chain Raider",
       "type": "humanoid",
-      "description": "A raider in frozen chain armor fights on a slick bridge. More water makes the footing worse; force or careful blows work better.",
+      "description": "A raider in frozen chain armor plants his feet on a slick bridge crusted with ice.",
       "tags": [
         "humanoid",
         "hazard",
@@ -1000,7 +1000,7 @@
       "monster_id": "custom.mirror_warden",
       "name": "Mirror Warden",
       "type": "construct",
-      "description": "A mirrored guardian throws reflected beams down a narrow hall. The challenge is to survive the line of fire.",
+      "description": "A mirrored guardian throws reflected beams down a narrow hall of silvered panels.",
       "tags": [
         "construct",
         "defense",
@@ -1033,7 +1033,7 @@
       "monster_id": "custom.falling_portcullis",
       "name": "Falling Portcullis",
       "type": "trap",
-      "description": "A portcullis drops while darts whip across the chamber. Enduring the impact path is the only safe response.",
+      "description": "A portcullis drops while darts whip across the chamber from both walls.",
       "tags": [
         "trap",
         "defense",
@@ -1066,7 +1066,7 @@
       "monster_id": "custom.collapse_wurm",
       "name": "Collapse Wurm",
       "type": "beast",
-      "description": "A tunneling wurm tears through cracked stone behind you. Holding ground is worse than getting out fast.",
+      "description": "A tunneling wurm tears through cracked stone behind you as the passage buckles.",
       "tags": [
         "beast",
         "escape_scene",
@@ -1098,7 +1098,7 @@
       "monster_id": "custom.hornet_cloud",
       "name": "Hornet Cloud",
       "type": "swarm",
-      "description": "A black cloud of cave hornets pours from a split hive. The passage out matters more than fighting them in place.",
+      "description": "A black cloud of cave hornets pours from a split hive and spreads across the ledge.",
       "tags": [
         "swarm",
         "escape_scene",
