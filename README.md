@@ -1,8 +1,8 @@
 # AgentQuest
 
-AgentQuest is a playable AI-agent RPG for structured tool-use evaluation, built to study how small quantized local models reason under structured constraints.
+AgentQuest is a playable AI-agent RPG for structured tool-use evaluation. It is built to study how small instruction models handle constrained decision-making, structured outputs, and failure recovery inside a deterministic game world.
 
-The game wrapper is intentional, but the main engineering goal is narrower: evaluate whether a model can choose valid tool calls, act under different information presets, and recover after failure in a deterministic environment.
+The RPG wrapper is intentional, but the engineering goal is narrower: evaluate whether a model can choose valid tool calls, operate under different information presets, and recover after failure in a reproducible runtime. The project stays runner-first so prompts, validation, run logs, benchmarks, and the Streamlit UI all reflect the same execution path.
 
 A model receives a fantasy scene plus a constrained set of visible tools, then must answer with strict JSON:
 
@@ -22,12 +22,12 @@ The project is built to make model behavior inspectable. You can preview prompts
 
 AgentQuest is aimed at questions like:
 
-- How much structured reasoning survives in smaller `.gguf` models?
+- How much structured reasoning survives in smaller quantized models?
 - Does more visible context help, or overload the model?
 - Are failures mostly formatting errors, illegal actions, or bad scene reasoning?
 - Can the model write useful notes after failure and improve on retry?
 
-Local quantized models are part of the point, not a workaround. They make the benchmark cheap, reproducible, and realistic for constrained deployments.
+Quantized `llama_cpp` runs are still part of the point, not a workaround. The current model catalog keeps selection reproducible across Hugging Face-hosted GGUF variants while preserving cheap, inspectable local-style inference.
 
 ## Portfolio Path
 
