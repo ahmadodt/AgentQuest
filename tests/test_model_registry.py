@@ -112,7 +112,11 @@ def test_build_handler_uses_llama_cpp_backend(monkeypatch, tmp_path):
             instance.n_ctx = n_ctx
             instance.n_gpu_layers = n_gpu_layers
             instance.verbose = verbose
+            instance.closed = False
             return instance
+
+        def close(self):
+            self.closed = True
 
         def create_chat_completion(
             self,
@@ -156,6 +160,10 @@ def test_build_handler_uses_llama_cpp_backend(monkeypatch, tmp_path):
     assert result.metadata["repo_id"] == "org/test-model-gguf"
     assert result.metadata["filename"] == "test-model-q4.gguf"
     assert result.metadata["finish_reason"] == "stop"
+
+    handler.close()
+
+    assert handler._client.closed is True
 
 
 def test_build_handler_rejects_backend_mismatch(tmp_path):

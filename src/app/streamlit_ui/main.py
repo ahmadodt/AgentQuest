@@ -20,9 +20,26 @@ from src.runner.streamlit_utils import (
 st.set_page_config(page_title="AgentQuest Run Viewer", layout="wide")
 
 
-@st.cache_resource(show_spinner=False)
-def get_cached_handler(model_name: str):
-    return build_handler(model_name_override=model_name)
+def _close_handler(handler) -> None:
+    close_handler = getattr(handler, "close", None)
+    if callable(close_handler):
+        close_handler()
+
+
+def get_session_handler(model_name: str):
+    active_model_name = st.session_state.get("active_handler_model_name")
+    active_handler = st.session_state.get("active_handler")
+
+    if active_model_name == model_name and active_handler is not None:
+        return active_handler
+
+    if active_handler is not None:
+        _close_handler(active_handler)
+
+    handler = build_handler(model_name_override=model_name)
+    st.session_state["active_handler_model_name"] = model_name
+    st.session_state["active_handler"] = handler
+    return handler
 
 
 def main() -> None:
@@ -165,7 +182,7 @@ def main() -> None:
                 per_scene_retry_limit=int(per_scene_retry_limit),
                 total_retry_limit=int(total_retry_limit),
                 initial_notes=initial_notes,
-                handler_factory=get_cached_handler,
+                handler_factory=get_session_handler,
             )
         elif run_mode == "scene":
             selected_scene_label = st.selectbox("Scene", list(scene_options.keys()), index=0)
@@ -177,7 +194,7 @@ def main() -> None:
                 actor_selection=selected_actor,
                 character_id=selected_character_id,
                 scene_id=selected_scene_id,
-                handler_factory=get_cached_handler,
+                handler_factory=get_session_handler,
             )
         else:
             render_benchmark_mode(
@@ -191,7 +208,7 @@ def main() -> None:
                 campaign_options=campaign_options,
                 selected_character_id=selected_character_id,
                 selected_preset=selected_preset,
-                handler_factory=get_cached_handler,
+                handler_factory=get_session_handler,
             )
     except (FileNotFoundError, KeyError, ValueError) as error:
         st.error(str(error))

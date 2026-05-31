@@ -61,3 +61,8 @@ class LlamaCppHandler:
         }
 
         return GenerationResult(raw_text=raw_text, metadata=metadata)
+
+    def close(self) -> None:
+        close_client = getattr(self._client, "close", None)
+        if callable(close_client):
+            close_client()
