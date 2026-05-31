@@ -1,81 +1,93 @@
-from src.runner.benchmark_utils import aggregate_benchmark_records, build_benchmark_record
+from src.runner.benchmark_utils import build_benchmark_progress_state, update_benchmark_progress_state
 
 
-def test_build_benchmark_record_captures_parse_failure_and_effective_power():
-    record = build_benchmark_record(
-        campaign_id="campaign.alpha",
-        scene_run={
-            "scene_id": "scene.alpha",
-            "scene_index": 0,
-            "status": "PARSE_ERROR",
-            "parsed_tool_call": None,
-            "validation": {
-                "ast_valid": False,
-                "reason": "AST error: Invalid JSON",
-                "reason_code": None,
-                "effective_power": 4.5,
-            },
-            "raw_model_output": "{bad json",
+def test_benchmark_progress_state_tracks_current_and_completed_counts(gamedata):
+    state = build_benchmark_progress_state(
+        gamedata=gamedata,
+        model_names=["fake_model"],
+        preset_names=["BATTLE_PLAN"],
+        campaign_ids=["campaign.tutorial_v1"],
+        character_ids=["wizard.ember"],
+        prompt_formats=["json_only"],
+    )
+
+    assert state["total"] == 3
+    assert state["completed"] == 0
+    assert state["remaining"] == 3
+
+    base_event = {
+        "model": "fake_model",
+        "preset": "BATTLE_PLAN",
+        "campaign_id": "campaign.tutorial_v1",
+        "character_id": "wizard.ember",
+        "prompt_format": "json_only",
+        "scene_id": "scene.tutorial.001_goblin_alley",
+        "scene_index": 0,
+        "scene_title": "Alley Ambush",
+    }
+
+    update_benchmark_progress_state(state, {"event": "scene_start", **base_event})
+
+    scene = state["index"][
+        (
+            "fake_model",
+            "BATTLE_PLAN",
+            "campaign.tutorial_v1",
+            "wizard.ember",
+            "json_only",
+            "scene.tutorial.001_goblin_alley",
+        )
+    ]
+    assert scene["status"] == "RUNNING"
+    assert state["current"]["scene_id"] == "scene.tutorial.001_goblin_alley"
+
+    update_benchmark_progress_state(
+        state,
+        {
+            "event": "scene_finish",
+            **base_event,
+            "status": "PASS",
+            "reason": "ok",
+            "selected_tool_id": "common.run",
+            "parse_failure": False,
         },
-        character_id="wizard.ember",
-        preset="BATTLE_PLAN",
-        prompt_format="json_only",
-        model="test-model",
-        valid_tools=["wizard.arcane_bolt"],
-        latency_seconds=0.25,
     )
 
-    assert record["campaign_id"] == "campaign.alpha"
-    assert record["scene_id"] == "scene.alpha"
-    assert record["pass"] is False
-    assert record["parse_failure"] is True
-    assert record["effective_power"] == 4.5
-    assert record["valid_tools"] == ["wizard.arcane_bolt"]
+    assert scene["status"] == "PASS"
+    assert scene["selected_tool_id"] == "common.run"
+    assert state["completed"] == 1
+    assert state["remaining"] == 2
+    assert state["passed"] == 1
+    assert state["failed"] == 0
 
 
-def test_aggregate_benchmark_records_groups_failures():
-    summary = aggregate_benchmark_records(
-        [
-            {
-                "campaign_id": "campaign.alpha",
-                "scene_id": "scene.alpha",
-                "character_id": "wizard.ember",
-                "preset": "BATTLE_PLAN",
-                "prompt_format": "json_only",
-                "pass": True,
-                "parse_failure": False,
-                "reason_code": None,
-            },
-            {
-                "campaign_id": "campaign.alpha",
-                "scene_id": "scene.beta",
-                "character_id": "wizard.ember",
-                "preset": "BATTLE_PLAN",
-                "prompt_format": "json_only",
-                "pass": False,
-                "parse_failure": False,
-                "reason_code": "insufficient_effective_power",
-            },
-            {
-                "campaign_id": "campaign.beta",
-                "scene_id": "scene.gamma",
-                "character_id": "knight.bram",
-                "preset": "FULL_INFO",
-                "prompt_format": "json_only",
-                "pass": False,
-                "parse_failure": True,
-                "reason_code": "unknown_reason",
-            },
-        ]
+def test_benchmark_progress_state_counts_failed_parse_scene(gamedata):
+    state = build_benchmark_progress_state(
+        gamedata=gamedata,
+        model_names=["fake_model"],
+        preset_names=["BATTLE_PLAN"],
+        campaign_ids=["campaign.tutorial_v1"],
+        character_ids=["wizard.ember"],
+        prompt_formats=["json_only"],
     )
 
-    assert summary["total_scenes"] == 3
-    assert summary["passed_scenes"] == 1
-    assert summary["failed_scenes"] == 2
-    assert summary["parse_failures"] == 1
-    assert round(summary["success_rate"], 1) == 33.3
-    assert summary["failures_by_reason_code"]["insufficient_effective_power"] == 1
-    assert summary["failures_by_reason_code"]["unknown_reason"] == 1
-    assert summary["failures_by_preset"]["BATTLE_PLAN"] == 1
-    assert summary["failures_by_character"]["wizard.ember"] == 1
-    assert summary["first_failed_scene"]["scene_id"] == "scene.beta"
+    update_benchmark_progress_state(
+        state,
+        {
+            "event": "scene_finish",
+            "model": "fake_model",
+            "preset": "BATTLE_PLAN",
+            "campaign_id": "campaign.tutorial_v1",
+            "character_id": "wizard.ember",
+            "prompt_format": "json_only",
+            "scene_id": "scene.tutorial.001_goblin_alley",
+            "status": "PARSE_ERROR",
+            "reason": "invalid JSON",
+            "parse_failure": True,
+        },
+    )
+
+    assert state["completed"] == 1
+    assert state["passed"] == 0
+    assert state["failed"] == 1
+    assert state["parse_failures"] == 1

@@ -134,3 +134,42 @@ def test_run_benchmark_writes_artifacts_and_dataset_id(gamedata, tmp_path):
     assert (tmp_path / "benchmark" / "manifest.json").exists()
     assert (tmp_path / "benchmark" / "records.json").exists()
     assert (tmp_path / "benchmark" / "summary.json").exists()
+
+
+def test_run_benchmark_emits_scene_progress_events(gamedata, tmp_path):
+    spec = BenchmarkSpec(
+        data_dir="data",
+        campaign_ids=["campaign.tutorial_v1"],
+        character_ids=["wizard.ember"],
+        preset_names=["BATTLE_PLAN"],
+        prompt_formats=["json_only"],
+        model_names=["fake_model"],
+        backend="llama_cpp",
+        output_dir=str(tmp_path / "benchmark"),
+    )
+    dataset = {
+        "dataset_id": "custom_test_hash",
+        "dataset_fingerprint": "abc123",
+        "data_dir": os.path.abspath("data"),
+        "runtime_data_dir": os.path.abspath(os.path.join("data", "custom", "agentquest")),
+        "files": {},
+    }
+    events = []
+
+    result = run_benchmark(
+        gamedata=gamedata,
+        spec=spec,
+        dataset_metadata=dataset,
+        handler_factory=lambda model_name: _FakeHandler(model_name),
+        progress_callback=events.append,
+    )
+
+    assert len(events) == len(result["records"]) * 2
+    assert events[0]["event"] == "scene_start"
+    assert events[1]["event"] == "scene_finish"
+    assert events[0]["scene_id"] == "scene.tutorial.001_goblin_alley"
+    assert events[0]["completed"] == 0
+    assert events[0]["total"] == len(result["records"])
+    assert events[1]["completed"] == 1
+    assert events[1]["remaining"] == len(result["records"]) - 1
+    assert events[1]["status"] == result["records"][0]["status"]

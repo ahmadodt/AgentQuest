@@ -116,3 +116,121 @@ def aggregate_benchmark_records(records: list[dict[str, Any]]) -> dict[str, Any]
         "failures_by_character": dict(failures_by_character),
         "first_failed_scene": first_failed_scene,
     }
+
+
+def _progress_key(event: dict[str, Any]) -> tuple[str, str, str, str, str, str]:
+    return (
+        event.get("model", ""),
+        event.get("preset", ""),
+        event.get("campaign_id", ""),
+        event.get("character_id", ""),
+        event.get("prompt_format", ""),
+        event.get("scene_id", ""),
+    )
+
+
+def build_benchmark_progress_state(
+    *,
+    gamedata: dict[str, Any],
+    model_names: list[str],
+    preset_names: list[str],
+    campaign_ids: list[str],
+    character_ids: list[str],
+    prompt_formats: list[str],
+) -> dict[str, Any]:
+    state: dict[str, Any] = {
+        "total": 0,
+        "completed": 0,
+        "remaining": 0,
+        "passed": 0,
+        "failed": 0,
+        "parse_failures": 0,
+        "current": None,
+        "models": [],
+        "index": {},
+    }
+
+    for model_name in model_names:
+        model_node = {"name": model_name, "presets": []}
+        state["models"].append(model_node)
+        for preset_name in preset_names:
+            preset_node = {"name": preset_name, "campaigns": []}
+            model_node["presets"].append(preset_node)
+            for campaign_id in campaign_ids:
+                campaign = gamedata["campaigns_by_id"].get(campaign_id, {})
+                campaign_node = {
+                    "id": campaign_id,
+                    "name": campaign.get("name", campaign_id),
+                    "characters": [],
+                }
+                preset_node["campaigns"].append(campaign_node)
+                scene_refs = campaign.get("scene_ids") or campaign.get("scenes", [])
+                scene_ids = [
+                    scene_ref["scene_id"] if isinstance(scene_ref, dict) else scene_ref
+                    for scene_ref in scene_refs
+                ]
+                for character_id in character_ids:
+                    character = gamedata["characters_by_id"].get(character_id, {})
+                    character_node = {
+                        "id": character_id,
+                        "name": character.get("name", character_id),
+                        "prompt_formats": [],
+                    }
+                    campaign_node["characters"].append(character_node)
+                    for prompt_format in prompt_formats:
+                        prompt_node = {"name": prompt_format, "scenes": []}
+                        character_node["prompt_formats"].append(prompt_node)
+                        for scene_index, scene_id in enumerate(scene_ids):
+                            scene = gamedata["scenes_by_id"].get(scene_id, {})
+                            scene_node = {
+                                "scene_id": scene_id,
+                                "scene_index": scene_index,
+                                "scene_title": scene.get("title", scene_id),
+                                "status": "NOT_RUN",
+                                "reason": "",
+                                "selected_tool_id": "",
+                            }
+                            prompt_node["scenes"].append(scene_node)
+                            key = (model_name, preset_name, campaign_id, character_id, prompt_format, scene_id)
+                            state["index"][key] = scene_node
+                            state["total"] += 1
+
+    state["remaining"] = state["total"]
+    return state
+
+
+def update_benchmark_progress_state(state: dict[str, Any], event: dict[str, Any]) -> dict[str, Any]:
+    key = _progress_key(event)
+    scene_node = state.get("index", {}).get(key)
+    if scene_node is None:
+        return state
+
+    event_name = event.get("event")
+    state["current"] = dict(event)
+
+    if event_name == "scene_start":
+        scene_node["status"] = "RUNNING"
+        scene_node["reason"] = ""
+        scene_node["selected_tool_id"] = ""
+        return state
+
+    if event_name != "scene_finish":
+        return state
+
+    previous_status = scene_node.get("status", "NOT_RUN")
+    status = event.get("status") or "UNKNOWN"
+    scene_node["status"] = status
+    scene_node["reason"] = event.get("reason", "")
+    scene_node["selected_tool_id"] = event.get("selected_tool_id", "")
+
+    if previous_status in {"NOT_RUN", "RUNNING"}:
+        state["completed"] += 1
+        state["remaining"] = max(state["total"] - state["completed"], 0)
+        if status == "PASS":
+            state["passed"] += 1
+        else:
+            state["failed"] += 1
+        if event.get("parse_failure") is True or status == "PARSE_ERROR":
+            state["parse_failures"] += 1
+
+    return state

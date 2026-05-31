@@ -5,7 +5,94 @@ import streamlit as st
 
 from src.app.streamlit_ui.constants import BENCHMARK_RESULT_KEY
 from src.runner.benchmark_service import BenchmarkSpec, estimate_benchmark_scene_runs, run_benchmark
+from src.runner.benchmark_utils import build_benchmark_progress_state, update_benchmark_progress_state
 from src.runner.streamlit_utils import discover_streamlit_presets
+
+
+def _status_marker(status: str) -> str:
+    if status == "PASS":
+        return "[x]"
+    if status == "RUNNING":
+        return "[~]"
+    if status == "NOT_RUN":
+        return "[ ]"
+    return "[!]"
+
+
+def _scene_counts(scenes: list[dict[str, Any]]) -> str:
+    completed = sum(1 for scene in scenes if scene["status"] not in {"NOT_RUN", "RUNNING"})
+    passed = sum(1 for scene in scenes if scene["status"] == "PASS")
+    failed = completed - passed
+    return f"{completed}/{len(scenes)} done, {passed} pass, {failed} fail"
+
+
+def _format_current_path(event: dict[str, Any] | None) -> str:
+    if not event:
+        return "Current: waiting to start"
+    return (
+        "Current: "
+        f"{event.get('model', '')} / "
+        f"{event.get('preset', '')} / "
+        f"{event.get('campaign_id', '')} / "
+        f"{event.get('character_id', '')} / "
+        f"{event.get('prompt_format', '')} / "
+        f"{event.get('scene_id', '')}"
+    )
+
+
+def _benchmark_tree_lines(state: dict[str, Any], model_labels: dict[str, str], *, max_lines: int = 260) -> list[str]:
+    lines: list[str] = []
+    for model_node in state["models"]:
+        model_label = model_labels.get(model_node["name"], model_node["name"])
+        lines.append(f"{model_label}")
+        for preset_node in model_node["presets"]:
+            lines.append(f"  {preset_node['name']}")
+            for campaign_node in preset_node["campaigns"]:
+                lines.append(f"    {campaign_node['name']} ({campaign_node['id']})")
+                for character_node in campaign_node["characters"]:
+                    lines.append(f"      {character_node['name']} ({character_node['id']})")
+                    for prompt_node in character_node["prompt_formats"]:
+                        lines.append(f"        {prompt_node['name']} - {_scene_counts(prompt_node['scenes'])}")
+                        for scene_node in prompt_node["scenes"]:
+                            label = (
+                                f"          {_status_marker(scene_node['status'])} "
+                                f"Scene {scene_node['scene_index'] + 1}: "
+                                f"{scene_node['scene_title']} ({scene_node['scene_id']}) - "
+                                f"{scene_node['status']}"
+                            )
+                            if scene_node.get("selected_tool_id"):
+                                label += f" - {scene_node['selected_tool_id']}"
+                            if scene_node.get("reason") and scene_node["status"] != "PASS":
+                                label += f" - {scene_node['reason']}"
+                            lines.append(label)
+                            if len(lines) >= max_lines:
+                                lines.append("          ... tree truncated for display")
+                                return lines
+    return lines
+
+
+def _render_benchmark_progress(
+    state: dict[str, Any],
+    *,
+    model_labels: dict[str, str],
+    container,
+) -> None:
+    total = state["total"]
+    completed = state["completed"]
+    remaining = state["remaining"]
+    progress_value = (completed / total) if total else 0.0
+    with container.container():
+        st.progress(
+            progress_value,
+            text=f"{completed} / {total} done, {remaining} remaining",
+        )
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Passed", state["passed"])
+        metric_cols[1].metric("Failed", state["failed"])
+        metric_cols[2].metric("Parse failures", state["parse_failures"])
+        metric_cols[3].metric("Remaining", remaining)
+        st.caption(_format_current_path(state.get("current")))
+        st.code("\n".join(_benchmark_tree_lines(state, model_labels)), language="text")
 
 
 def render_benchmark_mode(
@@ -95,6 +182,17 @@ def render_benchmark_mode(
             model_names=selected_models,
         )
     st.caption(f"Estimated scene runs: {run_count}")
+    progress_state = build_benchmark_progress_state(
+        gamedata=gamedata,
+        model_names=selected_models,
+        preset_names=selected_presets,
+        campaign_ids=selected_campaign_ids,
+        character_ids=selected_character_ids,
+        prompt_formats=selected_prompt_formats,
+    )
+    progress_container = st.empty()
+    if run_count:
+        _render_benchmark_progress(progress_state, model_labels=model_labels, container=progress_container)
 
     run_disabled = run_count == 0
     if st.button("Run benchmark", disabled=run_disabled):
@@ -114,11 +212,25 @@ def render_benchmark_mode(
             initial_notes=initial_notes,
             output_dir=output_dir.strip(),
         )
+        progress_state = build_benchmark_progress_state(
+            gamedata=gamedata,
+            model_names=selected_models,
+            preset_names=selected_presets,
+            campaign_ids=selected_campaign_ids,
+            character_ids=selected_character_ids,
+            prompt_formats=selected_prompt_formats,
+        )
+
+        def on_progress(event: dict[str, Any]) -> None:
+            update_benchmark_progress_state(progress_state, event)
+            _render_benchmark_progress(progress_state, model_labels=model_labels, container=progress_container)
+
         with st.spinner("Running benchmark..."):
             st.session_state[BENCHMARK_RESULT_KEY] = run_benchmark(
                 gamedata=gamedata,
                 spec=spec,
                 handler_factory=handler_factory,
+                progress_callback=on_progress,
             )
 
     result = st.session_state.get(BENCHMARK_RESULT_KEY)

@@ -195,6 +195,7 @@ def run_benchmark(
     spec: BenchmarkSpec,
     dataset_metadata: dict[str, Any] | None = None,
     handler_factory: Callable[[str], Any] | None = None,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     dataset_metadata = dataset_metadata or collect_dataset_metadata(spec.data_dir)
     output_dir, latest_dir = (
@@ -209,6 +210,14 @@ def run_benchmark(
     manifest = build_benchmark_manifest(spec=spec, dataset_metadata=dataset_metadata)
     records: list[dict[str, Any]] = []
     deterministic_valid_tools: dict[str, list[str]] = {}
+    total_scene_runs = estimate_benchmark_scene_runs(
+        gamedata=gamedata,
+        campaign_ids=spec.campaign_ids,
+        character_ids=spec.character_ids,
+        preset_names=spec.preset_names,
+        prompt_formats=spec.prompt_formats,
+        model_names=spec.model_names,
+    )
 
     for model_name in spec.model_names:
         handler = handler_factory(model_name) if handler_factory else build_handler(model_name_override=model_name)
@@ -221,6 +230,23 @@ def run_benchmark(
                         notes = spec.initial_notes
                         total_retries_used = 0
                         for scene_index, scene_id in enumerate(scene_ids):
+                            scene = gamedata["scenes_by_id"].get(scene_id, {})
+                            base_event = {
+                                "model": model_name,
+                                "preset": preset_name,
+                                "campaign_id": campaign_id,
+                                "character_id": character_id,
+                                "prompt_format": prompt_format,
+                                "scene_id": scene_id,
+                                "scene_index": scene_index,
+                                "scene_title": scene.get("title", scene_id),
+                                "completed": len(records),
+                                "total": total_scene_runs,
+                                "remaining": total_scene_runs - len(records),
+                            }
+                            if progress_callback:
+                                progress_callback({"event": "scene_start", **base_event})
+
                             valid_tools_key = f"{scene_id}::{character_id}"
                             if valid_tools_key not in deterministic_valid_tools:
                                 tool_results = collect_scene_character_tool_results(
@@ -274,19 +300,34 @@ def run_benchmark(
                                 )
                             latency_seconds = time.perf_counter() - start_time
                             model_label = scene_run.get("model") or model_name
-                            records.append(
-                                build_benchmark_record(
-                                    campaign_id=campaign_id,
-                                    scene_run=scene_run,
-                                    character_id=character_id,
-                                    preset=preset_name,
-                                    prompt_format=prompt_format,
-                                    model=model_label,
-                                    valid_tools=deterministic_valid_tools[valid_tools_key],
-                                    latency_seconds=latency_seconds,
-                                    dataset_id=dataset_metadata["dataset_id"],
-                                )
+                            record = build_benchmark_record(
+                                campaign_id=campaign_id,
+                                scene_run=scene_run,
+                                character_id=character_id,
+                                preset=preset_name,
+                                prompt_format=prompt_format,
+                                model=model_label,
+                                valid_tools=deterministic_valid_tools[valid_tools_key],
+                                latency_seconds=latency_seconds,
+                                dataset_id=dataset_metadata["dataset_id"],
                             )
+                            records.append(record)
+                            if progress_callback:
+                                progress_callback(
+                                    {
+                                        "event": "scene_finish",
+                                        **base_event,
+                                        "model_label": model_label,
+                                        "completed": len(records),
+                                        "remaining": total_scene_runs - len(records),
+                                        "status": record.get("status"),
+                                        "reason": record.get("reason", ""),
+                                        "reason_code": record.get("reason_code"),
+                                        "selected_tool_id": record.get("selected_tool_id"),
+                                        "parse_failure": record.get("parse_failure"),
+                                        "latency_seconds": latency_seconds,
+                                    }
+                                )
 
     summary = aggregate_benchmark_records(records)
     summary["dataset"] = dataset_metadata
