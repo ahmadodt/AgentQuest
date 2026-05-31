@@ -313,19 +313,22 @@ It exits non-zero if any scene/character pair is unsolved.
 Run model-backed benchmarks across models, campaigns, characters, presets, and prompt formats:
 
 ```bash
-python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram
+python scripts/run_benchmark.py --campaign-id campaign.benchmark_core_v1 --all-characters
 ```
+
+For broad model comparison, prefer `campaign.benchmark_core_v1`. It combines the distinct Goblin Den, Sewers and Rats, and Decision Lab scenes into one benchmark slice: storyline combat, enemy transfer, hazard avoidance, knowledge checks, defense, escape, and class-specific tool use. It excludes tutorial scenes that dilute benchmark signal and avoids rerunning the smaller Decision Lab subset campaigns.
 
 Examples:
 
 ```bash
-python scripts/run_benchmark.py --all-campaigns --all-characters
-python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --all-characters --preset BATTLE_PLAN --preset FULL_INFO
-python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --prompt-format json_only
-python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --model qwen3_4b_q4_k_m --model llama_3_2_3b_instruct_q4_k_m
+python scripts/run_benchmark.py --campaign-id campaign.benchmark_core_v1 --all-characters --preset BATTLE_PLAN --prompt-format json_only --model qwen3_4b_q4_k_m
+python scripts/run_benchmark.py --campaign-id campaign.benchmark_core_v1 --all-characters --preset BLIND_ADVENTURER --preset TOOL_MANUAL --preset SCOUT_REPORT --preset BATTLE_PLAN --preset FULL_INFO --prompt-format json_only --model qwen3_4b_q4_k_m --model qwen2_5_3b_instruct_q5_k_m --model llama_3_2_3b_instruct_q4_k_m
+python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --preset BLIND_ADVENTURER --preset BATTLE_PLAN --preset FULL_INFO --prompt-format json_only --model qwen3_4b_q4_k_m --model qwen2_5_3b_instruct_q5_k_m --model llama_3_2_3b_instruct_q4_k_m
 python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --self-learning --per-scene-retry-limit 3 --total-retry-limit 20
-python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --output-dir results/benchmarks/manual
+python scripts/run_benchmark.py --campaign-id campaign.benchmark_core_v1 --all-characters --output-dir results/benchmarks/manual
 ```
+
+Use `campaign.goblin_den_v1` as the smaller portfolio or demo slice. Use `campaign.all_v1` as a starter/story smoke test, not as the preferred benchmark campaign, because it includes tutorial scenes and does not include Decision Lab.
 
 Benchmark outputs:
 

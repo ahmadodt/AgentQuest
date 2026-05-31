@@ -66,6 +66,35 @@
       ]
     },
     {
+      "campaign_id": "campaign.benchmark_core_v1",
+      "name": "Core Benchmark",
+      "description": "Broad benchmark slice combining storyline combat, enemy transfer, hazards, knowledge checks, defense, and escape without tutorial scenes or duplicate subset campaigns.",
+      "type": "benchmark",
+      "scene_ids": [
+        "scene.goblin_den.001_outer_watch",
+        "scene.goblin_den.002_shadow_scout",
+        "scene.goblin_den.003_shield_line",
+        "scene.goblin_den.004_alchemist_lab",
+        "scene.goblin_den.005_warlock_shrine",
+        "scene.goblin_den.006_boss_chamber",
+        "scene.goblin_den.007_chieftain_finale",
+        "scene.sewers.001_first_rat",
+        "scene.sewers.002_diseased_giant_rat",
+        "scene.sewers.003_rat_swarm",
+        "scene.sewers.004_giant_rat",
+        "scene.sewers.005_wererat",
+        "scene.sewers.006_rat_king",
+        "scene.decision_lab.001_archive_lock",
+        "scene.decision_lab.002_flooded_warning",
+        "scene.decision_lab.003_powder_keg_walkway",
+        "scene.decision_lab.004_ice_chain_bridge",
+        "scene.decision_lab.005_mirror_beam_hall",
+        "scene.decision_lab.006_portcullis_drop",
+        "scene.decision_lab.007_collapsing_tunnel",
+        "scene.decision_lab.008_hornet_retreat"
+      ]
+    },
+    {
       "campaign_id": "campaign.decision_lab_v1",
       "name": "Decision Lab",
       "description": "Benchmark-focused scenes covering knowledge, hazard management, defense, and escape success.",
