@@ -118,10 +118,13 @@ Notes:
 
 ## Environment Variables
 
+- `HF_TOKEN`: optional Hugging Face token for higher Hub rate limits and gated/private model access
 - `AGENTQUEST_DATA_DIR`: runtime data root. Defaults to `data/`
 - `AGENTQUEST_MODEL`: model alias override
 - `AGENTQUEST_RUNS_DIR`: directory for saved run logs. Defaults to `runs/`
 - `AGENTQUEST_MODELS_DIR`: legacy local-model directory helper
+
+Streamlit and model-backed CLI entrypoints load a local `.env` file from the repository root when present. Existing shell environment variables take precedence over `.env` values.
 
 Model selection now resolves through `configs/model_catalog.json` and `docs/models.md`.
 

@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from src.engine.loader import DataValidationError, load_gamedata
+from src.env_loader import load_local_env
 from src.models.config import load_runtime_model_config, load_runtime_prompt_config
 from src.runtime_paths import get_data_dir
 from src.runner.benchmark_service import run_benchmark, spec_from_runtime_config
@@ -128,4 +129,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    load_local_env()
     sys.exit(main())

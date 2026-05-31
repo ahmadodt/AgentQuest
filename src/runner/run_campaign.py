@@ -1,6 +1,7 @@
 import argparse
 
 from src.engine.loader import DataValidationError, load_gamedata
+from src.env_loader import load_local_env
 from src.models.config import load_runtime_model_config
 from src.runtime_paths import get_data_dir
 from src.runner.runner_utils import (
@@ -161,4 +162,5 @@ def main():
 
 
 if __name__ == "__main__":
+    load_local_env()
     main()
