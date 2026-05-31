@@ -125,3 +125,60 @@ Examples:
 - `fix: resolve streamlit import path issue`
 - `refactor: extract shared campaign run service`
 - `docs: update streamlit run instructions`
+
+
+
+Documentation rules
+
+The top-level README.md is only for:
+
+Project overview
+Quick start
+Basic installation
+Common commands
+Links to deeper documentation
+
+Detailed documentation must go into docs/.
+
+Use this structure:
+
+docs/architecture.md for architecture and component relationships
+docs/development.md for local development workflow
+docs/testing.md for testing strategy and commands
+docs/docker.md for Docker setup and container behavior
+docs/decisions/ for architectural decision records
+Module-level README.md files only when a directory needs local explanation
+
+Do not write all documentation into one file.
+
+When adding documentation:
+
+Put it in the most specific existing document.
+Create a new document only if the topic does not fit anywhere.
+Link new documents from the relevant index or README.
+Keep documentation close to the code it explains when possible.
+
+Planning rule
+
+For multi-file changes, first produce a short plan with:
+
+Files likely to change
+Why each file needs to change
+Tests or validation to run
+
+Mistakes to avoid
+Do not dump all new documentation into README.md.
+Do not create a new top-level markdown file for every small topic.
+Do not create duplicate utilities when a shared helper already exists.
+Do not silently change APIs, CLI commands, config names, or output formats.
+Do not remove comments or documentation unless they are wrong or obsolete.
+Do not replace working code with a larger rewrite just to make it look cleaner.
+Do not invent commands; inspect project files first.
+Response format after completing work
+
+When finished, report:
+
+What changed
+Files modified
+Tests or checks run
+Any remaining risks or follow-up tasks
