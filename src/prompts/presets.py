@@ -18,6 +18,7 @@ BLIND_ADVENTURER = PromptConfig(
     include_success_condition=True,
     include_failure_condition=False,
     include_scene_constraints=False,
+    include_validation_rules=False,
 
     # basic = monster name/type/description
     monster_detail_level="basic",
@@ -44,6 +45,7 @@ TOOL_MANUAL = PromptConfig(
     include_success_condition=True,
     include_failure_condition=False,
     include_scene_constraints=False,
+    include_validation_rules=False,
 
     monster_detail_level="basic",
 
@@ -70,6 +72,7 @@ SCOUT_REPORT = PromptConfig(
     include_success_condition=True,
     include_failure_condition=True,
     include_scene_constraints=False,
+    include_validation_rules=False,
 
     monster_detail_level="stats",
 
@@ -95,6 +98,7 @@ BATTLE_PLAN = PromptConfig(
     include_success_condition=True,
     include_failure_condition=True,
     include_scene_constraints=False,
+    include_validation_rules=False,
 
     monster_detail_level="stats",
 
@@ -120,6 +124,7 @@ FULL_INFO = PromptConfig(
     include_success_condition=True,
     include_failure_condition=True,
     include_scene_constraints=True,
+    include_validation_rules=True,
 
     monster_detail_level="full",
 

@@ -28,6 +28,7 @@ def project_monster_for_llm(monster: Dict[str, Any]) -> Dict[str, Any]:
         "monster_id": monster.get("monster_id"),
         "name": monster.get("name", ""),
         "type": monster.get("type", ""),
+        "description": monster.get("description", ""),
         "tags": list(monster.get("tags", [])),
         "weaknesses": list(monster.get("weaknesses", [])),
         "resistances": list(monster.get("resistances", [])),

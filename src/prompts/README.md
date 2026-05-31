@@ -44,11 +44,11 @@ The system produces OpenAI-style chat messages:
 
 AgentQuest uses prompt presets to control how much information the agent receives before choosing a tool. The presets are designed as an analysis ladder: each one targets a different failure mode or reasoning scenario.
 
-- `blind_adventurer`: Shows only basic monster information and normal tool descriptions. This is the hardest mode and is useful for self-learning agent experiments. The agent may make a wrong choice because it does not yet know the monster's weaknesses or resistances. After failing, it can store a note such as "this monster resisted slashing" and try a different damage type in a later run.
+- `blind_adventurer`: Shows basic monster information, including narrative description, and normal tool descriptions. This is the hardest mode and is useful for self-learning agent experiments. The agent may make a wrong choice because it does not yet know the monster's weaknesses or resistances. After failing, it can store a note such as "this monster resisted slashing" and try a different damage type in a later run.
 - `tool_manual`: Keeps monster information limited, but reveals full tool details such as constraints and effects. This tests whether the agent understands the available tools. For example, the agent may know that one tool does piercing damage and another does slashing damage, but it still does not know which damage type the monster resists.
 - `scout_report`: Reveals monster weaknesses, resistances, immunities, and special rules, while keeping tool mechanics mostly implicit. This tests whether the agent can infer the right tool from monster information and natural-language tool descriptions.
 - `battle_plan`: Reveals both monster stats and tool effects. This is the default benchmark mode because the correct tool choice should be mechanically inferable. The agent has enough information to compare damage types and choose the tool with the best expected effect.
-- `full_info`: Reveals all scene, monster, and tool details, including scene constraints, full monster interactions, and exact tool constraints/effects. This is mainly used as a debug or upper-bound mode, where the agent has maximum information and should make the correct choice unless the prompt or model itself fails.
+- `full_info`: Reveals all scene, monster, and tool details, including scene constraints, validator-facing scene rules, full monster interactions, and exact tool constraints/effects. This is mainly used as a debug or upper-bound mode, where the agent has maximum information and should make the correct choice unless the prompt or model itself fails.
 
 ## Runner Commands
 
@@ -93,6 +93,7 @@ python -m src.runner.run_campaign
 - the expected information is visible
 - hidden information is actually hidden
 - `scene.constraints` are hidden unless you are explicitly using `FULL_INFO`
+- `scene.validation_rules` are hidden unless you are explicitly using `FULL_INFO`
 - allowed `tool_id` values are correct
 - tool schemas are readable
 - JSON formatting is clean

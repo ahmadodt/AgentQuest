@@ -296,7 +296,7 @@ def test_generated_monsters_are_normalized_for_runtime_and_projected_for_llm(tmp
         "knowledge_tools_help": True,
         "escape_allowed": True,
     }
-    assert "description" not in llm_monster
+    assert llm_monster["description"] == "A muddy pest."
     assert "source" not in llm_monster
     assert "cr" not in llm_monster
     assert "condition_immunities" not in llm_monster
@@ -414,6 +414,12 @@ def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_pat
         "exactly_one_tool_call": True,
         "no_escape": True,
     }
+    dataset["scenes"]["scenes"][0]["validation_rules"] = {
+        "mode": "survival_check",
+        "allow_escape_as_success": False,
+        "required_effect_tags": ["defense"],
+        "forbidden_effect_tags": ["escape"],
+    }
     _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)
 
     gamedata = load_gamedata(str(tmp_path))
@@ -421,8 +427,15 @@ def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_pat
     scene = gamedata["scenes_by_id"]["scene.slime"]
     visible_tools = [gamedata["tools_by_id"][tool_id] for tool_id in character["tool_ids"]]
 
-    from src.prompts.presets import BATTLE_PLAN, FULL_INFO
+    from src.prompts.presets import BATTLE_PLAN, BLIND_ADVENTURER, FULL_INFO
 
+    blind_messages = build_messages(
+        scene=scene,
+        character=character,
+        visible_tools=visible_tools,
+        gamedata=gamedata,
+        cfg=BLIND_ADVENTURER,
+    )
     battle_messages = build_messages(
         scene=scene,
         character=character,
@@ -438,8 +451,18 @@ def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_pat
         cfg=FULL_INFO,
     )
 
+    assert "- description: Sticky but simple." in blind_messages[1]["content"]
+    assert "- weaknesses:" not in blind_messages[1]["content"]
+    assert "- validation_rules:" not in blind_messages[1]["content"]
     assert "- constraints:" not in battle_messages[1]["content"]
+    assert "- validation_rules:" not in battle_messages[1]["content"]
+    assert "- description: Sticky but simple." in battle_messages[1]["content"]
     assert '- constraints: {"exactly_one_tool_call": true, "no_escape": true}' in full_messages[1]["content"]
+    assert (
+        '- validation_rules: {"mode": "survival_check", "allow_escape_as_success": false, '
+        '"required_effect_tags": ["defense"], "forbidden_effect_tags": ["escape"]}'
+    ) in full_messages[1]["content"]
+    assert "- description: Sticky but simple." in full_messages[1]["content"]
 
 
 def test_build_messages_includes_learning_notes_when_provided(tmp_path):

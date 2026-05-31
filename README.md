@@ -274,11 +274,11 @@ Campaign mode is for interactive inspection. Benchmark mode is for repeatable co
 
 The current prompt presets are defined in `src/prompts/presets.py`:
 
-- `BLIND_ADVENTURER`: basic monster info, normal tool descriptions, useful for hard-mode and self-learning runs
+- `BLIND_ADVENTURER`: basic monster info including description, normal tool descriptions, useful for hard-mode and self-learning runs
 - `TOOL_MANUAL`: basic monster info plus full tool details
 - `SCOUT_REPORT`: stronger monster detail, but limited explicit tool mechanics
 - `BATTLE_PLAN`: monster stats plus tool effects; default benchmark-friendly mode
-- `FULL_INFO`: full debug mode with maximal scene, monster, and tool detail
+- `FULL_INFO`: full debug mode with maximal scene, validation-rule, monster, and tool detail
 
 The default preset constant is `BATTLE_PLAN`.
 

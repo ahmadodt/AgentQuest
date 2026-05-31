@@ -98,6 +98,11 @@ def _render_scene(scene: Dict[str, Any], cfg: PromptConfig) -> str:
         if isinstance(constraints, dict):
             lines.append(f"- constraints: {json.dumps(constraints)}")
 
+    if cfg.include_validation_rules:
+        validation_rules = scene.get("validation_rules")
+        if isinstance(validation_rules, dict):
+            lines.append(f"- validation_rules: {json.dumps(validation_rules)}")
+
     return "\n".join(lines).strip()
 
 
