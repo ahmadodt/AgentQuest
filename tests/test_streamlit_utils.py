@@ -73,11 +73,11 @@ def test_discover_streamlit_presets_uses_expected_information_order_and_hides_de
 
     assert presets == [
         "BLIND_ADVENTURER",
-        "TOOL_MANUAL",
-        "SCOUT_REPORT",
         "BATTLE_PLAN",
         "FULL_INFO",
     ]
+    assert "TOOL_MANUAL" not in presets
+    assert "SCOUT_REPORT" not in presets
     assert "default" not in presets
     assert "MINIMAL" not in presets
 

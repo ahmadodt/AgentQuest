@@ -23,11 +23,10 @@ from src.runner.runner_utils import (
 DEFAULT_STREAMLIT_PRESET = DEFAULT_RUNTIME_PRESET_NAME
 DEFAULT_STREAMLIT_PRESET_ORDER = [
     "BLIND_ADVENTURER",
-    "TOOL_MANUAL",
-    "SCOUT_REPORT",
     "BATTLE_PLAN",
     "FULL_INFO",
 ]
+HIDDEN_STREAMLIT_PRESETS = {"TOOL_MANUAL", "SCOUT_REPORT"}
 
 
 def discover_catalog_models(
@@ -53,7 +52,11 @@ def discover_streamlit_presets() -> list[str]:
     preset_names = {
         name
         for name, value in vars(presets).items()
-        if name.isupper() and name != "DEFAULT_PRESET_NAME" and name != "PRESETS" and isinstance(value, PromptConfig)
+        if name.isupper()
+        and name != "DEFAULT_PRESET_NAME"
+        and name != "PRESETS"
+        and name not in HIDDEN_STREAMLIT_PRESETS
+        and isinstance(value, PromptConfig)
     }
 
     ordered = [name for name in DEFAULT_STREAMLIT_PRESET_ORDER if name in preset_names]
