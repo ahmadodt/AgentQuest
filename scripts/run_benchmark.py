@@ -1,25 +1,10 @@
 import argparse
-import os
 import sys
-import time
-from datetime import datetime
 
 from src.engine.loader import DataValidationError, load_gamedata
-from src.engine.validation.report_utils import collect_scene_character_tool_results
 from src.models.config import load_runtime_model_config, load_runtime_prompt_config
-from src.models.registry import build_handler
 from src.runtime_paths import get_data_dir
-from src.runner.benchmark_utils import aggregate_benchmark_records, build_benchmark_record
-from src.runner.runner_utils import (
-    ensure_dir,
-    execute_scene_run,
-    get_campaign_scene_ids,
-    get_results_dir,
-    load_preset,
-    safe_path_segment,
-    timestamp_for_filename,
-    write_json_file,
-)
+from src.runner.benchmark_service import run_benchmark, spec_from_runtime_config
 
 
 def _parse_multi_option(values: list[str] | None) -> list[str]:
@@ -50,34 +35,17 @@ def _resolve_character_ids(gamedata: dict, args) -> list[str]:
 
 def _resolve_presets(runtime_prompt_cfg, args) -> list[str]:
     presets = _parse_multi_option(args.preset)
-    if presets:
-        return presets
-    return [runtime_prompt_cfg.preset_name]
+    return presets or [runtime_prompt_cfg.preset_name]
 
 
 def _resolve_prompt_formats(runtime_prompt_cfg, args) -> list[str]:
     prompt_formats = _parse_multi_option(args.prompt_format)
-    if prompt_formats:
-        return prompt_formats
-    return [runtime_prompt_cfg.prompt_format]
+    return prompt_formats or [runtime_prompt_cfg.prompt_format]
 
 
-def _benchmark_output_dirs(campaign_ids: list[str], model_name: str) -> tuple[str, str]:
-    campaign_segment = campaign_ids[0] if len(campaign_ids) == 1 else "all_campaigns"
-    benchmark_dir = os.path.join(
-        get_results_dir(),
-        "campaigns",
-        safe_path_segment(campaign_segment),
-        safe_path_segment(model_name),
-    )
-    return (
-        os.path.join(benchmark_dir, timestamp_for_filename()),
-        os.path.join(benchmark_dir, "latest"),
-    )
-
-
-def _write_json(path: str, payload: object) -> None:
-    write_json_file(path, payload)
+def _resolve_model_names(runtime_model_cfg, args) -> list[str]:
+    models = _parse_multi_option(args.model)
+    return models or [runtime_model_cfg.model_name]
 
 
 def main() -> int:
@@ -89,113 +57,45 @@ def main() -> int:
     parser.add_argument("--all-characters", action="store_true")
     parser.add_argument("--preset", action="append", default=[])
     parser.add_argument("--prompt-format", action="append", default=[])
-    parser.add_argument("--model-key", type=str, default="")
-    parser.add_argument("--model-path", type=str, default="")
+    parser.add_argument("--model", action="append", default=[], help="Catalog model name. Repeat or comma-separate for a model matrix.")
     parser.add_argument("--max-tokens", type=int, default=128)
     parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--self-learning", action="store_true")
+    parser.add_argument("--per-scene-retry-limit", type=int, default=3)
+    parser.add_argument("--total-retry-limit", type=int, default=20)
+    parser.add_argument("--initial-notes", type=str, default="")
     parser.add_argument("--output-dir", type=str, default="")
     args = parser.parse_args()
 
     try:
         gamedata = load_gamedata(args.data_dir)
         runtime_prompt_cfg = load_runtime_prompt_config()
-        runtime_model_cfg = load_runtime_model_config(
-            model_path_override=args.model_path or None,
+        runtime_model_cfg = load_runtime_model_config()
+
+        spec = spec_from_runtime_config(
+            data_dir=args.data_dir,
+            campaign_ids=_resolve_campaign_ids(gamedata, args),
+            character_ids=_resolve_character_ids(gamedata, args),
+            preset_names=_resolve_presets(runtime_prompt_cfg, args),
+            prompt_formats=_resolve_prompt_formats(runtime_prompt_cfg, args),
+            runtime_model_cfg=runtime_model_cfg,
+            model_names=_resolve_model_names(runtime_model_cfg, args),
+            max_tokens=args.max_tokens,
+            temperature=args.temperature,
+            self_learning_enabled=args.self_learning,
+            per_scene_retry_limit=args.per_scene_retry_limit,
+            total_retry_limit=args.total_retry_limit,
+            initial_notes=args.initial_notes,
+            output_dir=args.output_dir,
         )
-
-        campaign_ids = _resolve_campaign_ids(gamedata, args)
-        character_ids = _resolve_character_ids(gamedata, args)
-        presets = _resolve_presets(runtime_prompt_cfg, args)
-        prompt_formats = _resolve_prompt_formats(runtime_prompt_cfg, args)
-
-        output_dir, latest_dir = (
-            (os.path.abspath(args.output_dir), "")
-            if args.output_dir
-            else _benchmark_output_dirs(campaign_ids, runtime_model_cfg.model_name)
-        )
-        ensure_dir(output_dir)
-        if latest_dir:
-            ensure_dir(latest_dir)
-
-        manifest = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "data_dir": os.path.abspath(args.data_dir),
-            "campaign_ids": campaign_ids,
-            "character_ids": character_ids,
-            "presets": presets,
-            "prompt_formats": prompt_formats,
-            "model": runtime_model_cfg.model_path,
-            "backend": runtime_model_cfg.backend,
-            "max_tokens": args.max_tokens,
-            "temperature": args.temperature,
-        }
-        _write_json(os.path.join(output_dir, "manifest.json"), manifest)
-
-        records: list[dict] = []
-        deterministic_valid_tools: dict[str, list[str]] = {}
-        handler = build_handler(
-            args.model_key,
-            model_path_override=runtime_model_cfg.model_path,
-        )
-
-        for campaign_id in campaign_ids:
-            scene_ids = get_campaign_scene_ids(gamedata, campaign_id)
-            for character_id in character_ids:
-                for preset_name in presets:
-                    cfg = load_preset(preset_name)
-                    for prompt_format in prompt_formats:
-                        for scene_index, scene_id in enumerate(scene_ids):
-                            valid_tools_key = f"{scene_id}::{character_id}"
-                            if valid_tools_key not in deterministic_valid_tools:
-                                tool_results = collect_scene_character_tool_results(
-                                    gamedata,
-                                    scene_id=scene_id,
-                                    character_id=character_id,
-                                )
-                                deterministic_valid_tools[valid_tools_key] = [
-                                    item["tool_id"] for item in tool_results["valid_tools"]
-                                ]
-
-                            start_time = time.perf_counter()
-                            scene_run = execute_scene_run(
-                                gamedata=gamedata,
-                                campaign_id=campaign_id,
-                                character_id=character_id,
-                                scene_id=scene_id,
-                                scene_index=scene_index,
-                                prompt_format=prompt_format,
-                                cfg=cfg,
-                                model_key=args.model_key,
-                                max_tokens=args.max_tokens,
-                                temperature=args.temperature,
-                                model_name_override=runtime_model_cfg.model_name,
-                                handler=handler,
-                            )
-                            latency_seconds = time.perf_counter() - start_time
-                            model_label = scene_run.get("model") or runtime_model_cfg.model_path
-                            records.append(
-                                build_benchmark_record(
-                                    campaign_id=campaign_id,
-                                    scene_run=scene_run,
-                                    character_id=character_id,
-                                    preset=preset_name,
-                                    prompt_format=prompt_format,
-                                    model=model_label,
-                                    valid_tools=deterministic_valid_tools[valid_tools_key],
-                                    latency_seconds=latency_seconds,
-                                )
-                            )
-
-        summary = aggregate_benchmark_records(records)
-        _write_json(os.path.join(output_dir, "records.json"), records)
-        _write_json(os.path.join(output_dir, "summary.json"), summary)
-        if latest_dir:
-            _write_json(os.path.join(latest_dir, "manifest.json"), manifest)
-            _write_json(os.path.join(latest_dir, "records.json"), records)
-            _write_json(os.path.join(latest_dir, "summary.json"), summary)
+        result = run_benchmark(gamedata=gamedata, spec=spec)
+        summary = result["summary"]
 
         print("Benchmark complete")
-        print(f"Output: {output_dir}")
+        print(f"Output: {result['output_dir']}")
+        if result.get("latest_dir"):
+            print(f"Latest: {result['latest_dir']}")
+        print(f"Dataset: {summary['dataset_id']}")
         print(f"Total scenes: {summary['total_scenes']}")
         print(f"Passed: {summary['passed_scenes']}")
         print(f"Failed: {summary['failed_scenes']}")

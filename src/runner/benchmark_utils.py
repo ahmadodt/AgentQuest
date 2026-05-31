@@ -23,13 +23,15 @@ def build_benchmark_record(
     model: str,
     valid_tools: list[str],
     latency_seconds: float | None,
+    dataset_id: str = "",
 ) -> dict[str, Any]:
     validation = scene_run.get("validation", {}) or {}
     parsed_tool_call = scene_run.get("parsed_tool_call") or {}
     status = scene_run.get("status")
     parse_failure = status == "PARSE_ERROR" or validation.get("ast_valid") is False
 
-    return {
+    record = {
+        "dataset_id": dataset_id,
         "campaign_id": campaign_id,
         "scene_id": scene_run.get("scene_id"),
         "scene_index": scene_run.get("scene_index"),
@@ -49,6 +51,31 @@ def build_benchmark_record(
         "parse_failure": parse_failure,
         "raw_model_output": scene_run.get("raw_model_output", ""),
     }
+    if "attempt_count" in scene_run:
+        record["attempt_count"] = scene_run.get("attempt_count")
+    if "retry_count" in scene_run:
+        record["retry_count"] = scene_run.get("retry_count")
+    if "resolved_after_learning" in scene_run:
+        record["resolved_after_learning"] = bool(scene_run.get("resolved_after_learning"))
+    if "total_retries_used" in scene_run:
+        record["total_retries_used"] = scene_run.get("total_retries_used")
+    if "initial_notes" in scene_run:
+        record["initial_notes"] = scene_run.get("initial_notes", "")
+    if "final_notes" in scene_run:
+        record["final_notes"] = scene_run.get("final_notes", "")
+    if scene_run.get("attempts"):
+        record["attempts"] = [
+            {
+                "attempt_index": attempt.get("attempt_index"),
+                "status": attempt.get("status"),
+                "reason": attempt.get("reason", ""),
+                "parsed_tool_call": attempt.get("parsed_tool_call"),
+                "validation": attempt.get("validation"),
+                "raw_model_output": attempt.get("raw_model_output", ""),
+            }
+            for attempt in scene_run.get("attempts", [])
+        ]
+    return record
 
 
 def aggregate_benchmark_records(records: list[dict[str, Any]]) -> dict[str, Any]:

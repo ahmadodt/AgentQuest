@@ -53,10 +53,10 @@ Recommended reviewer flow:
 - Run a full campaign across ordered scenes.
 - Run campaigns in continue-on-failure mode for evaluation.
 - Run self-learning campaigns that write notes after failures and retry scenes.
-- Launch a Streamlit run viewer for campaign and single-scene evaluation.
+- Launch a Streamlit run viewer for campaign, single-scene, and benchmark evaluation.
 - Save prompt previews and run logs as JSON.
 - Generate deterministic validation coverage reports for scene/character pairs.
-- Run benchmark sweeps across campaigns, characters, presets, and prompt formats.
+- Run benchmark sweeps across models, campaigns, characters, presets, and prompt formats.
 - Render portfolio-ready markdown reports from one or more saved benchmark runs.
 - Convert Open5e source data into AgentQuest-ready generated content.
 
@@ -255,16 +255,17 @@ The UI supports:
 - selecting a configured catalog model alias
 - selecting a prompt preset
 - selecting a character
-- campaign mode and single-scene mode
+- campaign mode, single-scene mode, and benchmark mode
 - running the current campaign scene
 - stepping through campaign scenes
 - running remaining scenes
 - resetting and rerunning a full campaign
 - self-learning campaign runs with editable initial notes
+- benchmark sweeps with selected-only defaults and optional self-learning retries
 - saved run logs for single scenes and campaigns
 - inspection of raw model output, parsed tool call JSON, validation result, prompt messages, and learning attempts
 
-Campaign mode is the primary UI flow. The app uses shared runner/service logic rather than a separate validation path.
+Campaign mode is for interactive inspection. Benchmark mode is for repeatable comparisons and writes the same benchmark artifacts as the CLI. The app uses shared runner/service logic rather than a separate validation path.
 
 ## Prompt Presets
 
@@ -306,7 +307,7 @@ It exits non-zero if any scene/character pair is unsolved.
 
 ### Run A Benchmark Sweep
 
-Run model-backed benchmarks across campaigns, characters, presets, and prompt formats:
+Run model-backed benchmarks across models, campaigns, characters, presets, and prompt formats:
 
 ```bash
 python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram
@@ -318,7 +319,9 @@ Examples:
 python scripts/run_benchmark.py --all-campaigns --all-characters
 python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --all-characters --preset BATTLE_PLAN --preset FULL_INFO
 python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --prompt-format json_only
-python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --output-dir runs/benchmarks/manual
+python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --model qwen3_4b_q4_k_m --model llama_3_2_3b_instruct_q4_k_m
+python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --self-learning --per-scene-retry-limit 3 --total-retry-limit 20
+python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --output-dir results/benchmarks/manual
 ```
 
 Benchmark outputs:
@@ -327,14 +330,14 @@ Benchmark outputs:
 - `records.json`
 - `summary.json`
 
-The default output directory is timestamped under `runs/benchmarks/`.
+The default output directory is timestamped under `results/benchmarks/<dataset_id>/<campaign>/<model>/`. The `dataset_id` is derived from custom data file versions plus a content fingerprint, and full per-file version/hash metadata is written into the benchmark manifest and summary.
 
 ### Render A Portfolio Benchmark Report
 
 Combine one or more saved benchmark directories into a markdown summary suitable for documentation or a LinkedIn case study:
 
 ```bash
-python scripts/render_benchmark_report.py --benchmark-dir runs/benchmarks/model_a --label "Model A" --benchmark-dir runs/benchmarks/model_b --label "Model B" --output docs/portfolio_assets/benchmark_report.md
+python scripts/render_benchmark_report.py --benchmark-dir results/benchmarks/model_a --label "Model A" --benchmark-dir results/benchmarks/model_b --label "Model B" --output docs/portfolio_assets/benchmark_report.md
 ```
 
 Optional output:
