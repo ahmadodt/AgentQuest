@@ -9,7 +9,15 @@ pip install -e .
 pip install llama-cpp-python
 ```
 
-`streamlit` is declared in `pyproject.toml`. The project currently supports the `llama_cpp` backend for model-backed runs.
+AgentQuest requires Python 3.10 or newer. `streamlit` is declared in `pyproject.toml`. The project currently supports the `llama_cpp` backend for model-backed runs.
+
+For normal manual use, start with Streamlit:
+
+```bash
+streamlit run streamlit_app.py
+```
+
+The UI exposes the available catalog models, prompt presets, characters, campaigns, scenes, benchmark mode, and self-learning notes. CLI commands are still useful for repeatable experiments and scripted checks.
 
 ## Runtime Config
 
@@ -64,12 +72,6 @@ Run self-learning retries:
 python -m src.runner.run_campaign --campaign-id campaign.goblin_den_v1 --character-id knight.bram --self-learning --per-scene-retry-limit 3 --total-retry-limit 20
 ```
 
-Run Streamlit:
-
-```bash
-streamlit run streamlit_app.py
-```
-
 ## Benchmarking
 
 Run a benchmark with the configured model:
@@ -93,6 +95,8 @@ python scripts/render_benchmark_report.py --benchmark-dir results/benchmarks/mod
 ## Data Work
 
 Normal development should use the hand-authored custom dataset under `data/custom/agentquest/`.
+
+See `docs/custom_data.md` for how the custom AgentQuest data is organized and how it relates to the RPG evaluation scenarios.
 
 The Open5e pipeline is separate from the normal runtime workflow. See `src/data_pipeline/README.md` before changing raw, curated, or generated Open5e data.
 

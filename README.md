@@ -1,18 +1,18 @@
 # AgentQuest
 
-AgentQuest is a playable AI-agent RPG for structured tool-use evaluation. A model receives a fantasy scene, sees a constrained set of visible tools, and must answer with strict JSON:
+AgentQuest is a small-model tool-calling testbed wrapped in a playable RPG. It asks local LLMs to read a scene, reason over limited or implicit information, and choose one valid structured action:
 
 ```json
 {"tool_id": "...", "arguments": {...}}
 ```
 
-The engine validates that output in three stages:
+The RPG layer gives the evaluation concrete pressure: characters have different tools, scenes hide or reveal different facts, prompt presets gate knowledge, and campaign retries can carry notes forward into future attempts. The goal is to inspect whether small models can follow the interface, choose legal actions, use available context, and improve when given run history.
+
+The engine validates each response in three stages:
 
 1. AST validation: is the JSON well-formed and schema-correct?
 2. Hard validation: can this character legally use that tool here?
 3. Soft validation: does the action solve the scene?
-
-The project is runner-first. The CLI runners, benchmark scripts, Streamlit UI, prompt builder, model backend, loader, and validator all use the same execution path.
 
 ## Quick Start
 
@@ -22,16 +22,10 @@ Install the project from the repository root:
 pip install -e .
 ```
 
-For model-backed runs, install the llama.cpp backend:
+AgentQuest uses Python 3.10 or newer. For model-backed runs, install the llama.cpp backend:
 
 ```bash
 pip install llama-cpp-python
-```
-
-Preview a prompt without calling a model:
-
-```bash
-python -m src.runner.preview_prompt
 ```
 
 Launch the Streamlit UI:
@@ -40,40 +34,21 @@ Launch the Streamlit UI:
 streamlit run streamlit_app.py
 ```
 
+Streamlit is the easiest way to use the project. From the UI, choose the actor or catalog model, prompt preset, character, and run mode. Campaign, single-scene, and benchmark runs all show the prompt, raw model output, parsed tool call, validation result, retries, notes, and saved run logs.
+
+Model aliases are defined in `configs/model_catalog.json`. To test another model, add it there and restart Streamlit. If the model is hosted behind Hugging Face access controls, set `HF_TOKEN` in your environment or a local `.env` file.
+
 Run the test suite:
 
 ```bash
 pytest
 ```
 
-## Configure A Run
-
-Runtime settings live in `configs/run_config.json`:
-
-```json
-{
-  "backend": "llama_cpp",
-  "model": "qwen3_4b_q4_k_m",
-  "preset": "BATTLE_PLAN",
-  "prompt_format": "json_only"
-}
-```
-
-Model aliases are defined in `configs/model_catalog.json`. The current backend is `llama_cpp`.
-
-Useful environment variables:
-
-- `HF_TOKEN`: optional Hugging Face token for downloads or gated models
-- `AGENTQUEST_DATA_DIR`: runtime data root, defaults to `data/`
-- `AGENTQUEST_MODEL`: model catalog alias override
-- `AGENTQUEST_RUNS_DIR`: saved run-log directory, defaults to `runs/`
-- `AGENTQUEST_MODELS_DIR`: legacy local-model directory helper
-
-CLI and Streamlit entrypoints load `.env` from the repository root when present. Existing shell variables take precedence.
-
 ## Common Commands
 
-Preview the exact prompt messages:
+The command line tools are useful for repeatable experiments, saved artifacts, and automation.
+
+Preview the exact prompt messages without calling a model:
 
 ```bash
 python -m src.runner.preview_prompt --preset BATTLE_PLAN
@@ -109,11 +84,12 @@ python scripts/generate_validation_report.py
 
 ## Streamlit UI
 
-The Streamlit app is a thin viewer over shared runner/service logic. It supports:
+The Streamlit app exposes the main inspection workflow:
 
-- configured catalog model selection
-- exposed prompt presets: `BLIND_ADVENTURER`, `BATTLE_PLAN`, and `FULL_INFO`
+- catalog model and human-player selection
+- prompt presets: `BLIND_ADVENTURER`, `BATTLE_PLAN`, and `FULL_INFO`
 - single-scene, campaign, and benchmark modes
+- self-learning campaign retries with notes
 - raw output, parsed tool call, prompt, validation, and retry inspection
 - saved run logs for scene and campaign runs
 
@@ -124,6 +100,7 @@ The Streamlit app is a thin viewer over shared runner/service logic. It supports
 - Testing: [`docs/testing.md`](docs/testing.md)
 - Docker: [`docs/docker.md`](docs/docker.md)
 - Models: [`docs/models.md`](docs/models.md)
+- Custom AgentQuest data: [`docs/custom_data.md`](docs/custom_data.md)
 - Prompt system: [`src/prompts/README.md`](src/prompts/README.md)
 - Engine and validators: [`src/engine/README.md`](src/engine/README.md)
 - Open5e data pipeline: [`src/data_pipeline/README.md`](src/data_pipeline/README.md)
