@@ -3,9 +3,18 @@ from typing import Any
 
 import streamlit as st
 
-from src.app.streamlit_ui.constants import BENCHMARK_RESULT_KEY
-from src.runner.benchmark_service import BenchmarkSpec, estimate_benchmark_scene_runs, run_benchmark
-from src.runner.benchmark_utils import build_benchmark_progress_state, update_benchmark_progress_state
+from src.app.streamlit_ui.constants import BENCHMARK_ERROR_KEY, BENCHMARK_RESULT_KEY, BENCHMARK_SESSION_KEY
+from src.runner.benchmark_service import (
+    BenchmarkRunError,
+    BenchmarkSpec,
+    estimate_benchmark_scene_runs,
+    run_benchmark_batch,
+)
+from src.runner.benchmark_utils import (
+    build_benchmark_progress_state,
+    update_benchmark_progress_from_records,
+    update_benchmark_progress_state,
+)
 from src.runner.streamlit_utils import discover_streamlit_presets
 
 
@@ -93,6 +102,114 @@ def _render_benchmark_progress(
         metric_cols[3].metric("Remaining", remaining)
         st.caption(_format_current_path(state.get("current")))
         st.code("\n".join(_benchmark_tree_lines(state, model_labels)), language="text")
+
+
+def _benchmark_signature(
+    *,
+    selected_campaign_ids: list[str],
+    selected_character_ids: list[str],
+    selected_presets: list[str],
+    selected_prompt_formats: list[str],
+    selected_models: list[str],
+    self_learning_enabled: bool,
+    per_scene_retry_limit: int,
+    total_retry_limit: int,
+    initial_notes: str,
+    output_dir: str,
+) -> tuple[Any, ...]:
+    return (
+        tuple(selected_campaign_ids),
+        tuple(selected_character_ids),
+        tuple(selected_presets),
+        tuple(selected_prompt_formats),
+        tuple(selected_models),
+        self_learning_enabled,
+        per_scene_retry_limit,
+        total_retry_limit,
+        initial_notes,
+        output_dir,
+    )
+
+
+def _session_spec(session: dict[str, Any]) -> BenchmarkSpec:
+    return BenchmarkSpec(**session["spec"])
+
+
+def _result_progress_state(
+    *,
+    gamedata: dict,
+    result: dict[str, Any],
+) -> dict[str, Any] | None:
+    manifest = result.get("manifest") or {}
+    if not manifest:
+        return None
+    state = build_benchmark_progress_state(
+        gamedata=gamedata,
+        model_names=list(manifest.get("models") or []),
+        preset_names=list(manifest.get("presets") or []),
+        campaign_ids=list(manifest.get("campaign_ids") or []),
+        character_ids=list(manifest.get("character_ids") or []),
+        prompt_formats=list(manifest.get("prompt_formats") or []),
+    )
+    update_benchmark_progress_from_records(state, list(result.get("records") or []))
+    return state
+
+
+def _run_benchmark_step(
+    *,
+    gamedata: dict,
+    handler_factory: Callable[[str], Any],
+    progress_container,
+    model_labels: dict[str, str],
+) -> None:
+    session = st.session_state.get(BENCHMARK_SESSION_KEY)
+    if not session or session.get("paused") or session.get("complete"):
+        return
+
+    spec = _session_spec(session)
+    progress_state = build_benchmark_progress_state(
+        gamedata=gamedata,
+        model_names=spec.model_names,
+        preset_names=spec.preset_names,
+        campaign_ids=spec.campaign_ids,
+        character_ids=spec.character_ids,
+        prompt_formats=spec.prompt_formats,
+    )
+    existing_result = st.session_state.get(BENCHMARK_RESULT_KEY)
+    if existing_result:
+        update_benchmark_progress_from_records(progress_state, list(existing_result.get("records") or []))
+
+    def on_progress(event: dict[str, Any]) -> None:
+        update_benchmark_progress_state(progress_state, event)
+        _render_benchmark_progress(progress_state, model_labels=model_labels, container=progress_container)
+
+    try:
+        result = run_benchmark_batch(
+            gamedata=gamedata,
+            spec=spec,
+            handler_factory=handler_factory,
+            progress_callback=on_progress,
+            max_scene_runs=1,
+            resume=bool(session.get("resume", True)),
+        )
+    except BenchmarkRunError as error:
+        st.session_state[BENCHMARK_RESULT_KEY] = error.result
+        session["spec"]["output_dir"] = error.result["output_dir"]
+        session["resume"] = True
+        session["paused"] = True
+        session["error"] = str(error)
+        st.session_state[BENCHMARK_ERROR_KEY] = str(error)
+        st.session_state[BENCHMARK_SESSION_KEY] = session
+        return
+
+    st.session_state[BENCHMARK_RESULT_KEY] = result
+    st.session_state[BENCHMARK_ERROR_KEY] = ""
+    session["spec"]["output_dir"] = result["output_dir"]
+    session["resume"] = True
+    session["complete"] = bool(result.get("complete"))
+    st.session_state[BENCHMARK_SESSION_KEY] = session
+    if not session["complete"] and not session.get("paused"):
+        st.rerun()
 
 
 def render_benchmark_mode(
@@ -191,11 +308,47 @@ def render_benchmark_mode(
         prompt_formats=selected_prompt_formats,
     )
     progress_container = st.empty()
-    if run_count:
+    existing_result = st.session_state.get(BENCHMARK_RESULT_KEY)
+    existing_progress_state = _result_progress_state(gamedata=gamedata, result=existing_result) if existing_result else None
+    if existing_progress_state:
+        _render_benchmark_progress(existing_progress_state, model_labels=model_labels, container=progress_container)
+    elif run_count:
         _render_benchmark_progress(progress_state, model_labels=model_labels, container=progress_container)
 
     run_disabled = run_count == 0
-    if st.button("Run benchmark", disabled=run_disabled):
+    session = st.session_state.get(BENCHMARK_SESSION_KEY) or {}
+    current_signature = _benchmark_signature(
+        selected_campaign_ids=selected_campaign_ids,
+        selected_character_ids=selected_character_ids,
+        selected_presets=selected_presets,
+        selected_prompt_formats=selected_prompt_formats,
+        selected_models=selected_models,
+        self_learning_enabled=self_learning_enabled,
+        per_scene_retry_limit=int(per_scene_retry_limit),
+        total_retry_limit=int(total_retry_limit),
+        initial_notes=initial_notes,
+        output_dir=output_dir.strip(),
+    )
+    session_matches_selection = session.get("signature") == current_signature
+    active_session = bool(session) and not session.get("complete") and session_matches_selection
+    control_cols = st.columns(3)
+    run_clicked = control_cols[0].button("Run benchmark", disabled=run_disabled)
+    pause_clicked = control_cols[1].button("Pause benchmark", disabled=not active_session or session.get("paused", False))
+    continue_clicked = control_cols[2].button("Continue benchmark", disabled=run_disabled or not active_session)
+
+    if pause_clicked:
+        session["paused"] = True
+        st.session_state[BENCHMARK_SESSION_KEY] = session
+        st.rerun()
+
+    if continue_clicked and active_session:
+        session["paused"] = False
+        session["error"] = ""
+        st.session_state[BENCHMARK_ERROR_KEY] = ""
+        st.session_state[BENCHMARK_SESSION_KEY] = session
+        st.rerun()
+
+    if run_clicked:
         spec = BenchmarkSpec(
             data_dir=data_dir,
             campaign_ids=selected_campaign_ids,
@@ -212,25 +365,51 @@ def render_benchmark_mode(
             initial_notes=initial_notes,
             output_dir=output_dir.strip(),
         )
-        progress_state = build_benchmark_progress_state(
-            gamedata=gamedata,
-            model_names=selected_models,
-            preset_names=selected_presets,
-            campaign_ids=selected_campaign_ids,
-            character_ids=selected_character_ids,
-            prompt_formats=selected_prompt_formats,
-        )
+        st.session_state[BENCHMARK_RESULT_KEY] = None
+        st.session_state[BENCHMARK_ERROR_KEY] = ""
+        st.session_state[BENCHMARK_SESSION_KEY] = {
+            "signature": _benchmark_signature(
+                selected_campaign_ids=selected_campaign_ids,
+                selected_character_ids=selected_character_ids,
+                selected_presets=selected_presets,
+                selected_prompt_formats=selected_prompt_formats,
+                selected_models=selected_models,
+                self_learning_enabled=self_learning_enabled,
+                per_scene_retry_limit=int(per_scene_retry_limit),
+                total_retry_limit=int(total_retry_limit),
+                initial_notes=initial_notes,
+                output_dir=output_dir.strip(),
+            ),
+            "spec": spec.__dict__.copy(),
+            "resume": False,
+            "paused": False,
+            "complete": False,
+            "error": "",
+        }
+        st.rerun()
 
-        def on_progress(event: dict[str, Any]) -> None:
-            update_benchmark_progress_state(progress_state, event)
-            _render_benchmark_progress(progress_state, model_labels=model_labels, container=progress_container)
-
+    session = st.session_state.get(BENCHMARK_SESSION_KEY) or {}
+    if session and not session.get("paused") and not session.get("complete") and session.get("signature") == current_signature:
         with st.spinner("Running benchmark..."):
-            st.session_state[BENCHMARK_RESULT_KEY] = run_benchmark(
+            _run_benchmark_step(
                 gamedata=gamedata,
-                spec=spec,
                 handler_factory=handler_factory,
-                progress_callback=on_progress,
+                progress_container=progress_container,
+                model_labels=model_labels,
+            )
+    elif session and not session.get("complete") and not session_matches_selection:
+        st.caption("Benchmark controls are showing a previous run. Restore its selections or start a new benchmark.")
+
+    benchmark_error = st.session_state.get(BENCHMARK_ERROR_KEY)
+    if benchmark_error:
+        st.error(benchmark_error)
+        failed_item = (st.session_state.get(BENCHMARK_RESULT_KEY) or {}).get("next_item")
+        if failed_item:
+            st.caption(
+                "Next continue attempt will rerun: "
+                f"{failed_item.get('model')} / {failed_item.get('preset')} / "
+                f"{failed_item.get('campaign_id')} / {failed_item.get('character_id')} / "
+                f"{failed_item.get('prompt_format')} / {failed_item.get('scene_id')}"
             )
 
     result = st.session_state.get(BENCHMARK_RESULT_KEY)

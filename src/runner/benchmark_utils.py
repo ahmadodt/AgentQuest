@@ -4,6 +4,29 @@ from collections import Counter
 from typing import Any
 
 
+def benchmark_item_key(
+    *,
+    model: str,
+    preset: str,
+    campaign_id: str,
+    character_id: str,
+    prompt_format: str,
+    scene_id: str,
+) -> tuple[str, str, str, str, str, str]:
+    return (model, preset, campaign_id, character_id, prompt_format, scene_id)
+
+
+def benchmark_record_key(record: dict[str, Any]) -> tuple[str, str, str, str, str, str]:
+    return benchmark_item_key(
+        model=str(record.get("benchmark_model") or record.get("model") or ""),
+        preset=str(record.get("preset") or ""),
+        campaign_id=str(record.get("campaign_id") or ""),
+        character_id=str(record.get("character_id") or ""),
+        prompt_format=str(record.get("prompt_format") or ""),
+        scene_id=str(record.get("scene_id") or ""),
+    )
+
+
 def extract_effective_power(validation: dict[str, Any] | None) -> float | None:
     if not isinstance(validation, dict):
         return None
@@ -119,13 +142,13 @@ def aggregate_benchmark_records(records: list[dict[str, Any]]) -> dict[str, Any]
 
 
 def _progress_key(event: dict[str, Any]) -> tuple[str, str, str, str, str, str]:
-    return (
-        event.get("model", ""),
-        event.get("preset", ""),
-        event.get("campaign_id", ""),
-        event.get("character_id", ""),
-        event.get("prompt_format", ""),
-        event.get("scene_id", ""),
+    return benchmark_item_key(
+        model=str(event.get("model") or ""),
+        preset=str(event.get("preset") or ""),
+        campaign_id=str(event.get("campaign_id") or ""),
+        character_id=str(event.get("character_id") or ""),
+        prompt_format=str(event.get("prompt_format") or ""),
+        scene_id=str(event.get("scene_id") or ""),
     )
 
 
@@ -196,6 +219,31 @@ def build_benchmark_progress_state(
                             state["total"] += 1
 
     state["remaining"] = state["total"]
+    return state
+
+
+def update_benchmark_progress_from_records(
+    state: dict[str, Any],
+    records: list[dict[str, Any]],
+) -> dict[str, Any]:
+    for record in records:
+        update_benchmark_progress_state(
+            state,
+            {
+                "event": "scene_finish",
+                "model": record.get("benchmark_model") or record.get("model", ""),
+                "preset": record.get("preset", ""),
+                "campaign_id": record.get("campaign_id", ""),
+                "character_id": record.get("character_id", ""),
+                "prompt_format": record.get("prompt_format", ""),
+                "scene_id": record.get("scene_id", ""),
+                "scene_index": record.get("scene_index"),
+                "status": record.get("status"),
+                "reason": record.get("reason", ""),
+                "selected_tool_id": record.get("selected_tool_id", ""),
+                "parse_failure": record.get("parse_failure"),
+            },
+        )
     return state
 
 

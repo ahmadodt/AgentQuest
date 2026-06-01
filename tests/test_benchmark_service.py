@@ -3,11 +3,13 @@ import os
 from types import SimpleNamespace
 
 from src.runner.benchmark_service import (
+    BenchmarkRunError,
     BenchmarkSpec,
     build_benchmark_output_dirs,
     collect_dataset_metadata,
     estimate_benchmark_scene_runs,
     run_benchmark,
+    run_benchmark_batch,
 )
 
 
@@ -83,6 +85,21 @@ class _FakeHandler:
         self.model_name = model_name
 
     def generate(self, messages, max_tokens, temperature):
+        return SimpleNamespace(
+            raw_text=json.dumps({"tool_id": "common.run", "arguments": {"direction": "backtrack"}}),
+            metadata={"model": self.model_name},
+        )
+
+
+class _FailSecondHandler:
+    def __init__(self, model_name):
+        self.model_name = model_name
+        self.calls = 0
+
+    def generate(self, messages, max_tokens, temperature):
+        self.calls += 1
+        if self.calls == 2:
+            raise RuntimeError("transient model failure")
         return SimpleNamespace(
             raw_text=json.dumps({"tool_id": "common.run", "arguments": {"direction": "backtrack"}}),
             metadata={"model": self.model_name},
@@ -173,3 +190,54 @@ def test_run_benchmark_emits_scene_progress_events(gamedata, tmp_path):
     assert events[1]["completed"] == 1
     assert events[1]["remaining"] == len(result["records"]) - 1
     assert events[1]["status"] == result["records"][0]["status"]
+
+
+def test_run_benchmark_batch_checkpoints_and_reruns_failed_scene(gamedata, tmp_path):
+    spec = BenchmarkSpec(
+        data_dir="data",
+        campaign_ids=["campaign.tutorial_v1"],
+        character_ids=["wizard.ember"],
+        preset_names=["BATTLE_PLAN"],
+        prompt_formats=["json_only"],
+        model_names=["fake_model"],
+        backend="llama_cpp",
+        output_dir=str(tmp_path / "benchmark"),
+    )
+    dataset = {
+        "dataset_id": "custom_test_hash",
+        "dataset_fingerprint": "abc123",
+        "data_dir": os.path.abspath("data"),
+        "runtime_data_dir": os.path.abspath(os.path.join("data", "custom", "agentquest")),
+        "files": {},
+    }
+    failing_handler = _FailSecondHandler("fake_model")
+
+    try:
+        run_benchmark_batch(
+            gamedata=gamedata,
+            spec=spec,
+            dataset_metadata=dataset,
+            handler_factory=lambda model_name: failing_handler,
+            max_scene_runs=2,
+        )
+        assert False, "Expected the second benchmark item to fail"
+    except BenchmarkRunError as error:
+        partial = error.result
+
+    assert len(partial["records"]) == 1
+    assert partial["records"][0]["scene_id"] == "scene.tutorial.001_goblin_alley"
+    assert partial["next_item"]["scene_id"] == "scene.tutorial.002_runes_on_wall"
+    assert (tmp_path / "benchmark" / "records.json").exists()
+
+    resumed = run_benchmark_batch(
+        gamedata=gamedata,
+        spec=spec,
+        dataset_metadata=dataset,
+        handler_factory=lambda model_name: _FakeHandler(model_name),
+        max_scene_runs=1,
+    )
+
+    assert len(resumed["records"]) == 2
+    assert resumed["records"][1]["scene_id"] == "scene.tutorial.002_runes_on_wall"
+    assert resumed["summary"]["completed_scene_runs"] == 2
+    assert resumed["summary"]["remaining_scene_runs"] == 1
