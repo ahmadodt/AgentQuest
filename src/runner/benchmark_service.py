@@ -12,6 +12,7 @@ from src.engine.validation.report_utils import collect_scene_character_tool_resu
 from src.models.config import RuntimeModelConfig
 from src.models.registry import build_handler
 from src.runner.benchmark_utils import aggregate_benchmark_records, build_benchmark_record
+from src.runner.power import prevent_system_sleep
 from src.runner.runner_utils import (
     ensure_dir,
     execute_learning_scene,
@@ -190,6 +191,24 @@ def _write_artifacts(
 
 
 def run_benchmark(
+    *,
+    gamedata: dict,
+    spec: BenchmarkSpec,
+    dataset_metadata: dict[str, Any] | None = None,
+    handler_factory: Callable[[str], Any] | None = None,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
+) -> dict[str, Any]:
+    with prevent_system_sleep():
+        return _run_benchmark(
+            gamedata=gamedata,
+            spec=spec,
+            dataset_metadata=dataset_metadata,
+            handler_factory=handler_factory,
+            progress_callback=progress_callback,
+        )
+
+
+def _run_benchmark(
     *,
     gamedata: dict,
     spec: BenchmarkSpec,
