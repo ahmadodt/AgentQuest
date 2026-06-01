@@ -1,4 +1,7 @@
 from src.runner.benchmark_utils import (
+    build_benchmark_failure_rows,
+    build_benchmark_model_preset_rows,
+    build_benchmark_model_summary_rows,
     build_benchmark_progress_state,
     update_benchmark_progress_from_records,
     update_benchmark_progress_state,
@@ -139,3 +142,145 @@ def test_benchmark_progress_state_rebuilds_from_records(gamedata):
     assert scene["selected_tool_id"] == "common.run"
     assert state["completed"] == 1
     assert state["remaining"] == 2
+
+
+def test_benchmark_model_summary_rows_rank_by_success_parse_failures_and_latency():
+    records = [
+        {
+            "benchmark_model": "model_b",
+            "model": "display_b",
+            "pass": True,
+            "parse_failure": False,
+            "latency_seconds": 2.0,
+        },
+        {
+            "benchmark_model": "model_b",
+            "model": "display_b",
+            "pass": False,
+            "parse_failure": False,
+            "reason_code": "wrong_tool",
+            "latency_seconds": 1.0,
+        },
+        {
+            "benchmark_model": "model_a",
+            "model": "display_a",
+            "pass": True,
+            "parse_failure": False,
+            "latency_seconds": 0.5,
+        },
+        {
+            "benchmark_model": "model_a",
+            "model": "display_a",
+            "pass": True,
+            "parse_failure": False,
+            "latency_seconds": 0.7,
+        },
+        {
+            "benchmark_model": "model_c",
+            "model": "display_c",
+            "pass": True,
+            "parse_failure": False,
+            "latency_seconds": 0.3,
+        },
+        {
+            "benchmark_model": "model_c",
+            "model": "display_c",
+            "pass": False,
+            "parse_failure": True,
+            "reason_code": "json_parse_error",
+            "latency_seconds": 0.4,
+        },
+    ]
+
+    rows = build_benchmark_model_summary_rows(records)
+
+    assert [row["model"] for row in rows] == ["model_a", "model_b", "model_c"]
+    assert rows[0]["success_rate"] == 100.0
+    assert rows[0]["avg_latency_seconds"] == 0.6
+    assert rows[1]["top_failure_codes"] == "wrong_tool (1)"
+    assert rows[2]["parse_failures"] == 1
+
+
+def test_benchmark_model_preset_rows_group_by_model_and_preset():
+    records = [
+        {
+            "benchmark_model": "model_a",
+            "preset": "BATTLE_PLAN",
+            "pass": True,
+            "parse_failure": False,
+            "latency_seconds": 1.0,
+        },
+        {
+            "benchmark_model": "model_a",
+            "preset": "BLIND_ADVENTURER",
+            "pass": False,
+            "parse_failure": True,
+            "reason_code": "json_parse_error",
+            "latency_seconds": 2.0,
+        },
+    ]
+
+    rows = build_benchmark_model_preset_rows(records)
+
+    assert rows == [
+        {
+            "model": "model_a",
+            "total_scenes": 1,
+            "passed_scenes": 1,
+            "failed_scenes": 0,
+            "parse_failures": 0,
+            "success_rate": 100.0,
+            "avg_latency_seconds": 1.0,
+            "top_failure_codes": "-",
+            "preset": "BATTLE_PLAN",
+        },
+        {
+            "model": "model_a",
+            "total_scenes": 1,
+            "passed_scenes": 0,
+            "failed_scenes": 1,
+            "parse_failures": 1,
+            "success_rate": 0.0,
+            "avg_latency_seconds": 2.0,
+            "top_failure_codes": "json_parse_error (1)",
+            "preset": "BLIND_ADVENTURER",
+        },
+    ]
+
+
+def test_benchmark_failure_rows_keep_only_debugging_columns():
+    records = [
+        {
+            "benchmark_model": "model_a",
+            "model": "display_a",
+            "preset": "BATTLE_PLAN",
+            "campaign_id": "campaign.tutorial_v1",
+            "character_id": "wizard.ember",
+            "scene_id": "scene.tutorial.001_goblin_alley",
+            "selected_tool_id": "common.run",
+            "pass": False,
+            "reason_code": "wrong_tool",
+            "reason": "Expected a safer action.",
+            "raw_model_output": "large noisy text",
+        },
+        {
+            "benchmark_model": "model_a",
+            "pass": True,
+            "reason": "",
+        },
+    ]
+
+    rows = build_benchmark_failure_rows(records)
+
+    assert rows == [
+        {
+            "model": "model_a",
+            "preset": "BATTLE_PLAN",
+            "campaign_id": "campaign.tutorial_v1",
+            "character_id": "wizard.ember",
+            "scene_id": "scene.tutorial.001_goblin_alley",
+            "selected_tool_id": "common.run",
+            "reason_code": "wrong_tool",
+            "reason": "Expected a safer action.",
+        }
+    ]

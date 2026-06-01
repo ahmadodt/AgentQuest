@@ -141,6 +141,116 @@ def aggregate_benchmark_records(records: list[dict[str, Any]]) -> dict[str, Any]
     }
 
 
+def build_benchmark_model_summary_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, dict[str, Any]] = {}
+    for record in records:
+        model = str(record.get("benchmark_model") or record.get("model") or "unknown")
+        row = grouped.setdefault(model, _empty_summary_row(model=model))
+        _add_record_to_summary_row(row, record)
+    return _finalize_summary_rows(list(grouped.values()))
+
+
+def build_benchmark_model_preset_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str], dict[str, Any]] = {}
+    for record in records:
+        model = str(record.get("benchmark_model") or record.get("model") or "unknown")
+        preset = str(record.get("preset") or "unknown")
+        key = (model, preset)
+        row = grouped.setdefault(key, _empty_summary_row(model=model, preset=preset))
+        _add_record_to_summary_row(row, record)
+    return _finalize_summary_rows(list(grouped.values()))
+
+
+def build_benchmark_failure_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for record in records:
+        if record.get("pass") is True:
+            continue
+        rows.append(
+            {
+                "model": str(record.get("benchmark_model") or record.get("model") or "unknown"),
+                "preset": record.get("preset", ""),
+                "campaign_id": record.get("campaign_id", ""),
+                "character_id": record.get("character_id", ""),
+                "scene_id": record.get("scene_id", ""),
+                "selected_tool_id": record.get("selected_tool_id", ""),
+                "reason_code": record.get("reason_code") or "unknown_reason",
+                "reason": record.get("reason", ""),
+            }
+        )
+    return rows
+
+
+def _empty_summary_row(*, model: str, preset: str | None = None) -> dict[str, Any]:
+    row: dict[str, Any] = {
+        "model": model,
+        "total_scenes": 0,
+        "passed_scenes": 0,
+        "failed_scenes": 0,
+        "parse_failures": 0,
+        "success_rate": 0.0,
+        "avg_latency_seconds": None,
+        "top_failure_codes": "-",
+        "_latency_values": [],
+        "_failure_codes": Counter(),
+    }
+    if preset is not None:
+        row["preset"] = preset
+    return row
+
+
+def _add_record_to_summary_row(row: dict[str, Any], record: dict[str, Any]) -> None:
+    row["total_scenes"] += 1
+    if record.get("pass") is True:
+        row["passed_scenes"] += 1
+    else:
+        row["failed_scenes"] += 1
+        reason_code = str(record.get("reason_code") or "unknown_reason")
+        row["_failure_codes"][reason_code] += 1
+    if record.get("parse_failure") is True:
+        row["parse_failures"] += 1
+    latency = record.get("latency_seconds")
+    if isinstance(latency, (int, float)):
+        row["_latency_values"].append(float(latency))
+
+
+def _finalize_summary_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    finalized: list[dict[str, Any]] = []
+    for row in rows:
+        total_scenes = row["total_scenes"]
+        passed_scenes = row["passed_scenes"]
+        latency_values = row.pop("_latency_values")
+        failure_codes = row.pop("_failure_codes")
+        row["success_rate"] = (passed_scenes / total_scenes * 100.0) if total_scenes else 0.0
+        row["avg_latency_seconds"] = (
+            sum(latency_values) / len(latency_values)
+            if latency_values
+            else None
+        )
+        row["top_failure_codes"] = _format_failure_codes(failure_codes)
+        finalized.append(row)
+
+    return sorted(
+        finalized,
+        key=lambda item: (
+            -item["success_rate"],
+            item["parse_failures"],
+            item["avg_latency_seconds"] if item["avg_latency_seconds"] is not None else float("inf"),
+            item["model"],
+            item.get("preset", ""),
+        ),
+    )
+
+
+def _format_failure_codes(failure_codes: Counter) -> str:
+    if not failure_codes:
+        return "-"
+    return ", ".join(
+        f"{reason_code} ({count})"
+        for reason_code, count in failure_codes.most_common(3)
+    )
+
+
 def _progress_key(event: dict[str, Any]) -> tuple[str, str, str, str, str, str]:
     return benchmark_item_key(
         model=str(event.get("model") or ""),

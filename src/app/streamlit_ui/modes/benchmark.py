@@ -11,6 +11,9 @@ from src.runner.benchmark_service import (
     run_benchmark_batch,
 )
 from src.runner.benchmark_utils import (
+    build_benchmark_failure_rows,
+    build_benchmark_model_preset_rows,
+    build_benchmark_model_summary_rows,
     build_benchmark_progress_state,
     update_benchmark_progress_from_records,
     update_benchmark_progress_state,
@@ -210,6 +213,66 @@ def _run_benchmark_step(
     st.session_state[BENCHMARK_SESSION_KEY] = session
     if not session["complete"] and not session.get("paused"):
         st.rerun()
+
+
+def _format_latency(value: Any) -> str:
+    if isinstance(value, (int, float)):
+        return f"{value:.2f}s"
+    return "-"
+
+
+def _render_benchmark_results(result: dict[str, Any]) -> None:
+    summary = result["summary"]
+    records = list(result.get("records") or [])
+    completed = summary.get("completed_scene_runs", summary.get("total_scenes", len(records)))
+    expected = summary.get("expected_scene_runs", summary.get("total_scenes", len(records)))
+    remaining = summary.get("remaining_scene_runs", max(expected - completed, 0))
+
+    st.subheader("Results")
+    metric_cols = st.columns(5)
+    metric_cols[0].metric("Completed", f"{completed}/{expected}")
+    metric_cols[1].metric("Success rate", f"{summary['success_rate']:.1f}%")
+    metric_cols[2].metric("Failed", summary["failed_scenes"])
+    metric_cols[3].metric("Parse failures", summary["parse_failures"])
+    metric_cols[4].metric("Remaining", remaining)
+
+    st.caption(f"Output: {result['output_dir']}")
+    if result.get("latest_dir"):
+        st.caption(f"Latest: {result['latest_dir']}")
+    st.caption(f"Dataset: {summary['dataset_id']}")
+
+    model_rows = build_benchmark_model_summary_rows(records)
+    for row in model_rows:
+        row["avg_latency"] = _format_latency(row.pop("avg_latency_seconds"))
+    st.markdown("**Model comparison**")
+    st.dataframe(model_rows, use_container_width=True, hide_index=True)
+
+    failure_rows = build_benchmark_failure_rows(records)
+    reason_rows = [
+        {"reason_code": reason_code, "count": count}
+        for reason_code, count in sorted(
+            (summary.get("failures_by_reason_code") or {}).items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+    ]
+    if reason_rows:
+        st.markdown("**Failure reasons**")
+        st.dataframe(reason_rows, use_container_width=True, hide_index=True)
+
+    with st.expander("Model and preset comparison", expanded=False):
+        preset_rows = build_benchmark_model_preset_rows(records)
+        for row in preset_rows:
+            row["avg_latency"] = _format_latency(row.pop("avg_latency_seconds"))
+        st.dataframe(preset_rows, use_container_width=True, hide_index=True)
+
+    with st.expander(f"Failed scenes ({len(failure_rows)})", expanded=False):
+        if failure_rows:
+            st.dataframe(failure_rows, use_container_width=True, hide_index=True)
+        else:
+            st.caption("No failed scenes.")
+
+    with st.expander("Raw records", expanded=False):
+        st.dataframe(records, use_container_width=True)
 
 
 def render_benchmark_mode(
@@ -416,17 +479,4 @@ def render_benchmark_mode(
     if not result:
         return
 
-    summary = result["summary"]
-    metric_cols = st.columns(5)
-    metric_cols[0].metric("Total scenes", summary["total_scenes"])
-    metric_cols[1].metric("Passed", summary["passed_scenes"])
-    metric_cols[2].metric("Failed", summary["failed_scenes"])
-    metric_cols[3].metric("Parse failures", summary["parse_failures"])
-    metric_cols[4].metric("Success rate", f"{summary['success_rate']:.1f}%")
-    st.caption(f"Output: {result['output_dir']}")
-    if result.get("latest_dir"):
-        st.caption(f"Latest: {result['latest_dir']}")
-    st.caption(f"Dataset: {summary['dataset_id']}")
-    if summary.get("failures_by_reason_code"):
-        st.json(summary["failures_by_reason_code"])
-    st.dataframe(result["records"], use_container_width=True)
+    _render_benchmark_results(result)
