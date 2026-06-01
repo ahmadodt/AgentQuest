@@ -14,7 +14,7 @@ Use the alias in `configs/run_config.json`:
 {
   "backend": "llama_cpp",
   "model": "qwen3_4b_q4_k_m",
-  "preset": "TOOL_MANUAL",
+  "preset": "BATTLE_PLAN",
   "prompt_format": "json_only"
 }
 ```

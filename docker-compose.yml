@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     environment:
       AGENTQUEST_DATA_DIR: ${AGENTQUEST_DATA_DIR:-/app/data}
-      AGENTQUEST_MODEL_PATH: ${AGENTQUEST_MODEL_PATH:-/app/local_models/Qwen_Qwen3-4B-Q4_K_L.gguf}
+      AGENTQUEST_MODEL: ${AGENTQUEST_MODEL:-qwen3_4b_q4_k_m}
       AGENTQUEST_RUNS_DIR: ${AGENTQUEST_RUNS_DIR:-/app/runs}
       AGENTQUEST_MODELS_DIR: ${AGENTQUEST_MODELS_DIR:-/app/local_models}
       STREAMLIT_SERVER_ADDRESS: ${STREAMLIT_SERVER_ADDRESS:-0.0.0.0}

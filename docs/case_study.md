@@ -40,10 +40,10 @@ Use one fixed slice for the flagship LinkedIn post:
 Recommended workflow:
 
 ```bash
-python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --preset BLIND_ADVENTURER --preset BATTLE_PLAN --preset FULL_INFO --prompt-format json_only --model-path ..\\local_models\\MODEL_A.gguf --output-dir runs\\benchmarks\\portfolio\\model_a
-python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --preset BLIND_ADVENTURER --preset BATTLE_PLAN --preset FULL_INFO --prompt-format json_only --model-path ..\\local_models\\MODEL_B.gguf --output-dir runs\\benchmarks\\portfolio\\model_b
-python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --preset BLIND_ADVENTURER --preset BATTLE_PLAN --preset FULL_INFO --prompt-format json_only --model-path ..\\local_models\\MODEL_C.gguf --output-dir runs\\benchmarks\\portfolio\\model_c
-python scripts/render_benchmark_report.py --benchmark-dir runs\\benchmarks\\portfolio\\model_a --label "Model A" --benchmark-dir runs\\benchmarks\\portfolio\\model_b --label "Model B" --benchmark-dir runs\\benchmarks\\portfolio\\model_c --label "Model C" --output docs\\portfolio_assets\\benchmark_report.md --summary-json docs\\portfolio_assets\\benchmark_report.json
+python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --preset BLIND_ADVENTURER --preset BATTLE_PLAN --preset FULL_INFO --prompt-format json_only --model qwen3_4b_q4_k_m --output-dir results\\benchmarks\\portfolio\\qwen3_4b
+python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --preset BLIND_ADVENTURER --preset BATTLE_PLAN --preset FULL_INFO --prompt-format json_only --model qwen2_5_3b_instruct_q5_k_m --output-dir results\\benchmarks\\portfolio\\qwen2_5_3b
+python scripts/run_benchmark.py --campaign-id campaign.goblin_den_v1 --character-id knight.bram --preset BLIND_ADVENTURER --preset BATTLE_PLAN --preset FULL_INFO --prompt-format json_only --model llama_3_2_3b_instruct_q4_k_m --output-dir results\\benchmarks\\portfolio\\llama_3_2_3b
+python scripts/render_benchmark_report.py --benchmark-dir results\\benchmarks\\portfolio\\qwen3_4b --label "Qwen3 4B" --benchmark-dir results\\benchmarks\\portfolio\\qwen2_5_3b --label "Qwen2.5 3B" --benchmark-dir results\\benchmarks\\portfolio\\llama_3_2_3b --label "Llama 3.2 3B" --output docs\\portfolio_assets\\benchmark_report.md --summary-json docs\\portfolio_assets\\benchmark_report.json
 ```
 
 ## What To Report

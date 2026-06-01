@@ -68,7 +68,6 @@ Examples:
 
 ```bash
 python -m src.runner.preview_prompt --preset BLIND_ADVENTURER
-python -m src.runner.preview_prompt --preset SCOUT_REPORT
 python -m src.runner.preview_prompt --preset BATTLE_PLAN
 python -m src.runner.preview_prompt --preset FULL_INFO
 ```
@@ -98,11 +97,10 @@ python -m src.runner.run_campaign
 - tool schemas are readable
 - JSON formatting is clean
 
-## README Changes
+## Streamlit Preset Options
 
-This README was updated to:
+All presets remain available to CLI runners and benchmark scripts. The Streamlit UI intentionally exposes only the main inspection presets:
 
-- point preset documentation at `src/prompts/presets.py`
-- replace the outdated preset examples with the current preset names
-- add the exact command needed to run `preview_prompt`
-- mention the related `run_one` and `run_campaign` commands
+- `BLIND_ADVENTURER`
+- `BATTLE_PLAN`
+- `FULL_INFO`

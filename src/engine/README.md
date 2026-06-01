@@ -1,152 +1,95 @@
-# Loader (`src/engine/loader.py`)
+# Engine Module
 
-## Purpose
+The engine layer loads game data and validates model-selected tool calls. It does not call models, build prompts, or render UI.
 
-Loads all game JSON files, validates them, and builds fast lookup maps.
+## Loader
 
-## Files Loaded
+`src/engine/loader.py` loads runtime JSON data, validates it, and builds lookup maps.
 
-- `tools.json` → tools list
-- `characters.json` → characters list
-- `monsters.json` → monsters list
-- `scenes.json` → scenes list
+Loaded records:
 
-## What It Builds
+- `tools.json` -> tools list
+- `characters.json` -> characters list
+- `monsters.json` -> monsters list
+- `scenes.json` -> scenes list
+- `campaigns.json` -> campaign list when present
+
+Lookup maps:
 
 - `tools_by_id`
 - `characters_by_id`
 - `monsters_by_id`
 - `scenes_by_id`
+- `campaigns_by_id`
 
-These convert list-based JSON data into O(1) lookup dictionaries.
+Loader validation checks:
 
-## What It Validates
+- required fields exist
+- ids exist and are unique
+- tool argument schemas are coherent (`required` is a subset of `properties`)
+- characters reference valid `tool_ids`
+- character class matches tool `allowed_classes`
+- scenes reference valid monsters
+- scene escape rules are consistent with monster escape rules
 
-- Required fields exist
-- IDs exist and are unique
-- Tool argument schemas are coherent (`required ⊆ properties`)
-- Characters reference valid `tool_ids`
-- Character class matches tool `allowed_classes`
-- Scenes reference valid `character_id` and `monster_id`
-- Scene `no_escape` is consistent with monster `escape_allowed`
+The loader only ensures the world data is structurally valid before runners execute.
 
-## What It Does NOT Do
+## Validator Pipeline
 
-- No gameplay execution
-- No model/tool-call validation
-- No combat resolution
-- No scene outcome calculation
+The validator system is the deterministic rule engine behind AgentQuest. The LLM chooses an action, then the validator decides whether that action is structurally valid, legally possible, and successful in the current scene.
 
-The loader only ensures the world data is structurally valid before the engine runs.
-
----
-
-# Validators (`src/engine/*`)
-
-The validator system is the core rule engine behind AgentQuest.
-
-The LLM chooses an action, but the validator decides whether that action is structurally valid, legally possible, and successful in the current fantasy scene.
-
-## Purpose
-
-Validate an agent/tool output in layers, so failures are easy to diagnose:
-
-- **AST validation** = output format and argument correctness
-- **Hard validation** = feasibility and permissions: can the character do it?
-- **Soft validation** = scene outcome: does it work in this situation?
-
-This separation lets the engine distinguish between:
-
-1. Bad output shape
-2. Illegal action
-3. Valid but ineffective decision
-4. Successful action
-
----
-
-## Files
-
-### `validator_ast.py`
-
-**Purpose:** Stage 1 AST validation: tool-call structure and argument correctness.
-
-**Checks**
-
-- Output is valid JSON
-- Output contains exactly `tool_id` and `arguments`
-- `tool_id` exists in the tools catalog
-- `tool_id` is visible/allowed in the current context through `visible_tool_ids`
-- Required arguments are present
-- Extra arguments are rejected
-- Argument types are correct
-- Enum, minimum, and maximum rules are respected when defined
-
-**Does NOT**
-
-- Check inventory or trait feasibility
-- Check character permissions
-- Check scene or monster outcome logic
-
----
-
-### `validator_hard.py`
-
-**Purpose:** Stage 2 hard feasibility validation: permissions and constraints.
-
-**Checks**
-
-- Character exists
-- Tool exists as a safety check
-- Tool is available to the character: `tool_id in character.tool_ids`
-- Tool class constraint passes through `allowed_classes`
-- Required inventory is present
-- Forbidden traits are not present
-
-**Does NOT**
-
-- Parse model output or validate JSON structure
-- Validate argument types, enums, minimums, or maximums
-- Decide whether the action succeeds against the scene or monster
-
----
-
-### `validator_soft.py`
-
-**Purpose:** Stage 3 soft outcome validation: scene and monster result logic.
-
-**Checks**
-
-- Escape attempts against scene `no_escape` rules
-- Escape attempts against monster `escape_allowed` rules
-- Knowledge encounters using effects like `knowledge_gain`
-- Monster defeat checks using `base_power`, `damage_type`, modifiers, and `min_power_to_defeat`
-
-**Does NOT**
-
-- Parse model output
-- Check tool schema correctness
-- Enforce character permissions, inventory, or trait constraints
-
----
-
-### `validator_utils.py`
-
-**Purpose:** Shared helper functions for validator modules.
-
-**Contains helpers for**
-
-- Building invalid verdict dictionaries
-- Looking up characters, tools, scenes, and monsters
-- Reading tool constraints and effects
-- Computing effective attack power against monster modifiers
-
----
-
-### `validator.py`
-
-**Purpose:** Contains the `ToolCallValidator` pipeline class.
-
-The pipeline runs:
+Pipeline:
 
 ```text
-AST validation → hard validation → soft validation → final verdict
+AST validation -> hard validation -> soft validation -> final verdict
+```
+
+This separation keeps failures easy to diagnose:
+
+- AST validation: bad JSON, unknown tool, invisible tool, or invalid arguments.
+- Hard validation: legal tool-call shape, but the character cannot use the tool.
+- Soft validation: legal action, but it does not solve the scene.
+
+## Validator Files
+
+`validator.py` contains `ToolCallValidator`, the pipeline class that coordinates all validation stages.
+
+`validation/validator_ast.py` checks:
+
+- output is valid JSON
+- output contains exactly `tool_id` and `arguments`
+- `tool_id` exists in the tool catalog
+- `tool_id` is visible in the current context
+- required arguments are present
+- extra arguments are rejected
+- argument types, enums, minimums, and maximums are respected
+
+`validation/validator_hard.py` checks:
+
+- character exists
+- tool exists
+- tool is assigned to the character
+- class constraints pass
+- required inventory is present
+- forbidden traits are absent
+
+`validation/validator_soft.py` checks:
+
+- escape attempts against scene and monster rules
+- knowledge encounters
+- monster defeat using `base_power`, `damage_type`, modifiers, and `min_power_to_defeat`
+- scene objective and effect-tag rules
+
+`validation/validator_utils.py` contains shared lookup, verdict, constraint, effect, and power-calculation helpers.
+
+## Boundaries
+
+The engine does not:
+
+- call model backends
+- construct prompts
+- render Streamlit UI
+- write benchmark reports
+- decide campaign ordering
+
+Those responsibilities live in `src/models/`, `src/prompts/`, `src/app/`, and `src/runner/`.
