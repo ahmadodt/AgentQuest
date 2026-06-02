@@ -473,6 +473,7 @@ def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_pat
     assert "- constraints:" not in battle_messages[1]["content"]
     assert "- validation_rules:" not in battle_messages[1]["content"]
     assert "- resolved_damage_modifiers:" not in battle_messages[1]["content"]
+    assert "- tags:" not in battle_messages[1]["content"]
     assert "- description: Sticky but simple." in battle_messages[1]["content"]
     assert '- constraints: {"exactly_one_tool_call": true, "no_escape": true}' in full_messages[1]["content"]
     assert (
@@ -480,6 +481,7 @@ def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_pat
         '"required_effect_tags": ["defense"], "forbidden_effect_tags": ["escape"]}'
     ) in full_messages[1]["content"]
     assert '- resolved_damage_modifiers: {"fire": 2.0, "force": 1.5}' in full_messages[1]["content"]
+    assert '- tags: ["ooze"]' in full_messages[1]["content"]
     assert "- description: Sticky but simple." in full_messages[1]["content"]
 
 
@@ -532,6 +534,7 @@ def test_battle_plan_includes_defeat_objective_guidance_without_debug_fields(tmp
     assert "First satisfy the scene objective." in user_message
     assert "- validation_rules:" not in user_message
     assert "- resolved_damage_modifiers:" not in user_message
+    assert "- tags:" not in user_message
 
 
 def test_solve_encounter_objective_guidance_uses_preferred_effects(tmp_path):

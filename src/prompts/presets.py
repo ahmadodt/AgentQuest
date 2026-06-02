@@ -101,6 +101,7 @@ BATTLE_PLAN = PromptConfig(
     include_validation_rules=False,
 
     monster_detail_level="stats",
+    monster_include_tags=False,
 
     tools_include_label_emoji=False,
     tools_include_constraints=False,

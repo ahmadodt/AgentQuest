@@ -5,7 +5,8 @@ from src.prompts.prompt_config import PromptConfig
 from src.prompts.tool_renderers.compact_tools import render_tools_compact
 
 
-def _render_monster(monster: Dict[str, Any], level: str) -> str:
+def _render_monster(monster: Dict[str, Any], cfg: PromptConfig) -> str:
+    level = cfg.monster_detail_level
     if level == "none" or not monster:
         return ""
 
@@ -25,14 +26,14 @@ def _render_monster(monster: Dict[str, Any], level: str) -> str:
     if level == "basic":
         return "\n".join(lines).strip()
 
-    # stats (+tags, weaknesses, resistances, immunities, special_rules, escape_allowed)
+    # stats (+optional tags, weaknesses, resistances, immunities, special_rules, escape_allowed)
     tags = monster.get("tags", [])
     weaknesses = monster.get("weaknesses", [])
     resistances = monster.get("resistances", [])
     immunities = monster.get("immunities", [])
     special_rules = monster.get("special_rules", [])
 
-    if tags:
+    if cfg.monster_include_tags and tags:
         lines.append(f"- tags: {json.dumps(tags)}")
     if weaknesses:
         lines.append(f"- weaknesses: {json.dumps(weaknesses)}")
@@ -192,9 +193,9 @@ def _build_monster_block(
     mid = scene.get("monster_id")
     llm_monsters_by_id = gamedata.get("llm_monsters_by_id", {})
     if mid and mid in llm_monsters_by_id:
-        return _render_monster(llm_monsters_by_id[mid], cfg.monster_detail_level)
+        return _render_monster(llm_monsters_by_id[mid], cfg)
     if mid and mid in gamedata.get("monsters_by_id", {}):
-        return _render_monster(gamedata["monsters_by_id"][mid], cfg.monster_detail_level)
+        return _render_monster(gamedata["monsters_by_id"][mid], cfg)
     return ""
 
 

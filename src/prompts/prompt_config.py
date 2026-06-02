@@ -23,6 +23,7 @@ class PromptConfig:
 
     # Monster detail: none | basic | stats | full
     monster_detail_level: str = "none"  # start conservative
+    monster_include_tags: bool = True
 
     # Tools
     tools_include_label_emoji: bool = False
