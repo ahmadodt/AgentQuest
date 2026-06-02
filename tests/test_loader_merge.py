@@ -483,6 +483,82 @@ def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_pat
     assert "- description: Sticky but simple." in full_messages[1]["content"]
 
 
+def test_battle_plan_includes_defeat_objective_guidance_without_debug_fields(tmp_path):
+    dataset = _base_custom_dataset()
+    dataset["monsters"]["monsters"][0]["interactions"]["escape_allowed"] = True
+    dataset["monsters"]["monsters"][0]["damage_profile"] = "slime_profile"
+    dataset["monsters"]["monsters"][0]["damage_modifier_overrides"] = {"fire": 2.0}
+    dataset["scenes"]["scenes"][0]["validation_rules"] = {
+        "mode": "standard",
+        "allow_escape_as_success": False,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": [],
+    }
+    _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)
+    _write_json(
+        os.path.join(tmp_path, "custom", "agentquest", "damage_profiles.json"),
+        {
+            "version": "1.0",
+            "profiles": {
+                "slime_profile": {
+                    "fire": 2.0,
+                    "force": 1.0,
+                }
+            },
+        },
+    )
+
+    gamedata = load_gamedata(str(tmp_path))
+    character = gamedata["characters_by_id"]["mage.aria"]
+    scene = gamedata["scenes_by_id"]["scene.slime"]
+    visible_tools = [gamedata["tools_by_id"][tool_id] for tool_id in character["tool_ids"]]
+
+    from src.prompts.presets import BATTLE_PLAN
+
+    messages = build_messages(
+        scene=scene,
+        character=character,
+        visible_tools=visible_tools,
+        gamedata=gamedata,
+        cfg=BATTLE_PLAN,
+    )
+
+    user_message = messages[1]["content"]
+    assert "OBJECTIVE GUIDANCE:" in user_message
+    assert "For defeat_monster, choose a tool with combat_effect: true." in user_message
+    assert "Prefer a damage_type that matches visible weaknesses" in user_message
+    assert "The success_condition outranks narrative flavor" in user_message
+    assert "DECISION POLICY:" in user_message
+    assert "First satisfy the scene objective." in user_message
+    assert "- validation_rules:" not in user_message
+    assert "- resolved_damage_modifiers:" not in user_message
+
+
+def test_solve_encounter_objective_guidance_uses_preferred_effects(tmp_path):
+    dataset = _base_custom_dataset()
+    dataset["scenes"]["scenes"][0]["success_condition"] = {
+        "type": "solve_encounter",
+        "preferred_effects": ["mitigation"],
+    }
+    _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)
+
+    gamedata = load_gamedata(str(tmp_path))
+    character = gamedata["characters_by_id"]["mage.aria"]
+    scene = gamedata["scenes_by_id"]["scene.slime"]
+    visible_tools = [gamedata["tools_by_id"][tool_id] for tool_id in character["tool_ids"]]
+    messages = build_messages(
+        scene=scene,
+        character=character,
+        visible_tools=visible_tools,
+        gamedata=gamedata,
+        cfg=PromptConfig(tools_include_effects=True),
+    )
+
+    user_message = messages[1]["content"]
+    assert 'For solve_encounter, prefer tools matching preferred_effects: ["mitigation"].' in user_message
+    assert "Do not default to attacking unless combat is the objective or the preferred effect." in user_message
+
+
 def test_build_messages_includes_learning_notes_when_provided(tmp_path):
     dataset = _base_custom_dataset()
     _write_runtime_dataset(str(tmp_path), dataset, use_custom_subdir=True)

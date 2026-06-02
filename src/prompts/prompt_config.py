@@ -18,6 +18,8 @@ class PromptConfig:
     include_failure_condition: bool = True
     include_scene_constraints: bool = False
     include_validation_rules: bool = False
+    include_objective_guidance: bool = True
+    include_decision_policy: bool = True
 
     # Monster detail: none | basic | stats | full
     monster_detail_level: str = "none"  # start conservative

@@ -109,6 +109,53 @@ def _render_scene(scene: Dict[str, Any], cfg: PromptConfig) -> str:
     return "\n".join(lines).strip()
 
 
+def _render_objective_guidance(scene: Dict[str, Any]) -> str:
+    success_condition = scene.get("success_condition")
+    success_type = ""
+    preferred_effects: List[Any] = []
+    if isinstance(success_condition, dict):
+        success_type = str(success_condition.get("type") or "")
+        raw_preferred_effects = success_condition.get("preferred_effects")
+        if isinstance(raw_preferred_effects, list):
+            preferred_effects = raw_preferred_effects
+
+    lines = [
+        "- Choose the tool that best satisfies the scene success_condition, not just a plausible story action.",
+        "- The success_condition outranks narrative flavor and permissive monster fields such as escape_allowed.",
+    ]
+
+    if success_type == "defeat_monster":
+        lines.extend(
+            [
+                "- For defeat_monster, choose a tool with combat_effect: true.",
+                "- Prefer a damage_type that matches visible weaknesses and avoid visible resistances or immunities.",
+                "- Do not choose escape, defense, or knowledge tools unless the scene objective asks for them.",
+            ]
+        )
+    elif success_type == "solve_encounter":
+        if preferred_effects:
+            lines.append(
+                "- For solve_encounter, prefer tools matching preferred_effects: "
+                f"{json.dumps(preferred_effects)}."
+            )
+        else:
+            lines.append("- For solve_encounter, choose the tool whose effects best match the scene problem.")
+        lines.append("- Do not default to attacking unless combat is the objective or the preferred effect.")
+
+    return "\n".join(lines).strip()
+
+
+def _render_decision_policy() -> str:
+    return "\n".join(
+        [
+            "- First satisfy the scene objective.",
+            "- Then provide exactly the required arguments from the chosen tool schema.",
+            "- Then choose the strongest visibly relevant effect among otherwise suitable tools.",
+            "- Return only the JSON object.",
+        ]
+    )
+
+
 def _build_visible_tool_block(
     visible_tools: List[Dict[str, Any]],
     gamedata: Optional[Dict[str, Any]],
@@ -182,6 +229,12 @@ def build_json_only_messages(
 
     if monster_block:
         user_parts.append("MONSTER INFO:\n" + monster_block)
+
+    if cfg.include_objective_guidance:
+        user_parts.append("OBJECTIVE GUIDANCE:\n" + _render_objective_guidance(scene))
+
+    if cfg.include_decision_policy:
+        user_parts.append("DECISION POLICY:\n" + _render_decision_policy())
 
     if learning_notes.strip():
         user_parts.append(
