@@ -38,7 +38,7 @@ def test_collect_dataset_metadata_reads_versions_and_hashes(tmp_path):
 
     metadata = collect_dataset_metadata(str(tmp_path))
 
-    assert metadata["dataset_id"].startswith("custom_t1_4_chars1_2_m1_4_s1_2_camps1_1_dmg1_0_")
+    assert metadata["dataset_id"] == "custom_t1_4_chars1_2_m1_4_s1_2_camps1_1_dmg1_0"
     assert len(metadata["dataset_fingerprint"]) == 64
     assert metadata["files"]["tools"]["version"] == "1.4"
     assert metadata["files"]["campaigns"]["path"] == os.path.join("custom", "agentquest", "campaigns.json")
@@ -61,7 +61,7 @@ def test_collect_dataset_metadata_fingerprint_changes_when_content_changes(tmp_p
     )
     second = collect_dataset_metadata(str(tmp_path))
 
-    assert first["dataset_id"] != second["dataset_id"]
+    assert first["dataset_id"] == second["dataset_id"]
     assert first["dataset_fingerprint"] != second["dataset_fingerprint"]
 
 

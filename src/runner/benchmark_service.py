@@ -119,7 +119,7 @@ def collect_dataset_metadata(data_dir: str) -> dict[str, Any]:
         version_segments.append(f"{slug_prefix}{_version_slug(version)}")
 
     fingerprint = combined.hexdigest()
-    dataset_id = safe_path_segment(f"custom_{'_'.join(version_segments)}_{fingerprint[:8]}")
+    dataset_id = safe_path_segment(f"custom_{'_'.join(version_segments)}")
     return {
         "dataset_id": dataset_id,
         "dataset_fingerprint": fingerprint,
