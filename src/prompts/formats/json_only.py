@@ -57,6 +57,9 @@ def _render_monster(monster: Dict[str, Any], level: str) -> str:
         full_interactions = {k: v for k, v in interactions.items() if k != "escape_allowed"}
         if full_interactions:
             lines.append(f"- interactions: {json.dumps(full_interactions)}")
+    resolved_damage_modifiers = monster.get("resolved_damage_modifiers")
+    if isinstance(resolved_damage_modifiers, dict) and resolved_damage_modifiers:
+        lines.append(f"- resolved_damage_modifiers: {json.dumps(resolved_damage_modifiers)}")
 
     return "\n".join(lines).strip()
 

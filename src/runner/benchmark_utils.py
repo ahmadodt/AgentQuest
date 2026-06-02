@@ -181,6 +181,49 @@ def build_benchmark_failure_rows(records: list[dict[str, Any]]) -> list[dict[str
     return rows
 
 
+def build_benchmark_failure_reason_rows(
+    records: list[dict[str, Any]],
+    *,
+    include_preset: bool = False,
+) -> list[dict[str, Any]]:
+    grouped: Counter[tuple[str, ...]] = Counter()
+    for record in records:
+        if record.get("pass") is True:
+            continue
+        model = str(record.get("benchmark_model") or record.get("model") or "unknown")
+        reason_code = str(record.get("reason_code") or "unknown_reason")
+        if include_preset:
+            grouped[(model, str(record.get("preset") or "unknown"), reason_code)] += 1
+        else:
+            grouped[(model, reason_code)] += 1
+
+    rows: list[dict[str, Any]] = []
+    for key, count in grouped.items():
+        if include_preset:
+            model, preset, reason_code = key
+            rows.append(
+                {
+                    "model": model,
+                    "preset": preset,
+                    "reason_code": reason_code,
+                    "count": count,
+                }
+            )
+        else:
+            model, reason_code = key
+            rows.append(
+                {
+                    "model": model,
+                    "reason_code": reason_code,
+                    "count": count,
+                }
+            )
+
+    if include_preset:
+        return sorted(rows, key=lambda item: (item["model"], item["preset"], -item["count"], item["reason_code"]))
+    return sorted(rows, key=lambda item: (item["model"], -item["count"], item["reason_code"]))
+
+
 def _empty_summary_row(*, model: str, preset: str | None = None) -> dict[str, Any]:
     row: dict[str, Any] = {
         "model": model,

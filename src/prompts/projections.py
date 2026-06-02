@@ -35,6 +35,7 @@ def project_monster_for_llm(monster: Dict[str, Any]) -> Dict[str, Any]:
         "immunities": list(monster.get("immunities", [])),
         "special_rules": list(monster.get("special_rules", [])),
         "interactions": projected_interactions,
+        "resolved_damage_modifiers": dict(monster.get("resolved_damage_modifiers", {}) or {}),
     }
 
 

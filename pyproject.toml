@@ -6,9 +6,14 @@ build-backend = "setuptools.build_meta"
 name = "agentquest"
 version = "0.1.0"
 description = "Playable AI-agent RPG for visible LLM tool use"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "streamlit",
+]
+
+[project.optional-dependencies]
+llama-cpp = [
+    "llama-cpp-python==0.3.24",
 ]
 
 [tool.setuptools.packages.find]

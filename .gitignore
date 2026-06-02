@@ -16,3 +16,6 @@ data/raw/open5e/*.json
 # Generated converted datasets
 data/generated/open5e/*.json
 agentquest.egg-info/
+notes.md
+runs_old/
+results/

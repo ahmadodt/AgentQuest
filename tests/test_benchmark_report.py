@@ -1,6 +1,11 @@
 from src.runner.benchmark_report import (
+    build_showcase_failure_reason_rows,
+    build_showcase_full_info_failure_rows,
+    build_showcase_model_preset_rows,
+    build_showcase_model_summary_rows,
     load_benchmark_bundle,
     render_markdown_report,
+    render_showcase_markdown,
     summarize_benchmark_bundles,
 )
 from src.runner.runner_utils import write_json_file
@@ -128,3 +133,138 @@ def test_render_markdown_report_lists_models_and_failure_codes(tmp_path):
     assert "Model B" in markdown
     assert "illegal_tool" in markdown
     assert "BATTLE_PLAN" in markdown
+
+
+def test_showcase_summary_groups_model_matrix_records_by_benchmark_model():
+    records = [
+        {
+            "benchmark_model": "model_b",
+            "model": "display_b",
+            "preset": "FULL_INFO",
+            "pass": True,
+            "parse_failure": False,
+            "latency_seconds": 2.0,
+        },
+        {
+            "benchmark_model": "model_b",
+            "model": "display_b",
+            "preset": "FULL_INFO",
+            "pass": False,
+            "parse_failure": False,
+            "reason_code": "insufficient_effective_power",
+            "latency_seconds": 4.0,
+        },
+        {
+            "benchmark_model": "model_a",
+            "model": "display_a",
+            "preset": "BATTLE_PLAN",
+            "pass": True,
+            "parse_failure": False,
+            "latency_seconds": 1.0,
+        },
+    ]
+
+    rows = build_showcase_model_summary_rows(records)
+
+    assert rows[0]["model"] == "model_a"
+    assert rows[0]["success_rate"] == 100.0
+    assert rows[1]["model"] == "model_b"
+    assert rows[1]["passed_scenes"] == 1
+    assert rows[1]["failed_scenes"] == 1
+    assert rows[1]["top_failure_codes"] == "insufficient_effective_power (1)"
+
+
+def test_showcase_preset_and_failure_reason_rows_separate_presets():
+    records = [
+        {
+            "benchmark_model": "model_a",
+            "preset": "FULL_INFO",
+            "pass": False,
+            "parse_failure": False,
+            "reason_code": "wrong_tool",
+        },
+        {
+            "benchmark_model": "model_a",
+            "preset": "BATTLE_PLAN",
+            "pass": False,
+            "parse_failure": True,
+            "reason_code": "json_parse_error",
+        },
+    ]
+
+    preset_rows = build_showcase_model_preset_rows(records)
+    reason_rows = build_showcase_failure_reason_rows(records)
+
+    assert {row["preset"] for row in preset_rows} == {"FULL_INFO", "BATTLE_PLAN"}
+    assert reason_rows == [
+        {"model": "model_a", "preset": "BATTLE_PLAN", "reason_code": "json_parse_error", "count": 1},
+        {"model": "model_a", "preset": "FULL_INFO", "reason_code": "wrong_tool", "count": 1},
+    ]
+
+
+def test_showcase_full_info_failure_rows_preserve_tool_context():
+    records = [
+        {
+            "benchmark_model": "model_a",
+            "preset": "FULL_INFO",
+            "pass": False,
+            "scene_index": 2,
+            "scene_id": "scene.alpha",
+            "character_id": "wizard.ember",
+            "selected_tool_id": "wizard.cast_fireball",
+            "valid_tools": ["wizard.cast_frostbolt", "wizard.cast_lightning"],
+            "reason_code": "insufficient_effective_power",
+            "reason": "effective_power=3.0 < min_power_to_defeat=5",
+        },
+        {
+            "benchmark_model": "model_a",
+            "preset": "BATTLE_PLAN",
+            "pass": False,
+            "scene_id": "scene.beta",
+        },
+    ]
+
+    rows = build_showcase_full_info_failure_rows(records)
+
+    assert rows == [
+        {
+            "model": "model_a",
+            "scene_index": 2,
+            "scene_id": "scene.alpha",
+            "character_id": "wizard.ember",
+            "selected_tool_id": "wizard.cast_fireball",
+            "valid_tools": "wizard.cast_frostbolt, wizard.cast_lightning",
+            "reason_code": "insufficient_effective_power",
+            "reason": "effective_power=3.0 < min_power_to_defeat=5",
+        }
+    ]
+
+
+def test_render_showcase_markdown_includes_core_sections(tmp_path):
+    benchmark_dir = _write_bundle(
+        tmp_path,
+        "model_matrix",
+        model="",
+        records=[
+            {
+                "benchmark_model": "model_a",
+                "preset": "FULL_INFO",
+                "pass": False,
+                "parse_failure": False,
+                "reason_code": "wrong_tool",
+                "scene_id": "scene.alpha",
+                "character_id": "wizard.ember",
+            }
+        ],
+        summary={"dataset_id": "custom_t1_0"},
+    )
+    bundle = load_benchmark_bundle(benchmark_dir)
+
+    markdown = render_showcase_markdown(bundle, title="Showcase")
+
+    assert "# Showcase" in markdown
+    assert "## Model Leaderboard" in markdown
+    assert "## Model By Preset" in markdown
+    assert "## Full Info Failures" in markdown
+    assert "model_a" in markdown
+    assert "wrong_tool" in markdown
