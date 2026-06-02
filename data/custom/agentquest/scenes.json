@@ -190,7 +190,7 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": [
-          "area_fire"
+          "elemental_fire"
         ]
       },
       "ui": {

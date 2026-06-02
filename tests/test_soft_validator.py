@@ -142,6 +142,19 @@ def test_soft_escape_scene_rejects_non_escape_tool(gamedata):
     assert verdict["reason_code"] == "missing_escape_effect"
 
 
+def test_soft_alchemist_lab_rejects_elemental_fire_tools(gamedata):
+    verdict = soft_validate_tool_call(
+        gamedata=gamedata,
+        scene_id="scene.goblin_den.004_alchemist_lab",
+        tool_id="wizard.cast_fireball",
+    )
+
+    assert verdict["soft_valid"] is False
+    assert verdict["outcome"] == "failure"
+    assert verdict["reason_code"] == "forbidden_effect_tag"
+    assert "elemental_fire" in verdict["reason"]
+
+
 def test_soft_new_character_scene_pairings_succeed(gamedata):
     rogue_verdict = soft_validate_tool_call(
         gamedata=gamedata,
