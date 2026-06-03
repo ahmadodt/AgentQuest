@@ -280,7 +280,7 @@
       },
       "effects": {
         "damage_type": "fire",
-        "base_power": 4,
+        "base_power": 5,
         "combat_effect": true,
         "effect_tags": ["ranged", "physical", "elemental_fire", "thrown", "light"]
       },
@@ -462,7 +462,7 @@
       },
       "effects": {
         "damage_type": "fire",
-        "base_power": 4,
+        "base_power": 5,
         "combat_effect": true,
         "effect_tags": ["ranged", "physical", "elemental_fire", "thrown"]
       }
