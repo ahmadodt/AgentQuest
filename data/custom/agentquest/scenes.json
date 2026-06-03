@@ -564,6 +564,33 @@
       }
     },
     {
+      "scene_id": "scene.decision_lab.004b_steam_core",
+      "title": "Steam Core Overload",
+      "location": "Boiler Vault",
+      "monster_id": "custom.overheated_steam_core",
+      "narrative": "A brass engine lurches out of the boiler haze, glowing red around its pressure core. Flame feeds it, water flashes off as steam, and only a freezing strike can seize the mechanism long enough to break it.",
+      "knowledge_level": "medium",
+      "constraints": {
+        "exactly_one_tool_call": true
+      },
+      "success_condition": {
+        "type": "defeat_monster"
+      },
+      "failure_condition": {
+        "type": "not_defeated"
+      },
+      "validation_rules": {
+        "mode": "standard",
+        "allow_escape_as_success": false,
+        "required_effect_tags": [],
+        "forbidden_effect_tags": []
+      },
+      "ui": {
+        "monster_image_key": "flame_elemental",
+        "background_image_key": "gate"
+      }
+    },
+    {
       "scene_id": "scene.decision_lab.005_mirror_beam_hall",
       "title": "Mirror Beam Hall",
       "location": "Silvered Corridor",

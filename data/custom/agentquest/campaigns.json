@@ -68,9 +68,10 @@
     {
       "campaign_id": "campaign.benchmark_core_v1",
       "name": "Core Benchmark",
-      "description": "Broad benchmark slice combining storyline combat, enemy transfer, hazards, knowledge checks, defense, and escape without tutorial scenes or duplicate subset campaigns.",
+      "description": "Broad benchmark slice combining storyline combat, elemental counters, enemy transfer, hazards, knowledge checks, defense, and escape without duplicate subset campaigns.",
       "type": "benchmark",
       "scene_ids": [
+        "scene.tutorial.003_flame_gate",
         "scene.goblin_den.001_outer_watch",
         "scene.goblin_den.002_shadow_scout",
         "scene.goblin_den.003_shield_line",
@@ -88,6 +89,7 @@
         "scene.decision_lab.002_flooded_warning",
         "scene.decision_lab.003_powder_keg_walkway",
         "scene.decision_lab.004_ice_chain_bridge",
+        "scene.decision_lab.004b_steam_core",
         "scene.decision_lab.005_mirror_beam_hall",
         "scene.decision_lab.006_portcullis_drop",
         "scene.decision_lab.007_collapsing_tunnel",
@@ -104,6 +106,7 @@
         "scene.decision_lab.002_flooded_warning",
         "scene.decision_lab.003_powder_keg_walkway",
         "scene.decision_lab.004_ice_chain_bridge",
+        "scene.decision_lab.004b_steam_core",
         "scene.decision_lab.005_mirror_beam_hall",
         "scene.decision_lab.006_portcullis_drop",
         "scene.decision_lab.007_collapsing_tunnel",
@@ -119,6 +122,7 @@
         "scene.decision_lab.001_archive_lock",
         "scene.decision_lab.003_powder_keg_walkway",
         "scene.decision_lab.004_ice_chain_bridge",
+        "scene.decision_lab.004b_steam_core",
         "scene.decision_lab.005_mirror_beam_hall",
         "scene.decision_lab.007_collapsing_tunnel",
         "scene.decision_lab.008_hornet_retreat"

@@ -80,7 +80,6 @@
         "guardian"
       ],
       "weaknesses": [
-        "cold",
         "water"
       ],
       "resistances": [
@@ -95,7 +94,10 @@
         "no_escape_guardian"
       ],
       "damage_profile": "fire_elemental",
-      "damage_modifier_overrides": {},
+      "damage_modifier_overrides": {
+        "cold": 0.8,
+        "magic": 0.8
+      },
       "interactions": {
         "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
@@ -253,7 +255,10 @@
         "slashing": 0.6,
         "bludgeoning": 0.5,
         "piercing": 0.7,
-        "fire": 1.5
+        "fire": 1.5,
+        "cold": 0.7,
+        "water": 0.7,
+        "magic": 0.7
       },
       "interactions": {
         "min_power_to_defeat": 5,
@@ -643,7 +648,10 @@
       "damage_profile": "basic_flesh",
       "damage_modifier_overrides": {
         "bludgeoning": 0.5,
-        "piercing": 1.2
+        "piercing": 1.2,
+        "cold": 0.4,
+        "water": 0.4,
+        "magic": 0.4
       },
       "interactions": {
         "min_power_to_defeat": 3,
@@ -720,7 +728,9 @@
       "damage_modifier_overrides": {
         "slashing": 0.9,
         "bludgeoning": 0.7,
-        "piercing": 1.2
+        "piercing": 1.2,
+        "cold": 0.7,
+        "water": 0.7
       },
       "interactions": {
         "min_power_to_defeat": 5,
@@ -838,7 +848,9 @@
         "slashing": 0.8,
         "bludgeoning": 0.7,
         "piercing": 1.2,
-        "fire": 1.2
+        "fire": 1.2,
+        "cold": 0.7,
+        "water": 0.7
       },
       "interactions": {
         "min_power_to_defeat": 5,
@@ -949,6 +961,8 @@
         "bludgeoning": 0.8,
         "piercing": 1.2,
         "fire": 0.0,
+        "cold": 0.8,
+        "water": 0.8,
         "magic": 1.2
       },
       "interactions": {
@@ -987,11 +1001,55 @@
         "slashing": 0.8,
         "piercing": 0.9,
         "bludgeoning": 1.2,
+        "cold": 0.7,
         "water": 0.0,
         "magic": 1.2
       },
       "interactions": {
         "min_power_to_defeat": 5,
+        "knowledge_tools_help": false,
+        "escape_allowed": true
+      }
+    },
+    {
+      "monster_id": "custom.overheated_steam_core",
+      "name": "Overheated Steam Core",
+      "type": "construct",
+      "description": "A cracked brass engine stomps forward, its red-hot core venting pressure with every step.",
+      "tags": [
+        "construct",
+        "fire",
+        "overheated",
+        "armor",
+        "elemental_counter"
+      ],
+      "weaknesses": [
+        "cold",
+        "bludgeoning",
+        "piercing"
+      ],
+      "resistances": [
+        "fire",
+        "water",
+        "magic",
+        "slashing"
+      ],
+      "immunities": [],
+      "special_rules": [
+        "cold_shuts_core"
+      ],
+      "damage_profile": "armored",
+      "damage_modifier_overrides": {
+        "slashing": 0.5,
+        "bludgeoning": 1.2,
+        "piercing": 1.2,
+        "fire": 0.0,
+        "cold": 1.4,
+        "water": 0.8,
+        "magic": 0.7
+      },
+      "interactions": {
+        "min_power_to_defeat": 6,
         "knowledge_tools_help": false,
         "escape_allowed": true
       }
