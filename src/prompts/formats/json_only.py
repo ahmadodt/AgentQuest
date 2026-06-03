@@ -26,12 +26,11 @@ def _render_monster(monster: Dict[str, Any], cfg: PromptConfig) -> str:
     if level == "basic":
         return "\n".join(lines).strip()
 
-    # stats (+optional tags, weaknesses, resistances, immunities, special_rules, escape_allowed)
+    # stats (+optional tags, weaknesses, resistances, immunities, escape_allowed)
     tags = monster.get("tags", [])
     weaknesses = monster.get("weaknesses", [])
     resistances = monster.get("resistances", [])
     immunities = monster.get("immunities", [])
-    special_rules = monster.get("special_rules", [])
 
     if cfg.monster_include_tags and tags:
         lines.append(f"- tags: {json.dumps(tags)}")
@@ -41,8 +40,6 @@ def _render_monster(monster: Dict[str, Any], cfg: PromptConfig) -> str:
         lines.append(f"- resistances: {json.dumps(resistances)}")
     if immunities:
         lines.append(f"- immunities: {json.dumps(immunities)}")
-    if special_rules:
-        lines.append(f"- special_rules: {json.dumps(special_rules)}")
 
     interactions = monster.get("interactions") or {}
     if isinstance(interactions, dict):

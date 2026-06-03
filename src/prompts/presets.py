@@ -57,7 +57,7 @@ TOOL_MANUAL = PromptConfig(
 
 # Monster-focused mode:
 # The agent sees monster stats such as weaknesses, resistances, immunities,
-# and special rules, but tool effects are still not shown explicitly.
+# but tool effects are still not shown explicitly.
 # Useful to test if the model can map monster weaknesses to tool descriptions.
 SCOUT_REPORT = PromptConfig(
     include_inventory=True,

@@ -410,6 +410,7 @@ def test_llm_tool_projection_shortens_generated_spell_description_and_prompt_use
 
 def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_path):
     dataset = _base_custom_dataset()
+    dataset["monsters"]["monsters"][0]["special_rules"] = ["messy"]
     dataset["monsters"]["monsters"][0]["interactions"]["escape_allowed"] = False
     dataset["monsters"]["monsters"][0]["damage_profile"] = "slime_profile"
     dataset["monsters"]["monsters"][0]["damage_modifier_overrides"] = {"force": 1.5}
@@ -442,7 +443,7 @@ def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_pat
     scene = gamedata["scenes_by_id"]["scene.slime"]
     visible_tools = [gamedata["tools_by_id"][tool_id] for tool_id in character["tool_ids"]]
 
-    from src.prompts.presets import BATTLE_PLAN, BLIND_ADVENTURER, FULL_INFO
+    from src.prompts.presets import BATTLE_PLAN, BLIND_ADVENTURER, FULL_INFO, SCOUT_REPORT
 
     blind_messages = build_messages(
         scene=scene,
@@ -457,6 +458,13 @@ def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_pat
         visible_tools=visible_tools,
         gamedata=gamedata,
         cfg=BATTLE_PLAN,
+    )
+    scout_messages = build_messages(
+        scene=scene,
+        character=character,
+        visible_tools=visible_tools,
+        gamedata=gamedata,
+        cfg=SCOUT_REPORT,
     )
     full_messages = build_messages(
         scene=scene,
@@ -475,6 +483,10 @@ def test_full_info_includes_scene_constraints_but_battle_plan_hides_them(tmp_pat
     assert "- resolved_damage_modifiers:" not in battle_messages[1]["content"]
     assert "- tags:" not in battle_messages[1]["content"]
     assert "- description: Sticky but simple." in battle_messages[1]["content"]
+    assert "- special_rules:" not in blind_messages[1]["content"]
+    assert "- special_rules:" not in battle_messages[1]["content"]
+    assert "- special_rules:" not in scout_messages[1]["content"]
+    assert "- special_rules:" not in full_messages[1]["content"]
     assert '- constraints: {"exactly_one_tool_call": true, "no_escape": true}' in full_messages[1]["content"]
     assert (
         '- validation_rules: {"mode": "survival_check", "allow_escape_as_success": false, '
