@@ -17,7 +17,7 @@ from src.runner.streamlit_utils import (
 )
 
 
-st.set_page_config(page_title="AgentQuest Run Viewer", layout="wide")
+st.set_page_config(page_title="AgentQuest Evaluation Lab", layout="wide")
 
 
 def _close_handler(handler) -> None:
@@ -43,8 +43,8 @@ def get_session_handler(model_name: str):
 
 
 def main() -> None:
-    st.title("AgentQuest Run Viewer")
-    st.caption("Campaign mode is the primary flow. Single-scene runs remain available.")
+    st.title("AgentQuest Evaluation Lab")
+    st.caption("Benchmark is the primary evaluation workflow. Inspect Run is for drilling into one scene or campaign.")
     data_dir = get_data_dir()
     try:
         gamedata = load_gamedata(data_dir)
@@ -86,20 +86,14 @@ def main() -> None:
         st.error(f"No characters were found in {os.path.join(data_dir, 'custom', 'agentquest', 'characters.json')}.")
         return
 
-    current_model_name = run_settings.get("model_name", "")
-    actor_options = [HUMAN_ACTOR_VALUE] + model_options
-    actor_labels = {
-        HUMAN_ACTOR_VALUE: "Human Player",
-        **model_labels,
-    }
-    actor_index = actor_options.index(current_model_name) if current_model_name in actor_options else 0
-    preset_index = preset_options.index(run_settings["preset_name"]) if run_settings["preset_name"] in preset_options else 0
-
     character_options = {f"{item['name']} ({item['character_id']})": item["character_id"] for item in characters}
     campaign_options = {f"{item['name']} ({item['campaign_id']})": item["campaign_id"] for item in campaigns}
     scene_options = {f"{item['title']} ({item['scene_id']})": item["scene_id"] for item in scenes}
     character_labels = list(character_options.keys())
     campaign_labels = list(campaign_options.keys())
+    current_model_name = run_settings.get("model_name", "")
+    default_preset = run_settings["preset_name"] if run_settings["preset_name"] in preset_options else preset_options[0]
+    preset_index = preset_options.index(default_preset)
     default_character_id = "knight.bram"
     default_campaign_id = "campaign.goblin_den_v1"
     default_character_index = next(
@@ -118,8 +112,43 @@ def main() -> None:
         ),
         0,
     )
+    default_character_label = character_labels[default_character_index]
+    default_character_selection = character_options[default_character_label]
+    selected_page = st.radio(
+        "Page",
+        ["Benchmark", "Inspect Run"],
+        index=0,
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
-    select_cols = st.columns(4)
+    if selected_page == "Benchmark":
+        run_settings = dict(run_settings)
+        run_settings["preset_name"] = default_preset
+        run_settings["preset_config"] = load_preset(default_preset)
+        render_benchmark_mode(
+            gamedata=gamedata,
+            data_dir=data_dir,
+            run_settings=run_settings,
+            model_options=model_options,
+            model_labels=model_labels,
+            default_model_name=current_model_name,
+            character_options=character_options,
+            campaign_options=campaign_options,
+            selected_character_id=default_character_selection,
+            selected_preset=default_preset,
+            handler_factory=get_session_handler,
+        )
+        return
+
+    actor_options = [HUMAN_ACTOR_VALUE] + model_options
+    actor_labels = {
+        HUMAN_ACTOR_VALUE: "Human Player",
+        **model_labels,
+    }
+    actor_index = actor_options.index(current_model_name) if current_model_name in actor_options else 0
+
+    select_cols = st.columns(3)
     with select_cols[0]:
         selected_actor = st.selectbox(
             "Actor",
@@ -132,8 +161,8 @@ def main() -> None:
     with select_cols[2]:
         selected_character_label = st.selectbox("Character", character_labels, index=default_character_index)
         selected_character_id = character_options[selected_character_label]
-    with select_cols[3]:
-        run_mode = st.selectbox("Mode", ["campaign", "scene", "benchmark"], index=0)
+
+    run_mode = st.radio("Inspect mode", ["Campaign", "Scene"], index=0, horizontal=True)
 
     st.caption(
         f"Config model: `{run_settings.get('model_display_name') or current_model_name or 'unknown'}`. "
@@ -152,7 +181,7 @@ def main() -> None:
         return
 
     try:
-        if run_mode == "campaign":
+        if run_mode == "Campaign":
             selected_campaign_label = st.selectbox("Campaign", campaign_labels, index=default_campaign_index)
             selected_campaign_id = campaign_options[selected_campaign_label]
             self_learning_enabled = st.checkbox("Self-learning agent", value=False)
@@ -184,7 +213,7 @@ def main() -> None:
                 initial_notes=initial_notes,
                 handler_factory=get_session_handler,
             )
-        elif run_mode == "scene":
+        else:
             selected_scene_label = st.selectbox("Scene", list(scene_options.keys()), index=0)
             selected_scene_id = scene_options[selected_scene_label]
             resolve_scene(gamedata, selected_scene_id)
@@ -194,20 +223,6 @@ def main() -> None:
                 actor_selection=selected_actor,
                 character_id=selected_character_id,
                 scene_id=selected_scene_id,
-                handler_factory=get_session_handler,
-            )
-        else:
-            render_benchmark_mode(
-                gamedata=gamedata,
-                data_dir=data_dir,
-                run_settings=run_settings,
-                model_options=model_options,
-                model_labels=model_labels,
-                default_model_name=current_model_name if current_model_name in model_options else selected_actor,
-                character_options=character_options,
-                campaign_options=campaign_options,
-                selected_character_id=selected_character_id,
-                selected_preset=selected_preset,
                 handler_factory=get_session_handler,
             )
     except (FileNotFoundError, KeyError, ValueError) as error:

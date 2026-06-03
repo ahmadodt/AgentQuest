@@ -34,7 +34,7 @@ Launch the Streamlit UI:
 streamlit run streamlit_app.py
 ```
 
-Streamlit is the easiest way to use the project. From the UI, choose the actor or catalog model, prompt preset, character, and run mode. Campaign, single-scene, and benchmark runs all show the prompt, raw model output, parsed tool call, validation result, retries, notes, and saved run logs.
+Streamlit is the easiest way to use the project. It opens on Benchmark mode for repeatable model, preset, campaign, and character sweeps. Use Inspect Run to drill into one campaign or scene with a model actor or human player and inspect the prompt, raw output, parsed tool call, validation result, retries, notes, and saved run logs.
 
 Model aliases are defined in `configs/model_catalog.json`. To test another model, add it there and restart Streamlit. If the model is hosted behind Hugging Face access controls, set `HF_TOKEN` in your environment or a local `.env` file.
 
@@ -84,11 +84,12 @@ python scripts/generate_validation_report.py
 
 ## Streamlit UI
 
-The Streamlit app exposes the main inspection workflow:
+The Streamlit app exposes the main evaluation and inspection workflows:
 
+- benchmark-first landing page for repeatable sweeps
 - catalog model and human-player selection
 - prompt presets: `BLIND_ADVENTURER`, `BATTLE_PLAN`, and `FULL_INFO`
-- single-scene, campaign, and benchmark modes
+- single-scene and campaign inspection modes
 - self-learning campaign retries with notes
 - raw output, parsed tool call, prompt, validation, and retry inspection
 - saved run logs for scene and campaign runs
