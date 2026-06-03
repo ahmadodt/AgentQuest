@@ -3,7 +3,14 @@ from typing import Any
 
 import streamlit as st
 
-from src.app.streamlit_ui.constants import BENCHMARK_ERROR_KEY, BENCHMARK_RESULT_KEY, BENCHMARK_SESSION_KEY
+from src.app.streamlit_ui.constants import (
+    BENCHMARK_ERROR_KEY,
+    BENCHMARK_RESULT_KEY,
+    BENCHMARK_SESSION_KEY,
+    DEFAULT_LEARNING_PER_SCENE_RETRY_LIMIT,
+    DEFAULT_LEARNING_TOTAL_RETRY_LIMIT,
+    DISABLED_LEARNING_RETRY_LIMIT,
+)
 from src.runner.benchmark_service import (
     BenchmarkRunError,
     BenchmarkSpec,
@@ -19,6 +26,9 @@ from src.runner.benchmark_utils import (
     update_benchmark_progress_state,
 )
 from src.runner.streamlit_utils import discover_streamlit_presets
+
+
+DEFAULT_BENCHMARK_CAMPAIGN_ID = "campaign.benchmark_core_v1"
 
 
 def _status_marker(status: str) -> str:
@@ -293,7 +303,11 @@ def render_benchmark_mode(
     id_to_campaign_label = {value: label for label, value in campaign_options.items()}
     campaign_ids = list(id_to_campaign_label.keys())
     character_ids = list(id_to_character_label.keys())
-    default_campaign_ids = [campaign_ids[0]] if campaign_ids else []
+    default_campaign_ids = (
+        [DEFAULT_BENCHMARK_CAMPAIGN_ID]
+        if DEFAULT_BENCHMARK_CAMPAIGN_ID in campaign_ids
+        else campaign_ids[:1]
+    )
     default_character_ids = [selected_character_id] if selected_character_id in character_ids else character_ids[:1]
     default_models = [default_model_name] if default_model_name in model_options else model_options[:1]
 
@@ -332,11 +346,36 @@ def render_benchmark_mode(
         )
         self_learning_enabled = st.checkbox("Self-learning benchmark", value=False)
 
+    retry_inputs_disabled = not self_learning_enabled
+    default_per_scene_retry_limit = (
+        DEFAULT_LEARNING_PER_SCENE_RETRY_LIMIT
+        if self_learning_enabled
+        else DISABLED_LEARNING_RETRY_LIMIT
+    )
+    default_total_retry_limit = (
+        DEFAULT_LEARNING_TOTAL_RETRY_LIMIT
+        if self_learning_enabled
+        else DISABLED_LEARNING_RETRY_LIMIT
+    )
     retry_cols = st.columns(2)
     with retry_cols[0]:
-        per_scene_retry_limit = st.number_input("Benchmark per-scene retry limit", min_value=0, max_value=10, value=3, step=1)
+        per_scene_retry_limit = st.number_input(
+            "Benchmark per-scene retry limit",
+            min_value=0,
+            max_value=10,
+            value=default_per_scene_retry_limit,
+            step=1,
+            disabled=retry_inputs_disabled,
+        )
     with retry_cols[1]:
-        total_retry_limit = st.number_input("Benchmark total retry limit", min_value=0, max_value=100, value=20, step=1)
+        total_retry_limit = st.number_input(
+            "Benchmark total retry limit",
+            min_value=0,
+            max_value=100,
+            value=default_total_retry_limit,
+            step=1,
+            disabled=retry_inputs_disabled,
+        )
     initial_notes = ""
     if self_learning_enabled:
         initial_notes = st.text_area("Benchmark initial notes", value="")

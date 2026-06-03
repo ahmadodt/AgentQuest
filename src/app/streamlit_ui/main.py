@@ -2,7 +2,12 @@ import os
 
 import streamlit as st
 
-from src.app.streamlit_ui.constants import HUMAN_ACTOR_VALUE
+from src.app.streamlit_ui.constants import (
+    DEFAULT_LEARNING_PER_SCENE_RETRY_LIMIT,
+    DEFAULT_LEARNING_TOTAL_RETRY_LIMIT,
+    DISABLED_LEARNING_RETRY_LIMIT,
+    HUMAN_ACTOR_VALUE,
+)
 from src.app.streamlit_ui.modes.benchmark import render_benchmark_mode
 from src.app.streamlit_ui.modes.campaign import render_campaign_mode
 from src.app.streamlit_ui.modes.scene import render_single_scene_mode
@@ -188,11 +193,36 @@ def main() -> None:
             if selected_actor == HUMAN_ACTOR_VALUE and self_learning_enabled:
                 st.warning("Self-learning is unavailable in Human Player mode for now.")
                 self_learning_enabled = False
+            retry_inputs_disabled = not self_learning_enabled
+            default_per_scene_retry_limit = (
+                DEFAULT_LEARNING_PER_SCENE_RETRY_LIMIT
+                if self_learning_enabled
+                else DISABLED_LEARNING_RETRY_LIMIT
+            )
+            default_total_retry_limit = (
+                DEFAULT_LEARNING_TOTAL_RETRY_LIMIT
+                if self_learning_enabled
+                else DISABLED_LEARNING_RETRY_LIMIT
+            )
             learning_cols = st.columns(2)
             with learning_cols[0]:
-                per_scene_retry_limit = st.number_input("Per-scene retry limit", min_value=0, max_value=10, value=3, step=1)
+                per_scene_retry_limit = st.number_input(
+                    "Per-scene retry limit",
+                    min_value=0,
+                    max_value=10,
+                    value=default_per_scene_retry_limit,
+                    step=1,
+                    disabled=retry_inputs_disabled,
+                )
             with learning_cols[1]:
-                total_retry_limit = st.number_input("Total retry limit", min_value=0, max_value=100, value=20, step=1)
+                total_retry_limit = st.number_input(
+                    "Total retry limit",
+                    min_value=0,
+                    max_value=100,
+                    value=default_total_retry_limit,
+                    step=1,
+                    disabled=retry_inputs_disabled,
+                )
             initial_notes = ""
             if self_learning_enabled:
                 initial_notes = st.text_area(
