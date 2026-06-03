@@ -85,7 +85,8 @@
       "resistances": [
         "slashing",
         "bludgeoning",
-        "piercing"
+        "piercing",
+        "cold"
       ],
       "immunities": [
         "fire"
@@ -984,7 +985,8 @@
       ],
       "weaknesses": [
         "bludgeoning",
-        "magic"
+        "magic",
+        "fire"
       ],
       "resistances": [
         "slashing",

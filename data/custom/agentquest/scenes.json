@@ -174,7 +174,7 @@
       "title": "The Alchemist's Corner",
       "location": "Goblin Potion Nook",
       "monster_id": "open5e.monster.goblin-alchemist-a5e",
-      "narrative": "A goblin alchemist cackles beside bubbling bottles. One wrong move could make the whole cave explode.",
+      "narrative": "A goblin alchemist cackles beside bubbling bottles. Any open flame or fire could ignite the lab and explode the cave.",
       "knowledge_level": "low",
       "constraints": {
         "exactly_one_tool_call": true
@@ -539,7 +539,7 @@
       "title": "Ice-Chain Bridge",
       "location": "Frozen Span",
       "monster_id": "custom.ice_chain_raider",
-      "narrative": "An armored raider plants his feet on a frozen bridge. Throwing more water would only glaze the stone and hand him the advantage.",
+      "narrative": "An armored raider plants his feet on a frozen bridge. Throwing more water would only glaze the stone and hand him the advantage. And and fire would weaken the ice-chains holding the bridge together leading to your fall.",
       "knowledge_level": "medium",
       "constraints": {
         "exactly_one_tool_call": true
@@ -555,7 +555,8 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": [
-          "elemental_water"
+          "elemental_water",
+          "elemental_fire"
         ]
       },
       "ui": {
@@ -568,7 +569,7 @@
       "title": "Steam Core Overload",
       "location": "Boiler Vault",
       "monster_id": "custom.overheated_steam_core",
-      "narrative": "A brass engine lurches out of the boiler haze, glowing red around its pressure core. Flame feeds it, water flashes off as steam, and only a freezing strike can seize the mechanism long enough to break it.",
+      "narrative": "A brass engine lurches out of the boiler haze, glowing red around its pressure core.  ",
       "knowledge_level": "medium",
       "constraints": {
         "exactly_one_tool_call": true
