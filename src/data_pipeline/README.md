@@ -57,6 +57,7 @@ data/
   generated/
     open5e/
       monsters.json
+      damage_profiles.json
       tools_spells.json
       tools_weapons.json
 ```
@@ -231,11 +232,14 @@ Monster interaction damage modifiers are deterministic:
 - resistance -> `0.5`
 - immunity -> `0.0`
 
-Current generated monster interactions include:
+Current generated monster records include:
 
-- `damage_type_modifiers`
+- `damage_profile`
+- `damage_modifier_overrides`
 - `min_power_to_defeat`
 - `knowledge_tools_help`
+
+The converter also writes `data/generated/open5e/damage_profiles.json` from each monster's generated damage profile and overrides.
 
 The converter does not write monster-level `escape_allowed`.
 The runtime loader adds `escape_allowed: true` when generated monsters are merged so they remain valid under the current validation rules.
@@ -283,6 +287,7 @@ This rule is intentionally rough and easy to change later.
 The converter writes:
 
 - `data/generated/open5e/monsters.json`
+- `data/generated/open5e/damage_profiles.json`
 - `data/generated/open5e/tools_spells.json`
 - `data/generated/open5e/tools_weapons.json`
 

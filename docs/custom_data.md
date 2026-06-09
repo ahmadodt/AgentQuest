@@ -25,3 +25,15 @@ Use the custom data when changing playable evaluation scenarios. Use the Open5e 
 - Make knowledge gates and hidden information explicit in the data fields that validators and prompts already use.
 - Prefer adding focused scenarios over broad data rewrites.
 - Run prompt preview, validation reports, or targeted tests after changing scenario data.
+
+## Scene Mechanics
+
+Scenes should describe the objective and local hazards, while tools and monsters provide the reusable mechanics.
+
+- Defeat scenes use combat tool effects such as `damage_type` and `base_power`, then compare the resolved power against the monster's damage modifiers and `interactions.min_power_to_defeat`.
+- Knowledge scenes use `validation_rules.mode: "knowledge_check"` and expect a tool with `knowledge_gain` or a `knowledge` effect tag.
+- Survival scenes use `validation_rules.mode: "survival_check"` and expect defensive tools with a `defense` effect tag and positive `mitigation`.
+- Escape scenes use `validation_rules.mode: "escape_check"`, `escape_attempt`, `allow_escape_as_success`, and monster `interactions.escape_allowed`.
+- Hazard scenes use `validation_rules.forbidden_effect_tags` to reject otherwise useful tools in local contexts, such as forbidding `elemental_fire` near powder casks or `elemental_water` on an icy bridge.
+
+Keep `required_effect_tags` and `forbidden_effect_tags` aligned with real tool `effects.effect_tags`. The validator checks exact tag names; it does not infer that a made-up tag should match a related damage type.
