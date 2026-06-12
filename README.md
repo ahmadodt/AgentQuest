@@ -99,7 +99,6 @@ The Streamlit app exposes the main evaluation and inspection workflows:
 - Architecture: [`docs/architecture.md`](docs/architecture.md)
 - Local development: [`docs/development.md`](docs/development.md)
 - Testing: [`docs/testing.md`](docs/testing.md)
-- Docker: [`docs/docker.md`](docs/docker.md)
 - Models: [`docs/models.md`](docs/models.md)
 - Custom AgentQuest data: [`docs/custom_data.md`](docs/custom_data.md)
 - Prompt system: [`src/prompts/README.md`](src/prompts/README.md)

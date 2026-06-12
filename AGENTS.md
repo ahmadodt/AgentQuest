@@ -145,7 +145,6 @@ Use this structure:
 docs/architecture.md for architecture and component relationships
 docs/development.md for local development workflow
 docs/testing.md for testing strategy and commands
-docs/docker.md for Docker setup and container behavior
 docs/decisions/ for architectural decision records
 Module-level README.md files only when a directory needs local explanation
 
