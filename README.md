@@ -14,6 +14,18 @@ The engine validates each response in three stages:
 2. Hard validation: can this character legally use that tool here?
 3. Soft validation: does the action solve the scene?
 
+## Visual Overview
+
+Benchmark mode runs repeatable model, prompt-preset, campaign, and character sweeps while keeping scene-level outcomes visible.
+
+![AgentQuest benchmark workflow](docs/portfolio_assets/benchmark_UI_2.png)
+
+The prompt presets form an information ladder for testing how much context helps or overloads smaller local models.
+
+![AgentQuest prompt preset comparison](docs/portfolio_assets/preset_comparison.png)
+
+See the [portfolio materials](docs/portfolio.md) and [full screenshot catalog](docs/portfolio_assets/README.md) for additional examples.
+
 ## Quick Start
 
 Install the project from the repository root:
