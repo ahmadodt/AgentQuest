@@ -1,0 +1,75 @@
+{
+  "total_scenes": 252,
+  "passed_scenes": 129,
+  "failed_scenes": 123,
+  "parse_failures": 29,
+  "success_rate": 51.19047619047619,
+  "failures_by_reason_code": {
+    "insufficient_effective_power": 65,
+    "escape_not_success": 4,
+    "forbidden_effect_tag": 3,
+    "non_combat_tool": 17,
+    "unknown_reason": 29,
+    "missing_escape_effect": 3,
+    "missing_defense_effect": 2
+  },
+  "failures_by_preset": {
+    "FULL_INFO": 123
+  },
+  "failures_by_character": {
+    "knight.bram": 27,
+    "wizard.ember": 31,
+    "rogue.lark": 31,
+    "cleric.mira": 34
+  },
+  "first_failed_scene": {
+    "campaign_id": "campaign.benchmark_core_v1",
+    "scene_id": "scene.goblin_den.002_shadow_scout",
+    "character_id": "knight.bram",
+    "preset": "FULL_INFO",
+    "prompt_format": "json_only",
+    "reason_code": "insufficient_effective_power"
+  },
+  "dataset": {
+    "dataset_id": "custom_t1_4_chars1_2_m1_4_s1_2_camps1_1_dmg1_0",
+    "dataset_fingerprint": "edaf7450fa31b8a3d3b7e25c63449dad316544553f1621212cc1a1c22185c0f2",
+    "files": {
+      "tools": {
+        "path": "custom\\agentquest\\tools.json",
+        "version": "1.4",
+        "sha256": "2307d06a98c2c96f7c89dde5012e956d648c5fccac0c9c4372af17724b89d685"
+      },
+      "characters": {
+        "path": "custom\\agentquest\\characters.json",
+        "version": "1.2",
+        "sha256": "149eec3a7cd1c2832454cda3b4ec0bebffc4aee3eefbd48226ed22895c7daf21"
+      },
+      "monsters": {
+        "path": "custom\\agentquest\\monsters.json",
+        "version": "1.4",
+        "sha256": "27129d7fe8caf194aecb0aed3f8cb5d87e49bb086fa8403580b1fdb04354dcf0"
+      },
+      "scenes": {
+        "path": "custom\\agentquest\\scenes.json",
+        "version": "1.2",
+        "sha256": "362c604ec832d0aceea4a0a8a5e46a5cc8f3eef239be4890fc606bd456c10d7b"
+      },
+      "campaigns": {
+        "path": "custom\\agentquest\\campaigns.json",
+        "version": "1.1",
+        "sha256": "270b6afb9fc8bd9a998e44996627df92892233ebcbb5617f39a27d92da219c86"
+      },
+      "damage_profiles": {
+        "path": "custom\\agentquest\\damage_profiles.json",
+        "version": "1.0",
+        "sha256": "07ca213c28278c67283a1237b953ad74b375b2ae9e37c1df52c5b57ffe19e114"
+      }
+    }
+  },
+  "dataset_id": "custom_t1_4_chars1_2_m1_4_s1_2_camps1_1_dmg1_0",
+  "self_learning_enabled": false,
+  "completed_scene_runs": 252,
+  "expected_scene_runs": 252,
+  "remaining_scene_runs": 0,
+  "benchmark_complete": true
+}

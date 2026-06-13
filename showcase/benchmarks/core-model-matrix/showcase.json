@@ -1,0 +1,5 @@
+{
+  "showcase_id": "core-model-matrix",
+  "title": "Core Small-Model Matrix",
+  "description": "Three local quantized models evaluated across the core campaign with the FULL_INFO prompt preset."
+}
