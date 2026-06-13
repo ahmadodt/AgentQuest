@@ -1,6 +1,16 @@
 import os
 
+import pytest
+
 from src.env_loader import load_local_env
+
+
+@pytest.fixture(autouse=True)
+def restore_environment_after_test():
+    original_environment = os.environ.copy()
+    yield
+    os.environ.clear()
+    os.environ.update(original_environment)
 
 
 def test_load_local_env_sets_missing_values(tmp_path, monkeypatch):

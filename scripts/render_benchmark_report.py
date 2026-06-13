@@ -2,6 +2,10 @@ import argparse
 import os
 import sys
 
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
 from src.runner.benchmark_report import load_benchmark_bundle, render_markdown_report
 from src.runner.runner_utils import write_json_file
 

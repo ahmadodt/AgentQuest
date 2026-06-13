@@ -34,7 +34,7 @@ Install the project from the repository root:
 pip install -e .
 ```
 
-AgentQuest uses Python 3.10 or newer. For model-backed runs, install the llama.cpp backend:
+AgentQuest uses Python 3.11 or newer. For model-backed runs, install the llama.cpp backend:
 
 ```bash
 pip install llama-cpp-python

@@ -9,7 +9,7 @@ pip install -e .
 pip install llama-cpp-python
 ```
 
-AgentQuest requires Python 3.10 or newer. `streamlit` is declared in `pyproject.toml`. The project currently supports the `llama_cpp` backend for model-backed runs.
+AgentQuest requires Python 3.11 or newer. `streamlit` is declared in `pyproject.toml`. The project currently supports the `llama_cpp` backend for model-backed runs.
 
 For normal manual use, start with Streamlit:
 

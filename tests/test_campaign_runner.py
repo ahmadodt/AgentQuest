@@ -125,7 +125,7 @@ def test_execute_campaign_run_can_continue_after_failure(gamedata, make_tool_cal
         [
             make_tool_call("wizard.arcane_bolt", {"target": "goblin"}),
             make_tool_call("wizard.arcane_shield", {}),
-            make_tool_call("wizard.cast_ice_spear", {"target": "flame sentinel"}),
+            make_tool_call("wizard.cast_water_ball", {"target": "flame sentinel"}),
         ]
     )
 
@@ -160,7 +160,7 @@ def test_execute_campaign_run_succeeds_when_all_scenes_succeed(gamedata, make_to
         [
             make_tool_call("wizard.arcane_bolt", {"target": "goblin"}),
             make_tool_call("wizard.read_runes", {"surface": "wall"}),
-            make_tool_call("wizard.cast_ice_spear", {"target": "flame sentinel"}),
+            make_tool_call("wizard.cast_water_ball", {"target": "flame sentinel"}),
         ]
     )
 
@@ -226,7 +226,7 @@ def test_execute_learning_campaign_carries_notes_across_scenes(gamedata, make_to
             make_tool_call("wizard.arcane_shield", {}),
             '{"notes":"- Use rune-reading on glowing walls or statues."}',
             make_tool_call("wizard.read_runes", {"surface": "wall"}),
-            make_tool_call("wizard.cast_ice_spear", {"target": "flame sentinel"}),
+            make_tool_call("wizard.cast_water_ball", {"target": "flame sentinel"}),
         ]
     )
 
