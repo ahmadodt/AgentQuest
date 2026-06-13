@@ -10,6 +10,7 @@ from src.app.streamlit_ui.constants import (
 )
 from src.app.streamlit_ui.modes.benchmark import render_benchmark_mode
 from src.app.streamlit_ui.modes.campaign import render_campaign_mode
+from src.app.streamlit_ui.modes.results_showcase import render_results_showcase
 from src.app.streamlit_ui.modes.scene import render_single_scene_mode
 from src.engine.loader import DataValidationError, load_gamedata
 from src.models.registry import build_handler
@@ -49,7 +50,7 @@ def get_session_handler(model_name: str):
 
 def main() -> None:
     st.title("AgentQuest Evaluation Lab")
-    st.caption("Benchmark is the primary evaluation workflow. Inspect Run is for drilling into one scene or campaign.")
+    st.caption("Browse reproducible results, run benchmarks, or inspect one scene or campaign.")
     data_dir = get_data_dir()
     try:
         gamedata = load_gamedata(data_dir)
@@ -58,6 +59,17 @@ def main() -> None:
         return
     except Exception as error:
         st.error(f"Unexpected error while loading game data: {error}")
+        return
+
+    selected_page = st.radio(
+        "Page",
+        ["Results Showcase", "Benchmark", "Inspect Run"],
+        index=0,
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+    if selected_page == "Results Showcase":
+        render_results_showcase(data_dir=data_dir)
         return
 
     catalog_models = discover_catalog_models()
@@ -119,14 +131,6 @@ def main() -> None:
     )
     default_character_label = character_labels[default_character_index]
     default_character_selection = character_options[default_character_label]
-    selected_page = st.radio(
-        "Page",
-        ["Benchmark", "Inspect Run"],
-        index=0,
-        horizontal=True,
-        label_visibility="collapsed",
-    )
-
     if selected_page == "Benchmark":
         run_settings = dict(run_settings)
         run_settings["preset_name"] = default_preset

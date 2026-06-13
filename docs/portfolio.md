@@ -21,3 +21,9 @@ The strongest current benchmark story compares:
 - parse failures, hard-validation failures, and soft reasoning failures
 
 The RPG wrapper should support the story, not replace it. The key point is inspectable structured reasoning under constrained tool use.
+
+## Results Showcase
+
+The Streamlit `Results Showcase` page works without model weights. It combines stable committed bundles from `showcase/benchmarks/` with local history from `results/benchmarks/` when that directory exists.
+
+Each benchmark manifest records a SHA-256 fingerprint and per-file data versions. An exact match means the benchmark used the current custom dataset byte-for-byte. Mismatched historical runs remain useful as snapshots, but the UI labels them and does not present them as equivalent current-data evidence.

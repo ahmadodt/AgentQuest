@@ -92,6 +92,16 @@ Render a markdown benchmark report:
 python scripts/render_benchmark_report.py --benchmark-dir results/benchmarks/model_a --label "Model A" --output docs/portfolio_assets/benchmark_report.md
 ```
 
+Publish a completed local benchmark to the committed, model-free Streamlit showcase:
+
+```bash
+python scripts/publish_benchmark_showcase.py --benchmark-dir results/benchmarks/<dataset>/<campaign>/<model>/<timestamp> --showcase-id core-model-matrix --title "Core Small-Model Matrix"
+```
+
+Published bundles live under `showcase/benchmarks/`. The command copies the canonical manifest, summary, and records without modifying the local run, strips machine-specific absolute data paths, and rejects an existing showcase ID rather than overwriting it.
+
+The Results Showcase also discovers ignored local runs under `results/benchmarks/`. Exact dataset fingerprints are directly comparable; historical mismatches remain visible with version warnings.
+
 ## Data Work
 
 Normal development should use the hand-authored custom dataset under `data/custom/agentquest/`.

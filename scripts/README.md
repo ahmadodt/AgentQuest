@@ -36,6 +36,14 @@ python scripts/render_benchmark_report.py --benchmark-dir results/benchmarks/cus
 
 For multiple benchmark dirs, repeat `--benchmark-dir`; if labels are used, pass one `--label` per directory.
 
+## `publish_benchmark_showcase.py`
+
+Copies a completed local benchmark into the committed `showcase/benchmarks/` collection used by the model-free Streamlit Results Showcase. It strips machine-specific absolute data paths and does not modify the source run.
+
+```powershell
+python scripts/publish_benchmark_showcase.py --benchmark-dir results/benchmarks/custom_id/campaign/model/timestamp --showcase-id core-model-matrix --title "Core Small-Model Matrix"
+```
+
 ## `render_benchmark_showcase.py`
 
 Local showcase exporter for a currently hardcoded benchmark directory. It writes markdown and CSV files beside that benchmark's `records.json`.
@@ -63,4 +71,3 @@ Runs deterministic scene/character solvability checks using the validation pipel
 ```powershell
 python scripts/generate_validation_report.py --data-dir data
 ```
-
