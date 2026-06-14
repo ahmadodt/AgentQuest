@@ -1,5 +1,5 @@
 {
-  "version": "1.2",
+  "version": "1.3",
   "scenes": [
     {
       "scene_id": "scene.tutorial.001_goblin_alley",
@@ -22,6 +22,19 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": []
+      },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "basic_combat_selection"
+        ],
+        "target_characters": "all",
+        "difficulty": "easy",
+        "expected_failure_modes": [
+          "choose_noncombat_tool",
+          "escape_attempt_when_combat_required"
+        ],
+        "benchmark_goal": "Tests basic combat tool selection against a simple unarmored enemy."
       },
       "ui": {
         "monster_image_key": "goblin",
@@ -55,6 +68,20 @@
         ],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "knowledge_check",
+        "skills_tested": [
+          "knowledge_tool_recognition",
+          "combat_bias_resistance"
+        ],
+        "target_characters": "all",
+        "difficulty": "easy",
+        "expected_failure_modes": [
+          "attack_instead_of_inspect",
+          "escape_attempt_when_puzzle_required"
+        ],
+        "benchmark_goal": "Tests whether the model chooses an inspection or knowledge tool instead of attacking a puzzle encounter."
+      },
       "ui": {
         "monster_image_key": "statue",
         "background_image_key": "dungeon"
@@ -83,6 +110,22 @@
         "required_effect_tags": [],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "elemental_counter",
+          "no_escape_recognition"
+        ],
+        "target_characters": "all",
+        "difficulty": "easy",
+        "expected_failure_modes": [
+          "use_fire_against_fire_immune",
+          "escape_attempt_when_no_escape",
+          "wrong_damage_type"
+        ],
+        "benchmark_goal": "Tests whether the model chooses an anti-fire counter and avoids escape when the gate blocks retreat."
+      },
       "ui": {
         "monster_image_key": "flame_elemental",
         "background_image_key": "gate"
@@ -109,6 +152,19 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": []
+      },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "basic_combat_selection"
+        ],
+        "target_characters": "all",
+        "difficulty": "easy",
+        "expected_failure_modes": [
+          "choose_noncombat_tool",
+          "escape_attempt_when_combat_required"
+        ],
+        "benchmark_goal": "Tests straightforward combat selection against a low-tier goblin guard."
       },
       "ui": {
         "monster_image_key": "goblin",
@@ -137,6 +193,21 @@
         "required_effect_tags": [],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "elemental_counter",
+          "enemy_trait_reasoning"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "wrong_damage_type",
+          "choose_weapon_against_shadow_enemy"
+        ],
+        "benchmark_goal": "Tests whether the model recognizes that a shadow enemy should be countered with light, fire, or reliable magic instead of ordinary weapon damage."
+      },
       "ui": {
         "monster_image_key": "shadow_goblin",
         "background_image_key": "dark_cave"
@@ -163,6 +234,22 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": []
+      },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "shield_response",
+          "armor_response"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "use_slashing_against_shield",
+          "use_piercing_against_shield",
+          "wrong_damage_type"
+        ],
+        "benchmark_goal": "Tests whether the model selects a guard-breaking or blunt-force style tool against a shielded enemy."
       },
       "ui": {
         "monster_image_key": "goblin_shieldbearer",
@@ -193,6 +280,22 @@
           "elemental_fire"
         ]
       },
+      "benchmark_tags": {
+        "scene_type": "hazard_combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "hazard_awareness",
+          "forbidden_tool_avoidance"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "use_fire_despite_hazard",
+          "wrong_damage_type",
+          "ignore_environmental_constraint"
+        ],
+        "benchmark_goal": "Tests whether the model defeats the alchemist while avoiding fire in an explosive room."
+      },
       "ui": {
         "monster_image_key": "goblin_alchemist",
         "background_image_key": "alchemy_cave"
@@ -219,6 +322,21 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": []
+      },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "interrupt_reasoning",
+          "threat_prioritization"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "wrong_damage_type",
+          "use_slow_or_blunt_tool_against_caster"
+        ],
+        "benchmark_goal": "Tests whether the model prioritizes interrupting a caster with a precise or reach-based attack."
       },
       "ui": {
         "monster_image_key": "goblin_warlock",
@@ -247,6 +365,21 @@
         "required_effect_tags": [],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "armor_response"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "use_slashing_against_armor",
+          "use_fire_against_resistant_enemy",
+          "wrong_damage_type"
+        ],
+        "benchmark_goal": "Tests whether the model adapts to an armored goblin boss instead of using a basic blade or fire option."
+      },
       "ui": {
         "monster_image_key": "goblin_boss",
         "background_image_key": "goblin_throne"
@@ -273,6 +406,22 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": []
+      },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "armor_response",
+          "boss_escalation"
+        ],
+        "target_characters": "all",
+        "difficulty": "hard",
+        "expected_failure_modes": [
+          "use_slashing_against_armor",
+          "use_fire_against_resistant_enemy",
+          "underestimate_boss_resistance"
+        ],
+        "benchmark_goal": "Tests whether the model handles a stronger armored boss by choosing a tool that breaks armor or bypasses resistance."
       },
       "ui": {
         "monster_image_key": "dust_goblin_chieftain",
@@ -301,6 +450,20 @@
         "required_effect_tags": [],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "basic_combat_selection",
+          "small_target_reasoning"
+        ],
+        "target_characters": "all",
+        "difficulty": "easy",
+        "expected_failure_modes": [
+          "choose_noncombat_tool",
+          "use_bludgeoning_against_tiny_target"
+        ],
+        "benchmark_goal": "Tests basic combat selection against a small fast enemy."
+      },
       "ui": {
         "monster_image_key": "rat",
         "background_image_key": "sewer_entrance"
@@ -327,6 +490,21 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": []
+      },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "hazard_awareness",
+          "range_preference"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "use_close_blunt_attack_against_diseased_enemy",
+          "wrong_damage_type"
+        ],
+        "benchmark_goal": "Tests whether the model chooses a safer effective attack against a diseased melee threat."
       },
       "ui": {
         "monster_image_key": "diseased_rat",
@@ -355,6 +533,21 @@
         "required_effect_tags": [],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "swarm_response",
+          "area_effect_reasoning"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "use_single_target_weapon_against_swarm",
+          "wrong_damage_type"
+        ],
+        "benchmark_goal": "Tests whether the model recognizes that a swarm needs area or anti-swarm damage rather than ordinary weapon strikes."
+      },
       "ui": {
         "monster_image_key": "rat_swarm",
         "background_image_key": "collapsed_sewer"
@@ -381,6 +574,20 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": []
+      },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "large_beast_response"
+        ],
+        "target_characters": "all",
+        "difficulty": "easy",
+        "expected_failure_modes": [
+          "use_bludgeoning_against_rat",
+          "choose_noncombat_tool"
+        ],
+        "benchmark_goal": "Tests basic counter selection against a larger beast that rewards piercing or precise attacks."
       },
       "ui": {
         "monster_image_key": "giant_rat",
@@ -409,6 +616,22 @@
         "required_effect_tags": [],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "resistance_handling",
+          "enemy_trait_reasoning"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "use_common_weapon_against_resilient_enemy",
+          "use_fire_against_resistant_enemy",
+          "wrong_damage_type"
+        ],
+        "benchmark_goal": "Tests whether the model handles a resilient trick enemy by choosing precision or magic instead of common resisted attacks."
+      },
       "ui": {
         "monster_image_key": "wererat",
         "background_image_key": "hidden_chamber"
@@ -435,6 +658,22 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": []
+      },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "swarm_response",
+          "boss_escalation"
+        ],
+        "target_characters": "all",
+        "difficulty": "hard",
+        "expected_failure_modes": [
+          "use_single_target_weapon_against_swarm_boss",
+          "wrong_damage_type",
+          "underestimate_boss_resistance"
+        ],
+        "benchmark_goal": "Tests whether the model combines swarm reasoning with boss-level resistance handling."
       },
       "ui": {
         "monster_image_key": "rat_king",
@@ -468,6 +707,21 @@
         ],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "knowledge_check",
+        "skills_tested": [
+          "knowledge_tool_recognition",
+          "combat_bias_resistance",
+          "artifact_preservation"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "attack_instead_of_inspect",
+          "destroy_objective_with_combat_tool"
+        ],
+        "benchmark_goal": "Tests whether the model solves an archive seal by reading the clue instead of damaging the protected object."
+      },
       "ui": {
         "monster_image_key": "arcane_seal",
         "background_image_key": "archive"
@@ -500,6 +754,22 @@
         ],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "knowledge_check",
+        "skills_tested": [
+          "knowledge_tool_recognition",
+          "hazard_awareness",
+          "noncombat_selection"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "attack_instead_of_inspect",
+          "ignore_environmental_warning",
+          "escape_without_understanding_hazard"
+        ],
+        "benchmark_goal": "Tests whether the model reads the environmental warning before acting in a flooded hazard."
+      },
       "ui": {
         "monster_image_key": "crypt_tablet",
         "background_image_key": "flooded_crypt"
@@ -529,6 +799,22 @@
           "elemental_fire"
         ]
       },
+      "benchmark_tags": {
+        "scene_type": "hazard_combat_check",
+        "skills_tested": [
+          "hazard_awareness",
+          "forbidden_tool_avoidance",
+          "anti_salience"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "use_fire_despite_hazard",
+          "ignore_environmental_constraint",
+          "wrong_damage_type"
+        ],
+        "benchmark_goal": "Tests whether the model avoids the obvious fire option because the powder casks make it unsafe."
+      },
       "ui": {
         "monster_image_key": "sapper",
         "background_image_key": "powder_walkway"
@@ -539,7 +825,7 @@
       "title": "Ice-Chain Bridge",
       "location": "Frozen Span",
       "monster_id": "custom.ice_chain_raider",
-      "narrative": "An armored raider plants his feet on a frozen bridge. Throwing more water would only glaze the stone and hand him the advantage. And and fire would weaken the ice-chains holding the bridge together leading to your fall.",
+      "narrative": "An armored raider plants his feet on a frozen bridge. Throwing more water would only glaze the stone and hand him the advantage. Fire would weaken the ice-chains holding the bridge together and send you falling.",
       "knowledge_level": "medium",
       "constraints": {
         "exactly_one_tool_call": true
@@ -559,6 +845,22 @@
           "elemental_fire"
         ]
       },
+      "benchmark_tags": {
+        "scene_type": "hazard_combat_check",
+        "skills_tested": [
+          "context_override",
+          "forbidden_tool_avoidance",
+          "anti_salience"
+        ],
+        "target_characters": "all",
+        "difficulty": "hard",
+        "expected_failure_modes": [
+          "use_fire_despite_hazard",
+          "use_water_despite_hazard",
+          "ignore_environmental_constraint"
+        ],
+        "benchmark_goal": "Tests whether the model avoids normally tempting elemental tools because fire weakens the bridge and water worsens the ice."
+      },
       "ui": {
         "monster_image_key": "ice_raider",
         "background_image_key": "ice_bridge"
@@ -569,7 +871,7 @@
       "title": "Steam Core Overload",
       "location": "Boiler Vault",
       "monster_id": "custom.overheated_steam_core",
-      "narrative": "A brass engine lurches out of the boiler haze, glowing red around its pressure core.  ",
+      "narrative": "A brass engine lurches out of the boiler haze, glowing red around its pressure core. The metal screams with heat, and each vent pulses like it is about to burst.",
       "knowledge_level": "medium",
       "constraints": {
         "exactly_one_tool_call": true
@@ -585,6 +887,22 @@
         "allow_escape_as_success": false,
         "required_effect_tags": [],
         "forbidden_effect_tags": []
+      },
+      "benchmark_tags": {
+        "scene_type": "combat_check",
+        "skills_tested": [
+          "counter_selection",
+          "elemental_counter",
+          "construct_reasoning"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "use_fire_against_overheated_construct",
+          "use_water_against_resistant_core",
+          "wrong_damage_type"
+        ],
+        "benchmark_goal": "Tests whether the model chooses a cooling or structure-breaking counter against an overheated construct."
       },
       "ui": {
         "monster_image_key": "flame_elemental",
@@ -619,6 +937,21 @@
         ],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "defense_check",
+        "skills_tested": [
+          "noncombat_selection",
+          "defense_recognition",
+          "combat_bias_resistance"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "attack_instead_of_defend",
+          "escape_attempt_when_no_escape"
+        ],
+        "benchmark_goal": "Tests whether the model chooses a defensive survival tool instead of attacking the visible warden."
+      },
       "ui": {
         "monster_image_key": "mirror_warden",
         "background_image_key": "mirror_hall"
@@ -652,6 +985,21 @@
         ],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "defense_check",
+        "skills_tested": [
+          "noncombat_selection",
+          "defense_recognition",
+          "trap_response"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "attack_instead_of_defend",
+          "escape_attempt_when_no_escape"
+        ],
+        "benchmark_goal": "Tests whether the model recognizes a trap-survival scene where blocking or shielding is required."
+      },
       "ui": {
         "monster_image_key": "portcullis",
         "background_image_key": "trap_hall"
@@ -684,6 +1032,21 @@
         ],
         "forbidden_effect_tags": []
       },
+      "benchmark_tags": {
+        "scene_type": "escape_check",
+        "skills_tested": [
+          "escape_recognition",
+          "combat_bias_resistance",
+          "threat_prioritization"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "attack_instead_of_escape",
+          "defend_instead_of_escape"
+        ],
+        "benchmark_goal": "Tests whether the model retreats when fighting the visible threat would fail the scene objective."
+      },
       "ui": {
         "monster_image_key": "wurm",
         "background_image_key": "collapsing_tunnel"
@@ -715,6 +1078,21 @@
           "escape"
         ],
         "forbidden_effect_tags": []
+      },
+      "benchmark_tags": {
+        "scene_type": "escape_check",
+        "skills_tested": [
+          "escape_recognition",
+          "combat_bias_resistance",
+          "anti_salience"
+        ],
+        "target_characters": "all",
+        "difficulty": "medium",
+        "expected_failure_modes": [
+          "attack_instead_of_escape",
+          "use_fire_against_swarm_despite_retreat_goal"
+        ],
+        "benchmark_goal": "Tests whether the model avoids the obvious anti-swarm attack and chooses retreat because escape is the intended success."
       },
       "ui": {
         "monster_image_key": "hornet_cloud",
