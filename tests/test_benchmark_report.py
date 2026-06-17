@@ -210,6 +210,12 @@ def test_showcase_full_info_failure_rows_preserve_tool_context():
             "pass": False,
             "scene_index": 2,
             "scene_id": "scene.alpha",
+            "benchmark_tags": {
+                "scene_type": "combat_check",
+                "difficulty": "medium",
+                "skills_tested": ["precision_counter"],
+                "benchmark_goal": "Choose a precise counter.",
+            },
             "character_id": "wizard.ember",
             "selected_tool_id": "wizard.cast_fireball",
             "valid_tools": ["wizard.cast_frostbolt", "wizard.cast_lightning"],
@@ -231,6 +237,10 @@ def test_showcase_full_info_failure_rows_preserve_tool_context():
             "model": "model_a",
             "scene_index": 2,
             "scene_id": "scene.alpha",
+            "scene_type": "combat_check",
+            "difficulty": "medium",
+            "skills_tested": "precision_counter",
+            "benchmark_goal": "Choose a precise counter.",
             "character_id": "wizard.ember",
             "selected_tool_id": "wizard.cast_fireball",
             "valid_tools": "wizard.cast_frostbolt, wizard.cast_lightning",
@@ -253,6 +263,11 @@ def test_render_showcase_markdown_includes_core_sections(tmp_path):
                 "parse_failure": False,
                 "reason_code": "wrong_tool",
                 "scene_id": "scene.alpha",
+                "benchmark_tags": {
+                    "scene_type": "knowledge_check",
+                    "difficulty": "medium",
+                    "skills_tested": ["combat_bias_resistance"],
+                },
                 "character_id": "wizard.ember",
             }
         ],
@@ -265,6 +280,8 @@ def test_render_showcase_markdown_includes_core_sections(tmp_path):
     assert "# Showcase" in markdown
     assert "## Model Leaderboard" in markdown
     assert "## Model By Preset" in markdown
+    assert "## Scene Type Breakdown" in markdown
+    assert "knowledge_check" in markdown
     assert "## Full Info Failures" in markdown
     assert "model_a" in markdown
     assert "wrong_tool" in markdown

@@ -1,8 +1,11 @@
 from src.runner.benchmark_utils import (
+    build_benchmark_difficulty_rows,
     build_benchmark_failure_rows,
     build_benchmark_model_preset_rows,
     build_benchmark_model_summary_rows,
     build_benchmark_progress_state,
+    build_benchmark_scene_type_rows,
+    build_benchmark_skill_rows,
     update_benchmark_progress_from_records,
     update_benchmark_progress_state,
 )
@@ -279,8 +282,86 @@ def test_benchmark_failure_rows_keep_only_debugging_columns():
             "campaign_id": "campaign.tutorial_v1",
             "character_id": "wizard.ember",
             "scene_id": "scene.tutorial.001_goblin_alley",
+            "scene_type": "",
+            "difficulty": "",
+            "skills_tested": "",
+            "benchmark_goal": "",
             "selected_tool_id": "common.run",
             "reason_code": "wrong_tool",
             "reason": "Expected a safer action.",
         }
     ]
+
+
+def test_benchmark_failure_rows_include_benchmark_tag_context():
+    records = [
+        {
+            "benchmark_model": "model_a",
+            "preset": "BATTLE_PLAN",
+            "campaign_id": "campaign.alpha",
+            "character_id": "wizard.ember",
+            "scene_id": "scene.alpha",
+            "selected_tool_id": "wizard.cast_fireball",
+            "pass": False,
+            "reason_code": "forbidden_effect_tag",
+            "reason": "fire is unsafe",
+            "benchmark_tags": {
+                "scene_type": "hazard_check",
+                "skills_tested": ["environmental_warning", "fire_safety"],
+                "difficulty": "medium",
+                "benchmark_goal": "Avoid the obvious fire option.",
+            },
+        }
+    ]
+
+    rows = build_benchmark_failure_rows(records)
+
+    assert rows[0]["scene_type"] == "hazard_check"
+    assert rows[0]["difficulty"] == "medium"
+    assert rows[0]["skills_tested"] == "environmental_warning, fire_safety"
+    assert rows[0]["benchmark_goal"] == "Avoid the obvious fire option."
+
+
+def test_benchmark_tag_summary_rows_group_by_scene_type_difficulty_and_skill():
+    records = [
+        {
+            "pass": True,
+            "parse_failure": False,
+            "scene_type": "combat_check",
+            "difficulty": "easy",
+            "skills_tested": ["basic_combat_selection"],
+        },
+        {
+            "pass": False,
+            "parse_failure": True,
+            "reason_code": "json_parse_error",
+            "benchmark_tags": {
+                "scene_type": "combat_check",
+                "difficulty": "easy",
+                "skills_tested": ["basic_combat_selection", "combat_bias_resistance"],
+            },
+        },
+        {
+            "pass": False,
+            "parse_failure": False,
+            "reason_code": "wrong_tool",
+            "benchmark_tags": {
+                "scene_type": "knowledge_check",
+                "difficulty": "medium",
+                "skills_tested": ["combat_bias_resistance"],
+            },
+        },
+    ]
+
+    scene_type_rows = build_benchmark_scene_type_rows(records)
+    difficulty_rows = build_benchmark_difficulty_rows(records)
+    skill_rows = build_benchmark_skill_rows(records)
+
+    combat_row = next(row for row in scene_type_rows if row["scene_type"] == "combat_check")
+    easy_row = next(row for row in difficulty_rows if row["difficulty"] == "easy")
+    bias_row = next(row for row in skill_rows if row["skill"] == "combat_bias_resistance")
+
+    assert combat_row["total_scenes"] == 2
+    assert combat_row["success_rate"] == 50.0
+    assert easy_row["parse_failures"] == 1
+    assert bias_row["failed_scenes"] == 2

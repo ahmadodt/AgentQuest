@@ -36,6 +36,44 @@ def extract_effective_power(validation: dict[str, Any] | None) -> float | None:
     return None
 
 
+def _list_text(value: Any) -> str:
+    if not isinstance(value, list):
+        return ""
+    return ", ".join(str(item) for item in value)
+
+
+def _as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def _benchmark_tags_from_record(record: dict[str, Any]) -> dict[str, Any]:
+    tags = record.get("benchmark_tags")
+    return tags if isinstance(tags, dict) else {}
+
+
+def _benchmark_tag_value(record: dict[str, Any], key: str, default: Any = "") -> Any:
+    if key in record:
+        return record.get(key, default)
+    return _benchmark_tags_from_record(record).get(key, default)
+
+
+def _benchmark_tag_list(record: dict[str, Any], key: str) -> list[Any]:
+    value = _benchmark_tag_value(record, key, [])
+    return _as_list(value)
+
+
+def _record_benchmark_tag_fields(benchmark_tags: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "benchmark_tags": dict(benchmark_tags),
+        "scene_type": benchmark_tags.get("scene_type", ""),
+        "skills_tested": list(_as_list(benchmark_tags.get("skills_tested"))),
+        "target_characters": benchmark_tags.get("target_characters", ""),
+        "difficulty": benchmark_tags.get("difficulty", ""),
+        "expected_failure_modes": list(_as_list(benchmark_tags.get("expected_failure_modes"))),
+        "benchmark_goal": benchmark_tags.get("benchmark_goal", ""),
+    }
+
+
 def build_benchmark_record(
     *,
     campaign_id: str,
@@ -47,6 +85,7 @@ def build_benchmark_record(
     valid_tools: list[str],
     latency_seconds: float | None,
     dataset_id: str = "",
+    benchmark_tags: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     validation = scene_run.get("validation", {}) or {}
     parsed_tool_call = scene_run.get("parsed_tool_call") or {}
@@ -74,6 +113,7 @@ def build_benchmark_record(
         "parse_failure": parse_failure,
         "raw_model_output": scene_run.get("raw_model_output", ""),
     }
+    record.update(_record_benchmark_tag_fields(benchmark_tags or {}))
     if "attempt_count" in scene_run:
         record["attempt_count"] = scene_run.get("attempt_count")
     if "retry_count" in scene_run:
@@ -173,12 +213,28 @@ def build_benchmark_failure_rows(records: list[dict[str, Any]]) -> list[dict[str
                 "campaign_id": record.get("campaign_id", ""),
                 "character_id": record.get("character_id", ""),
                 "scene_id": record.get("scene_id", ""),
+                "scene_type": _benchmark_tag_value(record, "scene_type", ""),
+                "difficulty": _benchmark_tag_value(record, "difficulty", ""),
+                "skills_tested": _list_text(_benchmark_tag_list(record, "skills_tested")),
+                "benchmark_goal": _benchmark_tag_value(record, "benchmark_goal", ""),
                 "selected_tool_id": record.get("selected_tool_id", ""),
                 "reason_code": record.get("reason_code") or "unknown_reason",
                 "reason": record.get("reason", ""),
             }
         )
     return rows
+
+
+def build_benchmark_scene_type_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return _build_benchmark_tag_summary_rows(records, tag_key="scene_type", label_key="scene_type")
+
+
+def build_benchmark_difficulty_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return _build_benchmark_tag_summary_rows(records, tag_key="difficulty", label_key="difficulty")
+
+
+def build_benchmark_skill_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return _build_benchmark_tag_summary_rows(records, tag_key="skills_tested", label_key="skill")
 
 
 def build_benchmark_failure_reason_rows(
@@ -283,6 +339,68 @@ def _finalize_summary_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             item.get("preset", ""),
         ),
     )
+
+
+def _empty_tag_summary_row(label_key: str, label: str) -> dict[str, Any]:
+    return {
+        label_key: label,
+        "total_scenes": 0,
+        "passed_scenes": 0,
+        "failed_scenes": 0,
+        "parse_failures": 0,
+        "success_rate": 0.0,
+        "top_failure_codes": "-",
+        "_failure_codes": Counter(),
+    }
+
+
+def _add_record_to_tag_summary_row(row: dict[str, Any], record: dict[str, Any]) -> None:
+    row["total_scenes"] += 1
+    if record.get("pass") is True:
+        row["passed_scenes"] += 1
+    else:
+        row["failed_scenes"] += 1
+        reason_code = str(record.get("reason_code") or "unknown_reason")
+        row["_failure_codes"][reason_code] += 1
+    if record.get("parse_failure") is True:
+        row["parse_failures"] += 1
+
+
+def _finalize_tag_summary_rows(rows: list[dict[str, Any]], label_key: str) -> list[dict[str, Any]]:
+    finalized: list[dict[str, Any]] = []
+    for row in rows:
+        total_scenes = row["total_scenes"]
+        passed_scenes = row["passed_scenes"]
+        failure_codes = row.pop("_failure_codes")
+        row["success_rate"] = (passed_scenes / total_scenes * 100.0) if total_scenes else 0.0
+        row["top_failure_codes"] = _format_failure_codes(failure_codes)
+        finalized.append(row)
+
+    return sorted(
+        finalized,
+        key=lambda item: (
+            -item["success_rate"],
+            -item["total_scenes"],
+            item[label_key],
+        ),
+    )
+
+
+def _build_benchmark_tag_summary_rows(
+    records: list[dict[str, Any]],
+    *,
+    tag_key: str,
+    label_key: str,
+) -> list[dict[str, Any]]:
+    grouped: dict[str, dict[str, Any]] = {}
+    for record in records:
+        value = _benchmark_tag_value(record, tag_key, "")
+        labels = value if isinstance(value, list) else [value]
+        for raw_label in labels:
+            label = str(raw_label or "untagged")
+            row = grouped.setdefault(label, _empty_tag_summary_row(label_key, label))
+            _add_record_to_tag_summary_row(row, record)
+    return _finalize_tag_summary_rows(list(grouped.values()), label_key)
 
 
 def _format_failure_codes(failure_codes: Counter) -> str:

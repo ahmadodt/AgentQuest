@@ -3,9 +3,12 @@ import os
 from typing import Any
 
 from src.runner.benchmark_utils import (
+    build_benchmark_difficulty_rows,
     build_benchmark_failure_reason_rows,
     build_benchmark_model_preset_rows,
     build_benchmark_model_summary_rows,
+    build_benchmark_scene_type_rows,
+    build_benchmark_skill_rows,
 )
 
 
@@ -50,6 +53,18 @@ def build_showcase_failure_reason_rows(records: list[dict[str, Any]]) -> list[di
     return build_benchmark_failure_reason_rows(records, include_preset=True)
 
 
+def build_showcase_scene_type_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return build_benchmark_scene_type_rows(records)
+
+
+def build_showcase_difficulty_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return build_benchmark_difficulty_rows(records)
+
+
+def build_showcase_skill_rows(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return build_benchmark_skill_rows(records)
+
+
 def build_showcase_full_info_failure_rows(
     records: list[dict[str, Any]],
     *,
@@ -64,6 +79,10 @@ def build_showcase_full_info_failure_rows(
                 "model": _record_model(record),
                 "scene_index": record.get("scene_index"),
                 "scene_id": record.get("scene_id", ""),
+                "scene_type": _record_benchmark_tag(record, "scene_type"),
+                "difficulty": _record_benchmark_tag(record, "difficulty"),
+                "skills_tested": _format_record_tag_list(record, "skills_tested"),
+                "benchmark_goal": _record_benchmark_tag(record, "benchmark_goal"),
                 "character_id": record.get("character_id", ""),
                 "selected_tool_id": record.get("selected_tool_id", ""),
                 "valid_tools": ", ".join(str(tool_id) for tool_id in record.get("valid_tools") or []),
@@ -93,6 +112,9 @@ def render_showcase_markdown(
     model_rows = build_showcase_model_summary_rows(records)
     preset_rows = build_showcase_model_preset_rows(records)
     reason_rows = build_showcase_failure_reason_rows(records)
+    scene_type_rows = build_showcase_scene_type_rows(records)
+    difficulty_rows = build_showcase_difficulty_rows(records)
+    skill_rows = build_showcase_skill_rows(records)
     full_info_failures = build_showcase_full_info_failure_rows(records)
 
     lines = [
@@ -153,24 +175,46 @@ def render_showcase_markdown(
     else:
         lines.append("| n/a | n/a | n/a | 0 |")
 
+    _append_tag_summary_table(
+        lines,
+        title="Scene Type Breakdown",
+        label="Scene Type",
+        label_key="scene_type",
+        rows=scene_type_rows,
+    )
+    _append_tag_summary_table(
+        lines,
+        title="Difficulty Breakdown",
+        label="Difficulty",
+        label_key="difficulty",
+        rows=difficulty_rows,
+    )
+    _append_tag_summary_table(
+        lines,
+        title="Skill Breakdown",
+        label="Skill",
+        label_key="skill",
+        rows=skill_rows,
+    )
+
     lines.extend(
         [
             "",
             "## Full Info Failures",
             "",
-            "| Model | Scene | Character | Selected Tool | Valid Tools | Reason Code | Reason |",
-            "| --- | --- | --- | --- | --- | --- | --- |",
+            "| Model | Scene | Scene Type | Difficulty | Skills Tested | Character | Selected Tool | Valid Tools | Reason Code | Reason |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     if full_info_failures:
         for row in full_info_failures:
             lines.append(
-                "| {model} | {scene_id} | {character_id} | {selected_tool_id} | {valid_tools} | {reason_code} | {reason} |".format(
+                "| {model} | {scene_id} | {scene_type} | {difficulty} | {skills_tested} | {character_id} | {selected_tool_id} | {valid_tools} | {reason_code} | {reason} |".format(
                     **{key: _markdown_cell(value) for key, value in row.items()}
                 )
             )
     else:
-        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | No full-info failures. |")
+        lines.append("| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | No full-info failures. |")
 
     lines.extend(
         [
@@ -285,6 +329,53 @@ def _record_model(record: dict[str, Any]) -> str:
 
 def _format_seconds(value: Any) -> str:
     return "-" if value is None else f"{value:.2f}"
+
+
+def _record_benchmark_tags(record: dict[str, Any]) -> dict[str, Any]:
+    tags = record.get("benchmark_tags")
+    return tags if isinstance(tags, dict) else {}
+
+
+def _record_benchmark_tag(record: dict[str, Any], key: str) -> Any:
+    if key in record:
+        return record.get(key, "")
+    return _record_benchmark_tags(record).get(key, "")
+
+
+def _format_record_tag_list(record: dict[str, Any], key: str) -> str:
+    value = _record_benchmark_tag(record, key)
+    if not isinstance(value, list):
+        return ""
+    return ", ".join(str(item) for item in value)
+
+
+def _append_tag_summary_table(
+    lines: list[str],
+    *,
+    title: str,
+    label: str,
+    label_key: str,
+    rows: list[dict[str, Any]],
+) -> None:
+    lines.extend(
+        [
+            "",
+            f"## {title}",
+            "",
+            f"| {label} | Success Rate | Passed | Failed | Parse Failures | Top Failure Codes |",
+            "| --- | ---: | ---: | ---: | ---: | --- |",
+        ]
+    )
+    if rows:
+        for row in rows:
+            lines.append(
+                "| {label_value} | {success_rate:.1f}% | {passed_scenes}/{total_scenes} | {failed_scenes} | {parse_failures} | {top_failure_codes} |".format(
+                    label_value=_markdown_cell(row[label_key]),
+                    **row,
+                )
+            )
+    else:
+        lines.append("| n/a | 0.0% | 0/0 | 0 | 0 | - |")
 
 
 def _markdown_cell(value: Any) -> str:

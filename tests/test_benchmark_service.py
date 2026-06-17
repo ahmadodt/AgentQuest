@@ -148,6 +148,12 @@ def test_run_benchmark_writes_artifacts_and_dataset_id(gamedata, tmp_path):
     assert len(result["records"]) == expected_records
     assert result["summary"]["dataset_id"] == "custom_test_hash"
     assert result["records"][0]["dataset_id"] == "custom_test_hash"
+    assert result["records"][0]["benchmark_tags"] == gamedata["scenes_by_id"][
+        result["records"][0]["scene_id"]
+    ]["benchmark_tags"]
+    assert result["records"][0]["scene_type"] == "combat_check"
+    assert result["records"][0]["difficulty"] == "easy"
+    assert result["records"][0]["skills_tested"] == ["basic_combat_selection"]
     assert (tmp_path / "benchmark" / "manifest.json").exists()
     assert (tmp_path / "benchmark" / "records.json").exists()
     assert (tmp_path / "benchmark" / "summary.json").exists()

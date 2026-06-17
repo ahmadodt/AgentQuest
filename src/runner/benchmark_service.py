@@ -238,6 +238,7 @@ def _build_benchmark_items(*, gamedata: dict, spec: BenchmarkSpec) -> list[dict[
                                     "scene_id": scene_id,
                                     "scene_index": scene_index,
                                     "scene_title": scene.get("title", scene_id),
+                                    "benchmark_tags": dict(scene.get("benchmark_tags") or {}),
                                 }
                             )
     return items
@@ -425,6 +426,7 @@ def _run_benchmark_batch(
         prompt_format = item["prompt_format"]
         scene_id = item["scene_id"]
         scene_index = item["scene_index"]
+        benchmark_tags = item.get("benchmark_tags") or {}
         cfg = preset_cache[preset_name]
         handler = handlers.get(model_name)
         if handler is None:
@@ -534,6 +536,7 @@ def _run_benchmark_batch(
             valid_tools=deterministic_valid_tools[valid_tools_key],
             latency_seconds=latency_seconds,
             dataset_id=dataset_metadata["dataset_id"],
+            benchmark_tags=benchmark_tags,
         )
         record["benchmark_model"] = model_name
         records.append(record)
