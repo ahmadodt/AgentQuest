@@ -4,10 +4,13 @@ import streamlit as st
 
 from src.runner.benchmark_history import discover_benchmark_bundles
 from src.runner.benchmark_utils import (
+    build_benchmark_difficulty_rows,
     build_benchmark_failure_reason_rows,
     build_benchmark_failure_rows,
     build_benchmark_model_preset_rows,
     build_benchmark_model_summary_rows,
+    build_benchmark_scene_type_rows,
+    build_benchmark_skill_rows,
 )
 
 
@@ -72,6 +75,14 @@ def _render_run(bundle: dict[str, Any]) -> None:
         row["avg_latency"] = _format_latency(row.pop("avg_latency_seconds"))
     with st.expander("Model by prompt preset", expanded=True):
         st.dataframe(preset_rows, use_container_width=True, hide_index=True)
+
+    with st.expander("Benchmark tag breakdowns", expanded=False):
+        st.markdown("**By scene type**")
+        st.dataframe(build_benchmark_scene_type_rows(records), use_container_width=True, hide_index=True)
+        st.markdown("**By difficulty**")
+        st.dataframe(build_benchmark_difficulty_rows(records), use_container_width=True, hide_index=True)
+        st.markdown("**By skill tested**")
+        st.dataframe(build_benchmark_skill_rows(records), use_container_width=True, hide_index=True)
 
     reason_rows = build_benchmark_failure_reason_rows(records, include_preset=True)
     with st.expander(f"Failure reasons ({sum(row['count'] for row in reason_rows)})", expanded=False):

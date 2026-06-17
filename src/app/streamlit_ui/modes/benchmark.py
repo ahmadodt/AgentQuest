@@ -18,7 +18,10 @@ from src.runner.benchmark_service import (
     run_benchmark_batch,
 )
 from src.runner.benchmark_utils import (
+    build_benchmark_difficulty_rows,
     build_benchmark_failure_rows,
+    build_benchmark_scene_type_rows,
+    build_benchmark_skill_rows,
     build_benchmark_model_preset_rows,
     build_benchmark_model_summary_rows,
     build_benchmark_progress_state,
@@ -274,6 +277,14 @@ def _render_benchmark_results(result: dict[str, Any]) -> None:
         for row in preset_rows:
             row["avg_latency"] = _format_latency(row.pop("avg_latency_seconds"))
         st.dataframe(preset_rows, use_container_width=True, hide_index=True)
+
+    with st.expander("Benchmark tag breakdowns", expanded=False):
+        st.markdown("**By scene type**")
+        st.dataframe(build_benchmark_scene_type_rows(records), use_container_width=True, hide_index=True)
+        st.markdown("**By difficulty**")
+        st.dataframe(build_benchmark_difficulty_rows(records), use_container_width=True, hide_index=True)
+        st.markdown("**By skill tested**")
+        st.dataframe(build_benchmark_skill_rows(records), use_container_width=True, hide_index=True)
 
     with st.expander(f"Failed scenes ({len(failure_rows)})", expanded=False):
         if failure_rows:
