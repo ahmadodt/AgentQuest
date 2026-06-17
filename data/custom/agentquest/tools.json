@@ -1,10 +1,10 @@
 {
-  "version": "1.4",
+  "version": "1.5",
   "tools": [
     {
       "tool_id": "wizard.cast_fireball",
       "label": "Cast Fireball",
-      "description": "Launch a powerful burst of flame at the target. Strong against swarms, shadows, beasts, and enemies weak to fire, but useless against fire-immune creatures.",
+      "description": "Launch a powerful burst of flame at the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -13,18 +13,31 @@
             "type": "string"
           }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Wizard"],
-        "required_inventory": ["wand"],
-        "forbidden_traits": ["low_mana"]
+        "allowed_classes": [
+          "Wizard"
+        ],
+        "required_inventory": [
+          "wand"
+        ],
+        "forbidden_traits": [
+          "low_mana"
+        ]
       },
       "effects": {
         "damage_type": "fire",
         "base_power": 8,
         "combat_effect": true,
-        "effect_tags": ["ranged", "magical", "elemental_fire", "area"]
+        "effect_tags": [
+          "ranged",
+          "magical",
+          "elemental_fire",
+          "area"
+        ]
       },
       "ui": {
         "emoji": "🔥"
@@ -33,7 +46,7 @@
     {
       "tool_id": "wizard.cast_ice_spear",
       "label": "Cast Ice Spear",
-      "description": "Launch a sharp spear of ice at the target. Useful against hot, burning, or water-sensitive enemies, and precise enough to hit single targets.",
+      "description": "Launch a sharp spear of ice at the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -42,18 +55,32 @@
             "type": "string"
           }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Wizard"],
-        "required_inventory": ["wand"],
-        "forbidden_traits": ["low_mana"]
+        "allowed_classes": [
+          "Wizard"
+        ],
+        "required_inventory": [
+          "wand"
+        ],
+        "forbidden_traits": [
+          "low_mana"
+        ]
       },
       "effects": {
         "damage_type": "cold",
         "base_power": 6,
         "combat_effect": true,
-        "effect_tags": ["ranged", "magical", "elemental_cold", "single_target", "precise"]
+        "effect_tags": [
+          "ranged",
+          "magical",
+          "elemental_cold",
+          "single_target",
+          "precise"
+        ]
       },
       "ui": {
         "emoji": "🧊"
@@ -62,7 +89,7 @@
     {
       "tool_id": "wizard.cast_water_ball",
       "label": "Cast Water Ball",
-      "description": "Throw a dense ball of water at the target. Useful against fire creatures, burning hazards, and enemies vulnerable to water.",
+      "description": "Throw a dense ball of water at the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -71,18 +98,31 @@
             "type": "string"
           }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Wizard"],
-        "required_inventory": ["wand"],
-        "forbidden_traits": ["low_mana"]
+        "allowed_classes": [
+          "Wizard"
+        ],
+        "required_inventory": [
+          "wand"
+        ],
+        "forbidden_traits": [
+          "low_mana"
+        ]
       },
       "effects": {
         "damage_type": "water",
         "base_power": 6,
         "combat_effect": true,
-        "effect_tags": ["ranged", "magical", "elemental_water", "single_target"]
+        "effect_tags": [
+          "ranged",
+          "magical",
+          "elemental_water",
+          "single_target"
+        ]
       },
       "ui": {
         "emoji": "💧"
@@ -91,7 +131,7 @@
     {
       "tool_id": "wizard.arcane_bolt",
       "label": "Arcane Bolt",
-      "description": "Fire a focused bolt of raw magic. Useful when elemental damage is resisted or when a reliable magical strike is needed.",
+      "description": "Fire a focused bolt of raw magic at the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -100,18 +140,31 @@
             "type": "string"
           }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Wizard"],
-        "required_inventory": ["wand"],
-        "forbidden_traits": ["low_mana"]
+        "allowed_classes": [
+          "Wizard"
+        ],
+        "required_inventory": [
+          "wand"
+        ],
+        "forbidden_traits": [
+          "low_mana"
+        ]
       },
       "effects": {
         "damage_type": "magic",
         "base_power": 6,
         "combat_effect": true,
-        "effect_tags": ["ranged", "magical", "single_target", "reliable"]
+        "effect_tags": [
+          "ranged",
+          "magical",
+          "single_target",
+          "reliable"
+        ]
       },
       "ui": {
         "emoji": "✨"
@@ -120,7 +173,7 @@
     {
       "tool_id": "wizard.arcane_shield",
       "label": "Arcane Shield",
-      "description": "Conjure a protective magical barrier. This is useful for surviving magical attacks, but it does not directly defeat a monster.",
+      "description": "Conjure a protective magical barrier.",
       "category": "defense",
       "args": {
         "type": "object",
@@ -128,15 +181,24 @@
         "required": []
       },
       "constraints": {
-        "allowed_classes": ["Wizard"],
+        "allowed_classes": [
+          "Wizard"
+        ],
         "required_inventory": [],
-        "forbidden_traits": ["silenced"]
+        "forbidden_traits": [
+          "silenced"
+        ]
       },
       "effects": {
         "defense_type": "magic",
         "mitigation": 5,
         "combat_effect": false,
-        "effect_tags": ["defense", "magical", "shield", "survival"]
+        "effect_tags": [
+          "defense",
+          "magical",
+          "shield",
+          "survival"
+        ]
       },
       "ui": {
         "emoji": "🛡️"
@@ -145,7 +207,7 @@
     {
       "tool_id": "wizard.read_runes",
       "label": "Read Ancient Runes",
-      "description": "Analyze mystical inscriptions, cursed objects, seals, shrines, or magical writing to extract hidden knowledge. Best for puzzle or knowledge-based encounters.",
+      "description": "Analyze mystical inscriptions, cursed objects, seals, shrines, or magical writing.",
       "category": "utility",
       "args": {
         "type": "object",
@@ -154,19 +216,30 @@
             "type": "string"
           }
         },
-        "required": ["surface"]
+        "required": [
+          "surface"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Wizard"],
+        "allowed_classes": [
+          "Wizard"
+        ],
         "required_inventory": [],
-        "forbidden_traits": ["blinded"]
+        "forbidden_traits": [
+          "blinded"
+        ]
       },
       "effects": {
         "damage_type": "knowledge",
         "base_power": 1,
         "knowledge_gain": true,
         "combat_effect": false,
-        "effect_tags": ["knowledge", "puzzle", "runes", "inspection"]
+        "effect_tags": [
+          "knowledge",
+          "puzzle",
+          "runes",
+          "inspection"
+        ]
       },
       "ui": {
         "emoji": "📜"
@@ -175,7 +248,7 @@
     {
       "tool_id": "knight.sword_slash",
       "label": "Sword Slash",
-      "description": "Strike the target with a sword. Reliable against ordinary unarmored enemies, but weaker against shields, armor, swarms, and creatures resistant to slashing.",
+      "description": "Strike the target with a sword.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -184,18 +257,29 @@
             "type": "string"
           }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Knight"],
-        "required_inventory": ["sword"],
+        "allowed_classes": [
+          "Knight"
+        ],
+        "required_inventory": [
+          "sword"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "slashing",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["melee", "physical", "blade", "single_target"]
+        "effect_tags": [
+          "melee",
+          "physical",
+          "blade",
+          "single_target"
+        ]
       },
       "ui": {
         "emoji": "⚔️"
@@ -204,7 +288,7 @@
     {
       "tool_id": "knight.mace_strike",
       "label": "Mace Strike",
-      "description": "Strike the target with a heavy mace. Best against armored enemies, shielded enemies, barricades, bone plates, and targets weak to blunt force.",
+      "description": "Strike the target with a heavy mace.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -213,18 +297,30 @@
             "type": "string"
           }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Knight"],
-        "required_inventory": ["mace"],
+        "allowed_classes": [
+          "Knight"
+        ],
+        "required_inventory": [
+          "mace"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "bludgeoning",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["melee", "physical", "blunt", "armor_breaking", "single_target"]
+        "effect_tags": [
+          "melee",
+          "physical",
+          "blunt",
+          "armor_breaking",
+          "single_target"
+        ]
       },
       "ui": {
         "emoji": "🔨"
@@ -233,7 +329,7 @@
     {
       "tool_id": "knight.spear_thrust",
       "label": "Spear Thrust",
-      "description": "Thrust a spear into the target. Best when reach, precision, or interruption matters, such as against casters, alchemists, charging beasts, and enemies weak to piercing.",
+      "description": "Thrust a spear into the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -242,18 +338,31 @@
             "type": "string"
           }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Knight"],
-        "required_inventory": ["spear"],
+        "allowed_classes": [
+          "Knight"
+        ],
+        "required_inventory": [
+          "spear"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "piercing",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["melee", "physical", "reach", "precise", "interrupt", "single_target"]
+        "effect_tags": [
+          "melee",
+          "physical",
+          "reach",
+          "precise",
+          "interrupt",
+          "single_target"
+        ]
       },
       "ui": {
         "emoji": "🗡️"
@@ -262,7 +371,7 @@
     {
       "tool_id": "knight.throw_torch",
       "label": "Throw Torch",
-      "description": "Throw a burning torch at the target. Best against shadows, swarms, rats, and creatures weak to fire. Dangerous or useless against fire-resistant, wet, or explosive encounters.",
+      "description": "Throw a burning torch at the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -271,18 +380,30 @@
             "type": "string"
           }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Knight"],
-        "required_inventory": ["torch"],
+        "allowed_classes": [
+          "Knight"
+        ],
+        "required_inventory": [
+          "torch"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "fire",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["ranged", "physical", "elemental_fire", "thrown", "light"]
+        "effect_tags": [
+          "ranged",
+          "physical",
+          "elemental_fire",
+          "thrown",
+          "light"
+        ]
       },
       "ui": {
         "emoji": "🔥"
@@ -291,7 +412,7 @@
     {
       "tool_id": "knight.throw_water_flask",
       "label": "Throw Water Flask",
-      "description": "Throw a flask of water at the target. Useful against fire creatures and burning hazards.",
+      "description": "Throw a flask of water at the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -300,18 +421,29 @@
             "type": "string"
           }
         },
-        "required": ["target"]
+        "required": [
+          "target"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Knight"],
-        "required_inventory": ["water_flask"],
+        "allowed_classes": [
+          "Knight"
+        ],
+        "required_inventory": [
+          "water_flask"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "water",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["ranged", "physical", "elemental_water", "thrown"]
+        "effect_tags": [
+          "ranged",
+          "physical",
+          "elemental_water",
+          "thrown"
+        ]
       },
       "ui": {
         "emoji": "💧"
@@ -320,7 +452,7 @@
     {
       "tool_id": "knight.inspect_runes",
       "label": "Inspect Runes",
-      "description": "Carefully inspect runes, markings, clues, or inscriptions. Useful for simple knowledge-based encounters.",
+      "description": "Carefully inspect runes, markings, clues, or inscriptions.",
       "category": "utility",
       "args": {
         "type": "object",
@@ -329,19 +461,30 @@
             "type": "string"
           }
         },
-        "required": ["surface"]
+        "required": [
+          "surface"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Knight"],
+        "allowed_classes": [
+          "Knight"
+        ],
         "required_inventory": [],
-        "forbidden_traits": ["blinded"]
+        "forbidden_traits": [
+          "blinded"
+        ]
       },
       "effects": {
         "damage_type": "knowledge",
         "base_power": 1,
         "knowledge_gain": true,
         "combat_effect": false,
-        "effect_tags": ["knowledge", "puzzle", "runes", "inspection"]
+        "effect_tags": [
+          "knowledge",
+          "puzzle",
+          "runes",
+          "inspection"
+        ]
       },
       "ui": {
         "emoji": "🔎"
@@ -350,28 +493,45 @@
     {
       "tool_id": "knight.shield_block",
       "label": "Shield Block",
-      "description": "Block an incoming attack using a shield. Useful for defense, but it does not directly defeat a monster unless the scene specifically requires blocking.",
+      "description": "Block an incoming attack using a shield.",
       "category": "defense",
       "args": {
         "type": "object",
         "properties": {
           "direction": {
             "type": "string",
-            "enum": ["front", "left", "right", "above"]
+            "enum": [
+              "front",
+              "left",
+              "right",
+              "above"
+            ]
           }
         },
-        "required": ["direction"]
+        "required": [
+          "direction"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Knight"],
-        "required_inventory": ["shield"],
+        "allowed_classes": [
+          "Knight"
+        ],
+        "required_inventory": [
+          "shield"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "defense_type": "physical",
         "mitigation": 4,
         "combat_effect": false,
-        "effect_tags": ["defense", "physical", "shield", "block", "survival"]
+        "effect_tags": [
+          "defense",
+          "physical",
+          "shield",
+          "block",
+          "survival"
+        ]
       },
       "ui": {
         "emoji": "🛡️"
@@ -380,7 +540,7 @@
     {
       "tool_id": "rogue.precise_stab",
       "label": "Precise Stab",
-      "description": "Drive a dagger into a precise opening. Best against exposed joints, distracted casters, and targets that reward accurate piercing attacks.",
+      "description": "Drive a dagger into a precise opening.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -390,27 +550,43 @@
           },
           "aim": {
             "type": "string",
-            "enum": ["throat", "wrist", "side"]
+            "enum": [
+              "throat",
+              "wrist",
+              "side"
+            ]
           }
         },
-        "required": ["target", "aim"]
+        "required": [
+          "target",
+          "aim"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Rogue"],
-        "required_inventory": ["dagger"],
+        "allowed_classes": [
+          "Rogue"
+        ],
+        "required_inventory": [
+          "dagger"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "piercing",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["melee", "physical", "precise", "single_target"]
+        "effect_tags": [
+          "melee",
+          "physical",
+          "precise",
+          "single_target"
+        ]
       }
     },
     {
       "tool_id": "rogue.sap_strike",
       "label": "Sap Strike",
-      "description": "Crack the target with a weighted sap. Best against helmets, shields, and brittle guards that fold under blunt force.",
+      "description": "Strike the target with a weighted sap.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -420,27 +596,43 @@
           },
           "swing": {
             "type": "string",
-            "enum": ["overhead", "side", "low"]
+            "enum": [
+              "overhead",
+              "side",
+              "low"
+            ]
           }
         },
-        "required": ["target", "swing"]
+        "required": [
+          "target",
+          "swing"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Rogue"],
-        "required_inventory": ["sap"],
+        "allowed_classes": [
+          "Rogue"
+        ],
+        "required_inventory": [
+          "sap"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "bludgeoning",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["melee", "physical", "blunt", "single_target"]
+        "effect_tags": [
+          "melee",
+          "physical",
+          "blunt",
+          "single_target"
+        ]
       }
     },
     {
       "tool_id": "rogue.throw_oil_flask",
       "label": "Throw Oil Flask",
-      "description": "Hurl burning oil at the target. Best against swarms, shadows, and exposed nests, but a terrible idea around volatile powder or fragile structures.",
+      "description": "Hurl burning oil at the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -450,27 +642,42 @@
           },
           "flask_type": {
             "type": "string",
-            "enum": ["lamp_oil", "flash_oil"]
+            "enum": [
+              "lamp_oil",
+              "flash_oil"
+            ]
           }
         },
-        "required": ["target", "flask_type"]
+        "required": [
+          "target",
+          "flask_type"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Rogue"],
-        "required_inventory": ["oil_flask"],
+        "allowed_classes": [
+          "Rogue"
+        ],
+        "required_inventory": [
+          "oil_flask"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "fire",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["ranged", "physical", "elemental_fire", "thrown"]
+        "effect_tags": [
+          "ranged",
+          "physical",
+          "elemental_fire",
+          "thrown"
+        ]
       }
     },
     {
       "tool_id": "rogue.throw_brine_flask",
       "label": "Throw Brine Flask",
-      "description": "Splash a flask of dense brine at the target. Useful against flames, hot surfaces, and enemies that break apart when soaked.",
+      "description": "Splash a flask of dense brine at the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -480,27 +687,42 @@
           },
           "mixture": {
             "type": "string",
-            "enum": ["brine", "chalkwater"]
+            "enum": [
+              "brine",
+              "chalkwater"
+            ]
           }
         },
-        "required": ["target", "mixture"]
+        "required": [
+          "target",
+          "mixture"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Rogue"],
-        "required_inventory": ["brine_flask"],
+        "allowed_classes": [
+          "Rogue"
+        ],
+        "required_inventory": [
+          "brine_flask"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "water",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["ranged", "physical", "elemental_water", "thrown"]
+        "effect_tags": [
+          "ranged",
+          "physical",
+          "elemental_water",
+          "thrown"
+        ]
       }
     },
     {
       "tool_id": "rogue.read_marks",
       "label": "Read Hidden Marks",
-      "description": "Study scratches, hinge wear, tripwires, and coded signs to infer the safe approach through a hazard or puzzle.",
+      "description": "Study scratches, hinge wear, tripwires, and coded signs.",
       "category": "utility",
       "args": {
         "type": "object",
@@ -510,89 +732,147 @@
           },
           "clue_focus": {
             "type": "string",
-            "enum": ["wires", "glyphs", "hinges"]
+            "enum": [
+              "wires",
+              "glyphs",
+              "hinges"
+            ]
           }
         },
-        "required": ["surface", "clue_focus"]
+        "required": [
+          "surface",
+          "clue_focus"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Rogue"],
-        "required_inventory": ["mirror_shard"],
-        "forbidden_traits": ["blinded"]
+        "allowed_classes": [
+          "Rogue"
+        ],
+        "required_inventory": [
+          "mirror_shard"
+        ],
+        "forbidden_traits": [
+          "blinded"
+        ]
       },
       "effects": {
         "damage_type": "knowledge",
         "base_power": 1,
         "knowledge_gain": true,
         "combat_effect": false,
-        "effect_tags": ["knowledge", "inspection", "clues", "puzzle"]
+        "effect_tags": [
+          "knowledge",
+          "inspection",
+          "clues",
+          "puzzle"
+        ]
       }
     },
     {
       "tool_id": "rogue.smoke_veil",
       "label": "Smoke Veil",
-      "description": "Drop a smoke screen and move behind it. Useful for surviving focused fire, crossing exposed ground, or breaking line of sight.",
+      "description": "Drop a smoke screen and move behind it.",
       "category": "defense",
       "args": {
         "type": "object",
         "properties": {
           "cover": {
             "type": "string",
-            "enum": ["self", "ally"]
+            "enum": [
+              "self",
+              "ally"
+            ]
           },
           "route": {
             "type": "string",
-            "enum": ["left", "right", "back"]
+            "enum": [
+              "left",
+              "right",
+              "back"
+            ]
           }
         },
-        "required": ["cover", "route"]
+        "required": [
+          "cover",
+          "route"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Rogue"],
-        "required_inventory": ["smoke_bomb"],
+        "allowed_classes": [
+          "Rogue"
+        ],
+        "required_inventory": [
+          "smoke_bomb"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "defense_type": "evasion",
         "mitigation": 4,
         "combat_effect": false,
-        "effect_tags": ["defense", "survival", "smoke", "movement"]
+        "effect_tags": [
+          "defense",
+          "survival",
+          "smoke",
+          "movement"
+        ]
       }
     },
     {
       "tool_id": "rogue.quick_climb",
       "label": "Quick Climb",
-      "description": "Hook a ledge or beam and pull clear of the encounter. This is an escape action for scenes where retreat is the correct choice.",
+      "description": "Hook a ledge or beam and pull away from the encounter.",
       "category": "movement",
       "args": {
         "type": "object",
         "properties": {
           "route": {
             "type": "string",
-            "enum": ["upward", "backtrack", "side_ledge"]
+            "enum": [
+              "upward",
+              "backtrack",
+              "side_ledge"
+            ]
           },
           "anchor": {
             "type": "string",
-            "enum": ["railing", "beam", "window"]
+            "enum": [
+              "railing",
+              "beam",
+              "window"
+            ]
           }
         },
-        "required": ["route", "anchor"]
+        "required": [
+          "route",
+          "anchor"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Rogue"],
-        "required_inventory": ["grappling_hook"],
-        "forbidden_traits": ["broken_leg"]
+        "allowed_classes": [
+          "Rogue"
+        ],
+        "required_inventory": [
+          "grappling_hook"
+        ],
+        "forbidden_traits": [
+          "broken_leg"
+        ]
       },
       "effects": {
         "escape_attempt": true,
         "combat_effect": false,
-        "effect_tags": ["movement", "escape", "non_combat"]
+        "effect_tags": [
+          "movement",
+          "escape",
+          "non_combat"
+        ]
       }
     },
     {
       "tool_id": "cleric.sanctified_mace",
       "label": "Sanctified Mace",
-      "description": "Strike with a blessed mace. Best against armored foes, brittle guardians, and enemies that fear blunt sacred force.",
+      "description": "Strike the target with a blessed mace.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -602,27 +882,43 @@
           },
           "stance": {
             "type": "string",
-            "enum": ["forward", "guarded", "rising"]
+            "enum": [
+              "forward",
+              "guarded",
+              "rising"
+            ]
           }
         },
-        "required": ["target", "stance"]
+        "required": [
+          "target",
+          "stance"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Cleric"],
-        "required_inventory": ["mace"],
+        "allowed_classes": [
+          "Cleric"
+        ],
+        "required_inventory": [
+          "mace"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "bludgeoning",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["melee", "physical", "blunt", "single_target"]
+        "effect_tags": [
+          "melee",
+          "physical",
+          "blunt",
+          "single_target"
+        ]
       }
     },
     {
       "tool_id": "cleric.radiant_bolt",
       "label": "Radiant Bolt",
-      "description": "Release a concentrated burst of holy light. Reliable when brute force is resisted and especially useful against unnatural enemies.",
+      "description": "Release a concentrated burst of holy light at the target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -632,27 +928,45 @@
           },
           "invocation": {
             "type": "string",
-            "enum": ["flare", "beam", "judgment"]
+            "enum": [
+              "flare",
+              "beam",
+              "judgment"
+            ]
           }
         },
-        "required": ["target", "invocation"]
+        "required": [
+          "target",
+          "invocation"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Cleric"],
-        "required_inventory": ["holy_symbol"],
-        "forbidden_traits": ["silenced"]
+        "allowed_classes": [
+          "Cleric"
+        ],
+        "required_inventory": [
+          "holy_symbol"
+        ],
+        "forbidden_traits": [
+          "silenced"
+        ]
       },
       "effects": {
         "damage_type": "magic",
         "base_power": 8,
         "combat_effect": true,
-        "effect_tags": ["ranged", "magical", "radiant", "single_target"]
+        "effect_tags": [
+          "ranged",
+          "magical",
+          "radiant",
+          "single_target"
+        ]
       }
     },
     {
       "tool_id": "cleric.cast_blessed_water",
       "label": "Cast Blessed Water",
-      "description": "Throw or pour sanctified water onto a target. Useful against flame, curses tied to heat, and brittle occult wards.",
+      "description": "Throw or pour sanctified water onto a target.",
       "category": "attack",
       "args": {
         "type": "object",
@@ -662,27 +976,42 @@
           },
           "vessel": {
             "type": "string",
-            "enum": ["sprinkle", "splash"]
+            "enum": [
+              "sprinkle",
+              "splash"
+            ]
           }
         },
-        "required": ["target", "vessel"]
+        "required": [
+          "target",
+          "vessel"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Cleric"],
-        "required_inventory": ["blessed_water"],
+        "allowed_classes": [
+          "Cleric"
+        ],
+        "required_inventory": [
+          "blessed_water"
+        ],
         "forbidden_traits": []
       },
       "effects": {
         "damage_type": "water",
         "base_power": 5,
         "combat_effect": true,
-        "effect_tags": ["ranged", "magical", "elemental_water", "holy"]
+        "effect_tags": [
+          "ranged",
+          "magical",
+          "elemental_water",
+          "holy"
+        ]
       }
     },
     {
       "tool_id": "cleric.read_omens",
       "label": "Read Omens",
-      "description": "Interpret sacred markings, ash patterns, and old prayers to resolve a puzzle or identify the safe ritual response.",
+      "description": "Interpret sacred markings, ash patterns, and old prayers.",
       "category": "utility",
       "args": {
         "type": "object",
@@ -692,109 +1021,185 @@
           },
           "omen_focus": {
             "type": "string",
-            "enum": ["scripture", "ashes", "stars"]
+            "enum": [
+              "scripture",
+              "ashes",
+              "stars"
+            ]
           }
         },
-        "required": ["surface", "omen_focus"]
+        "required": [
+          "surface",
+          "omen_focus"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Cleric"],
-        "required_inventory": ["prayer_book"],
-        "forbidden_traits": ["blinded"]
+        "allowed_classes": [
+          "Cleric"
+        ],
+        "required_inventory": [
+          "prayer_book"
+        ],
+        "forbidden_traits": [
+          "blinded"
+        ]
       },
       "effects": {
         "damage_type": "knowledge",
         "base_power": 1,
         "knowledge_gain": true,
         "combat_effect": false,
-        "effect_tags": ["knowledge", "ritual", "puzzle", "inspection"]
+        "effect_tags": [
+          "knowledge",
+          "ritual",
+          "puzzle",
+          "inspection"
+        ]
       }
     },
     {
       "tool_id": "cleric.sanctuary_barrier",
       "label": "Sanctuary Barrier",
-      "description": "Raise a short-lived ward that absorbs incoming force. Useful when surviving the hazard is the real objective.",
+      "description": "Raise a short-lived ward that absorbs incoming force.",
       "category": "defense",
       "args": {
         "type": "object",
         "properties": {
           "anchor": {
             "type": "string",
-            "enum": ["front", "left", "right"]
+            "enum": [
+              "front",
+              "left",
+              "right"
+            ]
           },
           "prayer": {
             "type": "string",
-            "enum": ["ward", "stillness", "shelter"]
+            "enum": [
+              "ward",
+              "stillness",
+              "shelter"
+            ]
           }
         },
-        "required": ["anchor", "prayer"]
+        "required": [
+          "anchor",
+          "prayer"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Cleric"],
-        "required_inventory": ["ward_charm"],
-        "forbidden_traits": ["silenced"]
+        "allowed_classes": [
+          "Cleric"
+        ],
+        "required_inventory": [
+          "ward_charm"
+        ],
+        "forbidden_traits": [
+          "silenced"
+        ]
       },
       "effects": {
         "defense_type": "holy",
         "mitigation": 5,
         "combat_effect": false,
-        "effect_tags": ["defense", "shield", "survival", "holy"]
+        "effect_tags": [
+          "defense",
+          "shield",
+          "survival",
+          "holy"
+        ]
       }
     },
     {
       "tool_id": "cleric.guided_withdrawal",
       "label": "Guided Withdrawal",
-      "description": "Fall back under a brief prayer and keep panic from taking over. This is an escape action for scenes where retreat is the intended success.",
+      "description": "Fall back under a brief prayer.",
       "category": "movement",
       "args": {
         "type": "object",
         "properties": {
           "route": {
             "type": "string",
-            "enum": ["toward_exit", "side_passage", "backtrack"]
+            "enum": [
+              "toward_exit",
+              "side_passage",
+              "backtrack"
+            ]
           },
           "prayer": {
             "type": "string",
-            "enum": ["calm", "mercy", "resolve"]
+            "enum": [
+              "calm",
+              "mercy",
+              "resolve"
+            ]
           }
         },
-        "required": ["route", "prayer"]
+        "required": [
+          "route",
+          "prayer"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Cleric"],
-        "required_inventory": ["holy_symbol"],
-        "forbidden_traits": ["broken_leg"]
+        "allowed_classes": [
+          "Cleric"
+        ],
+        "required_inventory": [
+          "holy_symbol"
+        ],
+        "forbidden_traits": [
+          "broken_leg"
+        ]
       },
       "effects": {
         "escape_attempt": true,
         "combat_effect": false,
-        "effect_tags": ["movement", "escape", "non_combat"]
+        "effect_tags": [
+          "movement",
+          "escape",
+          "non_combat"
+        ]
       }
     },
     {
       "tool_id": "common.run",
       "label": "Run",
-      "description": "Attempt to flee the encounter. This can only succeed when escape is allowed by the scene or monster rules. It does not defeat the monster.",
+      "description": "Attempt to flee the encounter.",
       "category": "movement",
       "args": {
         "type": "object",
         "properties": {
           "direction": {
             "type": "string",
-            "enum": ["toward_exit", "into_forest", "backtrack"]
+            "enum": [
+              "toward_exit",
+              "into_forest",
+              "backtrack"
+            ]
           }
         },
-        "required": ["direction"]
+        "required": [
+          "direction"
+        ]
       },
       "constraints": {
-        "allowed_classes": ["Wizard", "Knight"],
+        "allowed_classes": [
+          "Wizard",
+          "Knight"
+        ],
         "required_inventory": [],
-        "forbidden_traits": ["broken_leg"]
+        "forbidden_traits": [
+          "broken_leg"
+        ]
       },
       "effects": {
         "escape_attempt": true,
         "combat_effect": false,
-        "effect_tags": ["movement", "escape", "non_combat"]
+        "effect_tags": [
+          "movement",
+          "escape",
+          "non_combat"
+        ]
       },
       "ui": {
         "emoji": "🏃"
